@@ -1,135 +1,95 @@
-import React from "react";
-import { useLoginUser } from "../../hooks/useLoginUser";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { Mail, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useLoginUser } from "../../hooks/useLoginUser";
+import AuthInput from "../ui/AuthInput";
+import AuthSubmitButton from "./AuthSubmitButton";
 
+const validationSchema = Yup.object({
+  email: Yup.string().email("Invalid email").required("Email required"),
+  password: Yup.string().min(8, "Min 8 characters required").required("Password required"),
+});
+
+// Figma 255:5371 "Login form"
 export default function LoginForm({ onForgotPassword }) {
   const { mutate, isPending } = useLoginUser();
 
-  const validationSchema = Yup.object({
-    email: Yup.string().email("Invalid email").required("Email required"),
-    password: Yup.string()
-      .min(8, "Min 8 characters required")
-      .required("Password required"),
-  });
-
   const formik = useFormik({
-    initialValues: {
-      email: "",
-      password: "",
-    },
+    initialValues: { email: "", password: "", remember: true },
     validationSchema,
-    onSubmit: (values) => {
-      mutate(values);
-    },
+    onSubmit: ({ email, password }) => mutate({ email, password }),
   });
 
   return (
-    <>
-      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-        Login to Your Account
-      </h2>
-      <form
-        className="space-y-4"
-        onSubmit={formik.handleSubmit}
-        aria-label="Login form"
-        noValidate
-      >
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-poppins font-medium text-gray-700"
-          >
-            Email address
-          </label>
+    <form
+      className="flex w-full flex-col gap-4"
+      onSubmit={formik.handleSubmit}
+      aria-label="Login form"
+      noValidate
+    >
+      <AuthInput
+        icon={Mail}
+        label="Email address"
+        type="email"
+        name="email"
+        placeholder="you@example.com"
+        autoComplete="email"
+        value={formik.values.email}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+        error={formik.touched.email && formik.errors.email}
+      />
+      <AuthInput
+        icon={LockKeyhole}
+        label="Password"
+        type="password"
+        name="password"
+        placeholder="Enter your password"
+        autoComplete="current-password"
+        value={formik.values.password}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+        error={formik.touched.password && formik.errors.password}
+      />
+
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2.5 font-body text-[12px] text-taupe">
           <input
-            id="email"
-            type="email"
-            name="email"
-            autoComplete="email"
+            type="checkbox"
+            name="remember"
+            checked={formik.values.remember}
             onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.email}
-            aria-required="true"
-            aria-describedby={
-              formik.touched.email && formik.errors.email
-                ? "email-error"
-                : undefined
-            }
-            aria-invalid={
-              formik.touched.email && !!formik.errors.email ? "true" : "false"
-            }
-            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="size-[18px] rounded accent-ink"
           />
-          {formik.touched.email && formik.errors.email && (
-            <p id="email-error" className="text-red-500 text-sm mt-1" role="alert">
-              {formik.errors.email}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-poppins font-medium text-gray-700"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.password}
-            aria-required="true"
-            aria-describedby={
-              formik.touched.password && formik.errors.password
-                ? "password-error"
-                : undefined
-            }
-            aria-invalid={
-              formik.touched.password && !!formik.errors.password
-                ? "true"
-                : "false"
-            }
-            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-          {formik.touched.password && formik.errors.password && (
-            <p
-              id="password-error"
-              className="text-red-500 text-sm mt-1"
-              role="alert"
-            >
-              {formik.errors.password}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center font-poppins justify-end">
-          <button
-            type="button"
-            onClick={onForgotPassword}
-            className="text-sm font-poppins text-indigo-600 hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded"
-          >
-            Forgot password?
-          </button>
-        </div>
-
+          Remember me
+        </label>
         <button
-          type="submit"
-          disabled={isPending}
-          aria-busy={isPending}
-          className={`w-full text-white font-poppins py-2 rounded-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-            isPending
-              ? "bg-indigo-300 cursor-not-allowed"
-              : "bg-indigo-600 hover:bg-indigo-700"
-          }`}
+          type="button"
+          onClick={onForgotPassword}
+          className="font-body text-[12px] font-medium text-gold-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-700"
         >
-          {isPending ? "Signing in..." : "Sign in"}
+          Forgot password?
         </button>
-      </form>
-    </>
+      </div>
+
+      <div className="flex flex-col items-center gap-3 pt-2">
+        <AuthSubmitButton pending={isPending} pendingLabel="Signing in…">
+          Sign in to Venure
+        </AuthSubmitButton>
+        <p className="flex items-center gap-1.5 font-body text-[14px] text-taupe-light">
+          <ShieldCheck aria-hidden="true" className="size-[14px] text-success" strokeWidth={2} />
+          <span className="font-medium text-success">Secure sign in</span>
+          <span>· Your details are encrypted</span>
+        </p>
+      </div>
+
+      <p className="text-center font-body text-[13px] text-taupe">
+        Prefer a private consultation?{" "}
+        <Link to="/contact" className="font-semibold text-gold-900 hover:underline">
+          Speak with our concierge
+        </Link>
+      </p>
+    </form>
   );
 }

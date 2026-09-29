@@ -19,6 +19,18 @@
   --color-sand: #f5ede0;
   --color-line: #e2d5bf;
 
+  /* Auth surface palette (login, register — Figma "Design system" page) */
+  --color-paper: #f7f3eb; /* auth page background */
+  --color-paper-white: #fffdf9; /* button label on dark bg, checkbox fill */
+  --color-charcoal: #211c17; /* primary reading text on paper */
+  --color-taupe: #6e655a; /* secondary text */
+  --color-taupe-light: #958a7d; /* placeholders, muted labels, footer links */
+  --color-border: #d9d0c2; /* input / divider borders */
+  --color-border-strong: #c5b8a6; /* pill button / checkbox borders */
+  --color-gold-icon: #a8782f; /* accent icon circles */
+  --color-gold-900: #76501b; /* accent links, darkest gold */
+  --color-success: #48634b; /* security / success messaging */
+
   /* ── Typography ──────────────────────────────────────── */
   --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
   --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
