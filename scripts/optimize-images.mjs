@@ -72,6 +72,10 @@ const IMAGES = {
   testimonialPriyaAditya: { src: "Testimonials/priya and aditya.png", dir: "testimonials", name: "priya-aditya", widths: [640, 1000, 1448], formats: PHOTO },
   testimonialAnita: { src: "Testimonials/anita.png", dir: "testimonials", name: "anita", widths: [640, 1000, 1448], formats: PHOTO },
   testimonialRohanSunita: { src: "Testimonials/rohan and sunita.png", dir: "testimonials", name: "rohan-sunita", widths: [640, 1000, 1448], formats: PHOTO },
+
+  // Auth pages: full-height "venue story" photo beside the login/register form
+  authLoginStory: { src: "auth/login-story.jpg", dir: "auth", name: "login-story", widths: PHOTO_WIDTHS, formats: PHOTO },
+  authRegisterStory: { src: "auth/register-story.jpg", dir: "auth", name: "register-story", widths: PHOTO_WIDTHS, formats: PHOTO },
 };
 
 const kb = (bytes) => `${(bytes / 1024).toFixed(0)} KB`;

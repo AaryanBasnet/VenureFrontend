@@ -123,6 +123,18 @@ import i119 from "./testimonials/rohan-sunita-1000.avif";
 import i120 from "./testimonials/rohan-sunita-1000.webp";
 import i121 from "./testimonials/rohan-sunita-1448.avif";
 import i122 from "./testimonials/rohan-sunita-1448.webp";
+import i123 from "./auth/login-story-480.avif";
+import i124 from "./auth/login-story-480.webp";
+import i125 from "./auth/login-story-800.avif";
+import i126 from "./auth/login-story-800.webp";
+import i127 from "./auth/login-story-928.avif";
+import i128 from "./auth/login-story-928.webp";
+import i129 from "./auth/register-story-480.avif";
+import i130 from "./auth/register-story-480.webp";
+import i131 from "./auth/register-story-800.avif";
+import i132 from "./auth/register-story-800.webp";
+import i133 from "./auth/register-story-896.avif";
+import i134 from "./auth/register-story-896.webp";
 
 /**
  * Responsive image descriptors. Use with <ResponsiveImage image={images.hero} sizes="100vw" />.
@@ -343,6 +355,24 @@ export const images = {
     srcSet: `${i118} 640w, ${i120} 1000w, ${i122} 1448w`,
     sources: [
       { type: "image/avif", srcSet: `${i117} 640w, ${i119} 1000w, ${i121} 1448w` },
+    ],
+  },
+  authLoginStory: {
+    width: 928,
+    height: 1152,
+    src: `${i128}`,
+    srcSet: `${i124} 480w, ${i126} 800w, ${i128} 928w`,
+    sources: [
+      { type: "image/avif", srcSet: `${i123} 480w, ${i125} 800w, ${i127} 928w` },
+    ],
+  },
+  authRegisterStory: {
+    width: 896,
+    height: 1200,
+    src: `${i134}`,
+    srcSet: `${i130} 480w, ${i132} 800w, ${i134} 896w`,
+    sources: [
+      { type: "image/avif", srcSet: `${i129} 480w, ${i131} 800w, ${i133} 896w` },
     ],
   },
 };
