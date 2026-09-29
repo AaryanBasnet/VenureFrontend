@@ -23,7 +23,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#e7dfd2]">
+    <div className="flex h-dvh overflow-hidden bg-[#e7dfd2]">
       {/* Venue story panel */}
       <div className="relative isolate hidden w-[46%] max-w-[738px] flex-col justify-between overflow-hidden px-10 py-10 lg:flex xl:px-[52px] xl:py-12">
         <ResponsiveImage
@@ -62,7 +62,7 @@ export default function LoginPage() {
       </div>
 
       {/* Form panel */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-16 bg-paper px-5 py-16">
+      <div className="flex flex-1 flex-col items-center justify-center gap-8 overflow-y-auto bg-paper px-5 py-10">
         <div className="flex w-full max-w-[518px] flex-col items-center gap-[29px]">
           <Link to="/" className="lg:hidden">
             <Logo height={56} label="Venure home" className="text-charcoal" />

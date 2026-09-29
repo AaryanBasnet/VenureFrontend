@@ -9,9 +9,9 @@ import { images } from "../assets/landing/images";
 // venue story on the right; mirrored from the login page).
 export default function RegisterPage() {
   return (
-    <div className="flex min-h-screen bg-[#e7dfd2]">
+    <div className="flex h-dvh overflow-hidden bg-[#e7dfd2]">
       {/* Form panel */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-16 bg-paper px-5 py-16">
+      <div className="flex flex-1 flex-col items-center justify-center gap-8 overflow-y-auto bg-paper px-5 py-10">
         <div className="flex w-full max-w-[518px] flex-col items-start gap-[18px]">
           <Link to="/" className="self-center lg:hidden">
             <Logo height={56} label="Venure home" className="text-charcoal" />
