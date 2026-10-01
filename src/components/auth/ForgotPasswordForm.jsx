@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Mail, ArrowLeft, Loader2, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Mail, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { useForgotPassword } from "../../hooks/useForgotPasswordHook";
 
 export default function ForgotPasswordForm({
@@ -57,59 +57,50 @@ export default function ForgotPasswordForm({
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
+    <div className="relative w-full max-w-md max-h-[85dvh] overflow-y-auto overflow-x-hidden rounded-2xl border border-border bg-white shadow-xl">
+      <div className="bg-ink px-5 py-5 sm:px-8 sm:py-6">
         <div className="flex items-center justify-between">
           <button
             onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors duration-200 p-1"
+            className="p-1 text-paper-white/70 transition-colors duration-200 hover:text-paper-white"
             disabled={isLoading}
           >
             <ArrowLeft size={20} />
           </button>
-          <div className="flex items-center space-x-2 text-white">
-            <Shield size={24} />
-            <h2 className="text-xl font-semibold">Reset Password</h2>
+          <div className="flex items-center gap-2 text-paper-white">
+            <ShieldCheck size={22} />
+            <h2 className="font-display text-xl">Reset Password</h2>
           </div>
           <div className="w-6" /> {/* Spacer for centering */}
         </div>
-        <p className="text-indigo-100 text-sm mt-2">
-          Enter your email address and we'll send you a reset code
+        <p className="mt-2 font-body text-sm text-paper-white/70">
+          Enter your email address and we&rsquo;ll send you a reset code
         </p>
       </div>
 
-      {/* Form Content */}
-      <div className="px-8 py-6">
+      <div className="px-5 py-5 sm:px-8 sm:py-6">
         <div onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="email" className="block font-body text-sm font-medium text-charcoal">
               Email Address
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Mail
                   className={`h-5 w-5 transition-colors duration-200 ${
-                    emailError
-                      ? "text-red-400"
-                      : email
-                      ? "text-indigo-500"
-                      : "text-gray-400"
+                    emailError ? "text-red-400" : email ? "text-gold-700" : "text-taupe-light"
                   }`}
                 />
               </div>
               <input
                 id="email"
                 type="email"
-                className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-0 ${
+                className={`w-full rounded-xl border-2 py-3 pl-10 pr-4 font-body transition-all duration-200 focus:outline-none focus:ring-0 ${
                   emailError
-                    ? "border-red-300 focus:border-red-500 bg-red-50"
+                    ? "border-red-300 bg-red-50 focus:border-red-500"
                     : email
-                    ? "border-indigo-300 focus:border-indigo-500 bg-indigo-50/30"
-                    : "border-gray-200 focus:border-indigo-400 hover:border-gray-300"
+                    ? "border-gold-700/40 bg-gold-50/40 focus:border-gold-700"
+                    : "border-border hover:border-border-strong focus:border-charcoal"
                 } ${isLoading ? "opacity-75" : ""}`}
                 placeholder="Enter your email address"
                 value={email}
@@ -119,19 +110,18 @@ export default function ForgotPasswordForm({
               />
             </div>
             {emailError && (
-              <p className="text-red-600 text-sm flex items-center space-x-1 animate-in slide-in-from-left-1 duration-200">
-                <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+              <p className="flex items-center gap-1 font-body text-sm text-red-600">
+                <span className="size-1 rounded-full bg-red-600"></span>
                 <span>{emailError}</span>
               </p>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-3 space-y-reverse sm:space-y-0">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-3 sm:space-y-0">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-100 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-border px-6 py-3 font-body font-medium text-charcoal transition-all duration-200 hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               disabled={isLoading}
             >
               Cancel
@@ -139,12 +129,12 @@ export default function ForgotPasswordForm({
             <button
               type="submit"
               onClick={handleSubmit}
-              className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-200 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-lg flex items-center justify-center space-x-2"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-6 py-3 font-body font-medium text-paper-white shadow-lg transition-all duration-200 hover:bg-charcoal disabled:cursor-not-allowed disabled:opacity-75 sm:w-auto"
               disabled={isLoading || !email}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="animate-spin h-4 w-4" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Sending Code...</span>
                 </>
               ) : (
@@ -157,29 +147,25 @@ export default function ForgotPasswordForm({
           </div>
         </div>
 
-        {/* Security Note */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <div className="flex items-start space-x-3">
-            <Shield className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+        <div className="mt-6 rounded-xl border border-border bg-paper p-4">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-success" />
             <div>
-              <h4 className="text-sm font-medium text-gray-900">
-                Security Note
-              </h4>
-              <p className="text-xs text-gray-600 mt-1">
-                For your security, the reset code will expire in 15 minutes. If
-                you don't receive the email, check your spam folder.
+              <h4 className="font-body text-sm font-medium text-charcoal">Security Note</h4>
+              <p className="mt-1 font-body text-xs text-taupe">
+                For your security, the reset code will expire in 15 minutes. If you don&rsquo;t receive the
+                email, check your spam folder.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Loading Overlay */}
       {isLoading && (
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-2xl">
+        <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm">
           <div className="text-center">
-            <Loader2 className="animate-spin h-8 w-8 text-indigo-600 mx-auto" />
-            <p className="text-sm text-gray-600 mt-2">Sending reset code...</p>
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-ink" />
+            <p className="mt-2 font-body text-sm text-taupe">Sending reset code...</p>
           </div>
         </div>
       )}

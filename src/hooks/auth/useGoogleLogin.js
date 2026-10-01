@@ -1,24 +1,23 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { registerUserApi } from "../../api/authApi";
+import { googleAuthApi } from "../../api/authApi";
 import { useAuthStore } from "../../store/authStore";
 
-export const useRegister = () => {
+export const useGoogleLogin = () => {
   const setUser = useAuthStore((s) => s.setUser);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData) => {
-      const res = await registerUserApi(formData);
-      // Backend envelope: { success: true, data: { _id, name, email, role, ... } }
+    mutationFn: async (credential) => {
+      const res = await googleAuthApi(credential);
       return res.data.data;
     },
     onSuccess: (user) => {
       setUser(user);
       queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
-      toast.success("Welcome to Venure!");
+      toast.success("Welcome back!");
 
       if (user?.role === "Admin") navigate("/admin/dashboard");
       else if (user?.role === "VenueOwner") navigate("/owner/dashboard");
@@ -26,7 +25,7 @@ export const useRegister = () => {
     },
     onError: (err) => {
       toast.error(
-        err?.response?.data?.message || "Registration failed. Please try again."
+        err?.response?.data?.message || "Google sign-in failed. Please try again."
       );
     },
   });
