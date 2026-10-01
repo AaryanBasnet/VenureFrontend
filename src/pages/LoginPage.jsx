@@ -62,7 +62,7 @@ export default function LoginPage() {
       </div>
 
       {/* Form panel */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-5 overflow-y-auto bg-paper px-5 py-6 sm:gap-8 sm:py-10">
+      <div className="flex flex-1 flex-col items-center justify-center gap-5 overflow-y-auto bg-paper px-5 py-6 [scrollbar-gutter:stable] sm:gap-8 sm:py-10">
         <div className="flex w-full max-w-[518px] flex-col items-center gap-5 sm:gap-[29px]">
           <Link to="/" className="lg:hidden">
             <Logo height={56} label="Venure home" className="text-charcoal" />
@@ -102,7 +102,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="flex w-full max-w-[1000px] items-center justify-between text-taupe-light">
+        <div className="flex w-full max-w-[518px] items-center justify-between text-taupe-light">
           <p className="font-body text-[12px] font-light">© {new Date().getFullYear()} Venure</p>
           <p className="font-body text-[11px]">Privacy · Terms · Help</p>
         </div>
