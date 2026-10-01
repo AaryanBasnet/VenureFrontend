@@ -79,32 +79,36 @@ export default function RegisterForm() {
         error={formik.touched.email && formik.errors.email}
       />
 
-      <AuthInput
-        icon={LockKeyhole}
-        label="Create password"
-        type="password"
-        name="password"
-        placeholder="At least 8 characters"
-        autoComplete="new-password"
-        value={formik.values.password}
-        onChange={formik.handleChange}
-        onBlur={formik.handleBlur}
-        error={formik.touched.password && formik.errors.password}
-        hint="Use a mix of uppercase, lowercase letters, and a number."
-      />
+      <div className="flex w-full flex-col gap-3.5 sm:flex-row">
+        <AuthInput
+          icon={LockKeyhole}
+          label="Create password"
+          type="password"
+          name="password"
+          placeholder="At least 8 characters"
+          autoComplete="new-password"
+          className="sm:flex-1"
+          value={formik.values.password}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.password && formik.errors.password}
+          hint="Use a mix of uppercase, lowercase letters, and a number."
+        />
 
-      <AuthInput
-        icon={LockKeyhole}
-        label="Confirm password"
-        type="password"
-        name="confirmPassword"
-        placeholder="Re-enter your password"
-        autoComplete="new-password"
-        value={formik.values.confirmPassword}
-        onChange={formik.handleChange}
-        onBlur={formik.handleBlur}
-        error={formik.touched.confirmPassword && formik.errors.confirmPassword}
-      />
+        <AuthInput
+          icon={LockKeyhole}
+          label="Confirm password"
+          type="password"
+          name="confirmPassword"
+          placeholder="Re-enter your password"
+          autoComplete="new-password"
+          className="sm:flex-1"
+          value={formik.values.confirmPassword}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.confirmPassword && formik.errors.confirmPassword}
+        />
+      </div>
 
       <div className="flex items-start gap-2.5">
         <input

@@ -7,7 +7,7 @@ export default function AuthSubmitButton({ pending, pendingLabel, children, ...p
       type="submit"
       disabled={pending}
       aria-busy={pending}
-      className="relative flex h-[54px] w-full items-center justify-center rounded-xl bg-ink px-[18px] transition-opacity disabled:opacity-70"
+      className="relative flex h-[54px] w-full cursor-pointer items-center justify-center rounded-xl bg-ink px-[18px] transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
       {...props}
     >
       <span className="font-body text-[18px] font-semibold text-paper-white">

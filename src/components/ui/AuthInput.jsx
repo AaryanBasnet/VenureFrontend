@@ -24,7 +24,7 @@ export default function AuthInput({
   return (
     <div className={`flex w-full flex-col items-start gap-2 ${className}`}>
       {label && (
-        <label htmlFor={id} className="font-body text-[13px] font-medium text-charcoal">
+        <label htmlFor={id} className="font-body text-small font-medium text-charcoal">
           {label}
         </label>
       )}
@@ -39,7 +39,7 @@ export default function AuthInput({
           type={isPassword && revealed ? "text" : type}
           aria-invalid={!!error}
           aria-describedby={errorId || hintId}
-          className="w-full min-w-0 flex-1 bg-transparent font-body text-[14px] text-charcoal placeholder:text-taupe-light focus:outline-none"
+          className="w-full min-w-0 flex-1 bg-transparent font-body text-small text-charcoal placeholder:text-taupe-light focus:outline-none"
           {...props}
         />
         {isPassword && (
@@ -47,7 +47,7 @@ export default function AuthInput({
             type="button"
             onClick={() => setRevealed((r) => !r)}
             aria-label={revealed ? "Hide password" : "Show password"}
-            className="shrink-0 text-taupe-light hover:text-charcoal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-charcoal"
+            className="shrink-0 cursor-pointer text-taupe-light hover:text-charcoal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-charcoal"
           >
             {revealed ? <EyeOff aria-hidden="true" className="size-[18px]" strokeWidth={1.75} /> : <Eye aria-hidden="true" className="size-[18px]" strokeWidth={1.75} />}
           </button>

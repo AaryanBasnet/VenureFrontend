@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { Mail, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Mail, LockKeyhole } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLoginUser } from "../../hooks/useLoginUser";
 import AuthInput from "../ui/AuthInput";
@@ -67,24 +67,19 @@ export default function LoginForm({ onForgotPassword }) {
         <button
           type="button"
           onClick={onForgotPassword}
-          className="font-body text-[12px] font-medium text-gold-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-700"
+          className="cursor-pointer font-body text-[12px] font-medium text-gold-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-700"
         >
           Forgot password?
         </button>
       </div>
 
-      <div className="flex flex-col items-center gap-3 pt-2">
+      <div className="pt-2">
         <AuthSubmitButton pending={isPending} pendingLabel="Signing in…">
           Sign in to Venure
         </AuthSubmitButton>
-        <p className="flex items-center gap-1.5 font-body text-[14px] text-taupe-light">
-          <ShieldCheck aria-hidden="true" className="size-[14px] text-success" strokeWidth={2} />
-          <span className="font-medium text-success">Secure sign in</span>
-          <span>· Your details are encrypted</span>
-        </p>
       </div>
 
-      <p className="text-center font-body text-[13px] text-taupe">
+      <p className="text-center font-body text-caption text-taupe">
         Prefer a private consultation?{" "}
         <Link to="/contact" className="font-semibold text-gold-900 hover:underline">
           Speak with our concierge
