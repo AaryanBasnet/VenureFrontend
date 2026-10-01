@@ -114,8 +114,8 @@ export default function VerifyResetCodeForm({
   const isCodeComplete = code.every((digit) => digit !== "");
 
   return (
-    <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
-      <div className="bg-ink px-8 py-6">
+    <div className="relative w-full max-w-md max-h-[85dvh] overflow-y-auto overflow-x-hidden rounded-2xl border border-border bg-white shadow-xl">
+      <div className="bg-ink px-5 py-5 sm:px-8 sm:py-6">
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
@@ -141,7 +141,7 @@ export default function VerifyResetCodeForm({
         </p>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="px-5 py-5 sm:px-8 sm:py-6">
         <div className="mb-6 text-center">
           <p className="font-body text-sm text-taupe">
             Code sent to{" "}
@@ -151,14 +151,15 @@ export default function VerifyResetCodeForm({
 
         <div className="space-y-6">
           <div className="space-y-4">
-            <div className="flex justify-center gap-3">
+            <div className="grid grid-cols-6 gap-1.5 sm:gap-3">
               {code.map((digit, index) => (
                 <input
                   key={index}
                   ref={(el) => (inputRefs.current[index] = el)}
                   type="text"
+                  inputMode="numeric"
                   maxLength="1"
-                  className={`h-12 w-12 rounded-xl border-2 text-center font-body text-xl font-bold transition-all duration-200 focus:outline-none focus:ring-0 ${
+                  className={`aspect-square w-full min-w-0 rounded-xl border-2 text-center font-body text-base sm:text-xl font-bold transition-all duration-200 focus:outline-none focus:ring-0 ${
                     error
                       ? "border-red-300 bg-red-50 focus:border-red-500"
                       : digit

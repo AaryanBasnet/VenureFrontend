@@ -62,14 +62,14 @@ export default function LoginPage() {
       </div>
 
       {/* Form panel */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 overflow-y-auto bg-paper px-5 py-10">
-        <div className="flex w-full max-w-[518px] flex-col items-center gap-[29px]">
+      <div className="flex flex-1 flex-col items-center justify-center gap-5 overflow-y-auto bg-paper px-5 py-6 sm:gap-8 sm:py-10">
+        <div className="flex w-full max-w-[518px] flex-col items-center gap-5 sm:gap-[29px]">
           <Link to="/" className="lg:hidden">
             <Logo height={56} label="Venure home" className="text-charcoal" />
           </Link>
 
           <div className="flex flex-col items-center gap-2.5 text-center">
-            <h1 className="font-display text-[42px] leading-[1.08] tracking-[-0.8px] text-charcoal">
+            <h1 className="font-display text-[32px] leading-[1.08] tracking-[-0.8px] text-charcoal sm:text-[42px]">
               Welcome back
             </h1>
             <p className="font-body text-[15px] leading-[1.5] text-taupe">

@@ -57,8 +57,8 @@ export default function ForgotPasswordForm({
   };
 
   return (
-    <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
-      <div className="bg-ink px-8 py-6">
+    <div className="relative w-full max-w-md max-h-[85dvh] overflow-y-auto overflow-x-hidden rounded-2xl border border-border bg-white shadow-xl">
+      <div className="bg-ink px-5 py-5 sm:px-8 sm:py-6">
         <div className="flex items-center justify-between">
           <button
             onClick={onClose}
@@ -78,7 +78,7 @@ export default function ForgotPasswordForm({
         </p>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="px-5 py-5 sm:px-8 sm:py-6">
         <div onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="email" className="block font-body text-sm font-medium text-charcoal">

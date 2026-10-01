@@ -124,8 +124,8 @@ export default function ResetPasswordForm({ email, code, onSuccess, onClose }) {
     !errors.confirmPassword;
 
   return (
-    <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
-      <div className="bg-ink px-8 py-6">
+    <div className="relative w-full max-w-md max-h-[85dvh] overflow-y-auto overflow-x-hidden rounded-2xl border border-border bg-white shadow-xl">
+      <div className="bg-ink px-5 py-5 sm:px-8 sm:py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-paper-white">
             <LockKeyhole size={22} />
@@ -144,7 +144,7 @@ export default function ResetPasswordForm({ email, code, onSuccess, onClose }) {
         </p>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="px-5 py-5 sm:px-8 sm:py-6">
         <div className="mb-6 text-center">
           <p className="font-body text-sm text-taupe">
             Resetting password for{" "}

@@ -11,14 +11,14 @@ export default function RegisterPage() {
   return (
     <div className="flex h-dvh overflow-hidden bg-[#e7dfd2]">
       {/* Form panel */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 overflow-y-auto bg-paper px-5 py-10">
+      <div className="flex flex-1 flex-col items-center justify-center gap-5 overflow-y-auto bg-paper px-5 py-6 sm:gap-8 sm:py-10">
         <div className="flex w-full max-w-[518px] flex-col items-start gap-[18px]">
           <Link to="/" className="self-center lg:hidden">
             <Logo height={56} label="Venure home" className="text-charcoal" />
           </Link>
 
           <div className="flex flex-col gap-2">
-            <h1 className="font-display text-[40px] leading-[1.08] tracking-[-0.7px] text-charcoal">
+            <h1 className="font-display text-[30px] leading-[1.08] tracking-[-0.7px] text-charcoal sm:text-[40px]">
               Begin your next chapter
             </h1>
             <p className="font-body text-[15px] leading-[1.45] text-taupe">
