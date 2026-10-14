@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../auth/AuthProvider";
-import { FiLogOut, FiBarChart2, FiMessageSquare, FiStar } from "react-icons/fi";
+import { FiLogOut, FiBarChart2, FiMessageSquare, FiStar, FiInbox } from "react-icons/fi";
 import { FaBuildingColumns } from "react-icons/fa6";
 import { MdDashboard, MdPayment } from "react-icons/md";
 import { BiCalendarEvent } from "react-icons/bi";
@@ -67,6 +67,12 @@ const OwnerSidebar = ({ sidebarOpen, setSidebarOpen }) => {
     {
       title: "Bookings & Revenue",
       items: [
+        {
+          Icon: FiInbox,
+          title: "Inquiries",
+          path: "/owner/inquiries",
+          description: "Requests and quotations",
+        },
         {
           Icon: BiCalendarEvent,
           title: "Bookings",

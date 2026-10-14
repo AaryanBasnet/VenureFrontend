@@ -29,6 +29,11 @@ const TestimonialForm = lazy(() =>
   import("../components/user/TestimonialForm")
 );
 const VenueDetails = lazy(() => import("../pages/user/VenueDetails"));
+const InquiryPage = lazy(() => import("../pages/user/InquiryPage"));
+const MyInquiriesPage = lazy(() => import("../pages/user/MyInquiriesPage"));
+const InquiryDetailPage = lazy(() => import("../pages/user/InquiryDetailPage"));
+const OwnerInquiriesPage = lazy(() => import("../pages/venueOwner/OwnerInquiriesPage"));
+const OwnerInquiryDetailPage = lazy(() => import("../pages/venueOwner/OwnerInquiryDetailPage"));
 const BookingPage = lazy(() => import("../pages/user/BookingPage"));
 const DateAndTimeSelectionPage = lazy(() =>
   import("../components/user/DateandTimeSelection")
@@ -97,9 +102,12 @@ export default function AppRouter() {
             <Route element={<MainLayout />}>
               <Route path="/venues" element={<VenueList />} />
               <Route path="/venue/:id" element={<VenueDetails />} />
+              <Route path="/venue/:id/inquire" element={<InquiryPage />} />
 
               <Route path="/favorites" element={<FavoriteSection />} />
               <Route path="/my-bookings" element={<MyBookings />} />
+              <Route path="/my-inquiries" element={<MyInquiriesPage />} />
+              <Route path="/my-inquiries/:id" element={<InquiryDetailPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/checkout/:id" element={<BookingPage />}>
                 <Route index element={<DateAndTimeSelectionPage />} />
@@ -143,6 +151,8 @@ export default function AppRouter() {
                 element={<OwnerVenueReviewsPage />}
               />
               <Route path="/owner/bookings" element={<OwnerBookingsPage />} />
+              <Route path="/owner/inquiries" element={<OwnerInquiriesPage />} />
+              <Route path="/owner/inquiries/:id" element={<OwnerInquiryDetailPage />} />
               <Route path="/owner/venues" element={<OwnerVenuePage />} />
               <Route path="/owner/chat" element={<OwnerChatPage />} />
               <Route path="/owner/payments" element={<OwnerPaymentPage />} />

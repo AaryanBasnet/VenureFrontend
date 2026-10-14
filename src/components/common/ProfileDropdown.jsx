@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { UserCircle2, Calendar, Heart, Settings, LogOut } from "lucide-react";
+import { UserCircle2, Calendar, ClipboardList, Heart, Settings, LogOut } from "lucide-react";
 
 const dropdownVariants = {
   initial: { opacity: 0, y: -10 },
@@ -68,6 +68,12 @@ const ProfileDropdown = ({ logout, avatarUrl }) => {
               className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
             >
               <Calendar size={16} /> My Bookings
+            </button>
+            <button
+              onClick={() => handleNavigate("/my-inquiries")}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+            >
+              <ClipboardList size={16} /> My Inquiries
             </button>
             <button
               onClick={() => handleNavigate("/favorites")}
