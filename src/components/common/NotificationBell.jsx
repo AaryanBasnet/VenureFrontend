@@ -13,7 +13,8 @@ const ago = (iso) => {
 };
 
 // Header bell: new quotations, booking updates and replies show up here, live and without a refresh.
-export default function NotificationBell({ userId }) {
+// tone="light" is white on the dark site header; tone="dark" is for cream backgrounds (owner area).
+export default function NotificationBell({ userId, tone = "light" }) {
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(userId);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -45,7 +46,7 @@ export default function NotificationBell({ userId }) {
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
-        className="relative flex size-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className={`relative flex size-10 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${tone === "dark" ? "text-ink hover:bg-ink/5 focus-visible:outline-ink" : "text-white hover:bg-white/10 focus-visible:outline-white"}`}
       >
         <Bell aria-hidden="true" className="size-5" strokeWidth={1.5} />
         {unreadCount > 0 && (
