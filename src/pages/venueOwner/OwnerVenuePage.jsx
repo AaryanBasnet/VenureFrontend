@@ -3,6 +3,7 @@ import { AuthContext } from "../../auth/AuthProvider";
 import AddVenueModal from "../../components/modal/AddVenueModal";
 import VenueCard from "../../components/common/VenueCard";
 import VenueRegisterForm from "../../components/owner/venueRegistrationForm";
+import SpacesManager from "../../components/owner/SpacesManager";
 import { useVenuesByOwner } from "../../hooks/owner/useVenuesByOwner";
 import { deleteVenue } from "../../api/owner/venueApi";
 import { sanitizeVenue } from "../../utils/sanitizeVenue";
@@ -18,14 +19,20 @@ const OwnerVenuePage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editVenue, setEditVenue] = useState(null);
+  const [spacesVenue, setSpacesVenue] = useState(null);
   const [deletingVenueId, setDeletingVenueId] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleAddVenueSuccess = useCallback(async () => {
-    setIsModalOpen(false);
-    setEditVenue(null);
-    await refetch();
-  }, [refetch]);
+  // After creating a venue, go straight to adding its first space so customers can request it.
+  const handleAddVenueSuccess = useCallback(
+    async (created) => {
+      setEditVenue(null);
+      if (created?._id) setSpacesVenue(created);
+      else setIsModalOpen(false);
+      await refetch();
+    },
+    [refetch]
+  );
 
   const handleUpdateVenueSuccess = useCallback(async () => {
     setIsUpdating(true);
@@ -59,8 +66,15 @@ const OwnerVenuePage = () => {
     if (!isUpdating) {
       setIsModalOpen(false);
       setEditVenue(null);
+      setSpacesVenue(null);
     }
   }, [isUpdating]);
+
+  const openSpaces = useCallback((venue) => {
+    setEditVenue(null);
+    setSpacesVenue(venue);
+    setIsModalOpen(true);
+  }, []);
 
   const handleAddVenueClick = useCallback(() => {
     setEditVenue(null);
@@ -106,6 +120,7 @@ const OwnerVenuePage = () => {
                 key={venue._id}
                 venue={venue}
                 onEdit={openEditModal}
+                onManageSpaces={openSpaces}
                 onDelete={() => handleDeleteVenue(venue._id)}
                 isDeleting={deletingVenueId === venue._id}
               />
@@ -115,15 +130,19 @@ const OwnerVenuePage = () => {
       )}
 
       <AddVenueModal isOpen={isModalOpen} onClose={handleModalClose}>
-        {/* key prop forces remount on mode change */}
-        <VenueRegisterForm
-          key={editVenue ? `edit-${editVenue._id}` : "create"}
-          onSuccess={
-            editVenue ? handleUpdateVenueSuccess : handleAddVenueSuccess
-          }
-          mode={editVenue ? "edit" : "create"}
-          initialData={editVenue}
-        />
+        {spacesVenue ? (
+          <SpacesManager key={spacesVenue._id} venue={spacesVenue} onDone={handleModalClose} />
+        ) : (
+          /* key prop forces remount on mode change */
+          <VenueRegisterForm
+            key={editVenue ? `edit-${editVenue._id}` : "create"}
+            onSuccess={
+              editVenue ? handleUpdateVenueSuccess : handleAddVenueSuccess
+            }
+            mode={editVenue ? "edit" : "create"}
+            initialData={editVenue}
+          />
+        )}
       </AddVenueModal>
     </div>
   );

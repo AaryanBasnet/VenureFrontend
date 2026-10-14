@@ -22,7 +22,7 @@ const Button = ({ children, onClick, className = "", ...props }) => {
     </button>
   );
 };
-const VenueCard = ({ venue, onEdit, onDelete, isDeleting }) => {
+const VenueCard = ({ venue, onEdit, onDelete, onManageSpaces, isDeleting }) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const {
@@ -30,17 +30,14 @@ const VenueCard = ({ venue, onEdit, onDelete, isDeleting }) => {
     averageRating,
     description,
     location,
-    capacity,
-    pricePerHour,
     amenities,
     venueImages,
+    packages = [],
   } = venue;
 
-  const backendBaseUrl = "http://localhost:5050/";
-  const imageUrl =
-    venueImages && venueImages.length > 0
-      ? backendBaseUrl + venueImages[0].url.replace(/^\/+/, "")
-      : "https://via.placeholder.com/400x200?text=Venue+Image";
+  // Venue photos are stored as full Cloudinary URLs.
+  const imageUrl = venueImages?.[0]?.url || "https://via.placeholder.com/400x200?text=Venue+Image";
+  const cheapest = packages.length ? Math.min(...packages.map((p) => p.pricePerPlate)) : 0;
 
   const statusColors = {
     approved: "bg-green-100 text-green-700",
@@ -86,12 +83,18 @@ const VenueCard = ({ venue, onEdit, onDelete, isDeleting }) => {
                 .filter(Boolean)
                 .join(", ")}
             </div>
-            <div className="flex items-center text-gray-500 text-sm mb-3">
-              <FaUserFriends className="mr-1" /> {capacity} capacity
+            <div className="text-purple-600 font-semibold text-lg mb-1">
+              {cheapest > 0 ? `From Nrs. ${cheapest.toLocaleString("en-IN")} per plate` : "No packages yet"}
             </div>
-            <div className="text-purple-600 font-semibold text-lg mb-4">
-              Nrs.{pricePerHour}/hour
-            </div>
+            {onManageSpaces && (
+              <button
+                type="button"
+                onClick={() => onManageSpaces(venue)}
+                className="mb-4 flex items-center text-sm text-purple-700 hover:underline"
+              >
+                <FaUserFriends className="mr-1" /> Halls &amp; spaces
+              </button>
+            )}
             <div className="flex flex-wrap gap-2 mb-4">
               {amenities.slice(0, 3).map((amenity, index) => (
                 <span

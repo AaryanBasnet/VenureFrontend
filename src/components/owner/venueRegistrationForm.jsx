@@ -5,6 +5,8 @@ import { AuthContext } from "../../auth/AuthProvider";
 import useAddVenue from "../../hooks/owner/useAddVenue";
 import { useUpdateVenue } from "../../hooks/owner/useUpdateVenue";
 import { venueTypes } from "../../features/landing/content/landingContent";
+import { DrinkOptionsEditor, PackagesEditor } from "./MenuEditors";
+import { drinksFromVenue, drinksToPayload, menuError, packagesFromVenue, packagesToPayload } from "./menuEditorUtils";
 
 const amenitiesOptions = ["WiFi", "Parking", "AC", "Music", "Catering", "Stage"];
 
@@ -19,11 +21,16 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
   const [previewImages, setPreviewImages] = useState([]);
   const [existingVenueImages, setExistingVenueImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [packageRows, setPackageRows] = useState([]);
+  const [drinkRows, setDrinkRows] = useState([]);
+  const [menuProblem, setMenuProblem] = useState("");
 
   // Load initial data for edit mode
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setSelectedAmenities(Array.isArray(initialData.amenities) ? initialData.amenities : []);
+      setPackageRows(packagesFromVenue(initialData.packages));
+      setDrinkRows(drinksFromVenue(initialData.drinkOptions));
 
       const images = Array.isArray(initialData.venueImages)
         ? initialData.venueImages
@@ -41,6 +48,8 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
       setExistingVenueImages(images);
     } else {
       setSelectedAmenities([]);
+      setPackageRows([]);
+      setDrinkRows([]);
       setExistingVenueImages([]);
     }
   }, [initialData, mode]);
@@ -50,8 +59,7 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
     initialValues: {
       venueName: initialData?.venueName || "",
       category: initialData?.category || "",
-      capacity: initialData?.capacity || "",
-      pricePerHour: initialData?.pricePerHour || "",
+      contactPhone: initialData?.contactPhone || "",
       description: initialData?.description || "",
       address: initialData?.location?.address || "",
       city: initialData?.location?.city || "",
@@ -61,8 +69,7 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
     validationSchema: Yup.object({
       venueName: Yup.string().required("Required"),
       category: Yup.string().required("Required"),
-      capacity: Yup.number().required("Required").min(1, "Minimum 1"),
-      pricePerHour: Yup.number().required("Required").min(0),
+      contactPhone: Yup.string().matches(/^(\+?[\d\s-]{7,16})?$/, "Enter a valid phone number"),
       description: Yup.string().required("Required"),
       address: Yup.string().required("Required"),
       city: Yup.string().required("Required"),
@@ -71,6 +78,10 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
     }),
     onSubmit: async (values, { resetForm }) => {
       if (!user?._id) return;
+
+      const problem = menuError(packageRows);
+      setMenuProblem(problem);
+      if (problem) return;
 
       setIsSubmitting(true);
 
@@ -82,6 +93,8 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
           Object.entries(rest).forEach(([key, val]) => formData.append(key, val));
           formData.append("location", JSON.stringify({ address, city, state, country }));
           formData.append("amenities", JSON.stringify(selectedAmenities));
+          formData.append("packages", JSON.stringify(packagesToPayload(packageRows)));
+          formData.append("drinkOptions", JSON.stringify(drinksToPayload(drinkRows)));
           venueImages.forEach((file) => formData.append("venueImages", file));
 
           await updateVenueMutation.mutateAsync({ venueId: initialData._id, updatedData: formData });
@@ -94,19 +107,22 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
           onSuccess?.(values);
         } else {
           // Create new venue
-          await addVenueMutation.mutateAsync({
+          const created = await addVenueMutation.mutateAsync({
             form: values,
             amenities: selectedAmenities,
             images: venueImages,
-            ownerId: user._id,
+            packages: packagesToPayload(packageRows),
+            drinkOptions: drinksToPayload(drinkRows),
           });
 
           resetForm();
           setVenueImages([]);
           setPreviewImages([]);
           setSelectedAmenities([]);
+          setPackageRows([]);
+          setDrinkRows([]);
 
-          onSuccess?.();
+          onSuccess?.(created?.data);
         }
       } catch {
         // error surfaced via toast in the mutation's onError handler
@@ -171,8 +187,6 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
             { label: "Name", name: "venueName" },
-            { label: "Capacity", name: "capacity", type: "number" },
-            { label: "Price/hr", name: "pricePerHour", type: "number" },
             { label: "City", name: "city" },
             { label: "State", name: "state" },
             { label: "Country", name: "country" },
@@ -231,6 +245,21 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
         </div>
 
         <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Contact phone for customers</label>
+          <input
+            type="tel"
+            name="contactPhone"
+            placeholder="98XXXXXXXX (shown as Call and WhatsApp buttons)"
+            className="w-full px-2 py-1.5 text-sm border rounded-md focus:ring-purple-500 focus:outline-none"
+            {...formik.getFieldProps("contactPhone")}
+            disabled={isLoading}
+          />
+          {formik.touched.contactPhone && formik.errors.contactPhone && (
+            <div className="text-red-500 text-xs mt-1">{formik.errors.contactPhone}</div>
+          )}
+        </div>
+
+        <div>
           <label className="block text-xs font-medium text-gray-600 mb-2">Amenities</label>
           <div className="flex flex-wrap gap-2">
             {amenitiesOptions.map((item) => (
@@ -251,6 +280,10 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
             ))}
           </div>
         </div>
+
+        <PackagesEditor rows={packageRows} onChange={setPackageRows} disabled={isLoading} />
+        <DrinkOptionsEditor rows={drinkRows} onChange={setDrinkRows} disabled={isLoading} />
+        {menuProblem && <div role="alert" className="text-red-500 text-xs">{menuProblem}</div>}
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Venue Images</label>
