@@ -1,303 +1,137 @@
-import React, { useContext, useState } from "react";
+import { useContext } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Building2, CalendarCheck, CalendarDays, Inbox, Plus, Wallet } from "lucide-react";
+import { AuthContext } from "../../auth/AuthProvider";
 import MonthlyEarningsChart from "../../components/owner/MonthlyEarningsChart";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat, StatusPill } from "../../components/owner/ui";
+import { btnPrimary, npr, shortDate } from "../../components/owner/ownerStyles";
+import { useOwnerInquiries } from "../../features/inquiry/hooks/useInquiries";
+import { bsLabel } from "../../features/inquiry/bsCalendar";
+import { shiftLabel } from "../../features/inquiry/inquiryOptions";
+import useActiveVenueCount from "../../hooks/owner/useGetActiveVenueCount";
 import { useGetMonthlyEarningsForOwner } from "../../hooks/owner/useGetMonthlyEarningForOwner";
 import useOwnerBookings from "../../hooks/owner/useOwnerBookings";
-import { StatCard } from "../../components/common/StatCard";
-import { AuthContext } from "../../auth/AuthProvider";
-import useActiveVenueCount from "../../hooks/owner/useGetActiveVenueCount";
-import { useGetTotalBookingsForOwner } from "../../hooks/owner/useGetTotalBookingsForOwner";
-import NotificationDropdown from "../../components/NotificationDropdown";
-import {
-  Building2,
-  Calendar,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  TrendingUp,
-  Users,
-  XCircle,
-} from "lucide-react";
 
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+};
+
+// What the owner has to do today comes first (requests waiting for a quotation, upcoming events);
+// money and charts follow.
 export default function OwnerDashboard() {
-  const {
-    data: bookings = [],
-    isLoading: isLoadingBookings,
-  } = useOwnerBookings();
-  const { data, isLoading, error } = useGetMonthlyEarningsForOwner();
-
   const { user } = useContext(AuthContext);
-  const ownerId = user?._id;
-  const {
-    data: activeVenueCountData,
-    isLoading: isLoadingActiveVenueCount,
-  } = useActiveVenueCount(ownerId);
+  const inquiries = useOwnerInquiries();
+  const bookings = useOwnerBookings();
+  const earnings = useGetMonthlyEarningsForOwner();
+  const venues = useActiveVenueCount(user?._id);
 
-  const {
-    data: monthlyEarningsData,
-    isLoading: isLoadingEarnings,
-  } = useGetMonthlyEarningsForOwner();
-  const currentMonthIndex = new Date().getMonth();
-  const currentMonthEarnings =
-    monthlyEarningsData?.[currentMonthIndex]?.totalEarnings ?? 0;
-  const { data: totalBookingCountData, isLoading: isLoadingBookingCount } =
-    useGetTotalBookingsForOwner();
-
-  const itemsPerPage = 5;
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(bookings.length / itemsPerPage);
-
-  const paginatedBookings = bookings.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "confirmed":
-      case "approved":
-        return <CheckCircle className="w-4 h-4" />;
-      case "cancelled":
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "confirmed":
-      case "approved":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      case "cancelled":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-amber-100 text-amber-800 border-amber-200";
-    }
-  };
-  const BookingRow = ({ booking }) => {
-    const date = new Date(booking.bookingDate).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-
-    return (
-      <div className="group flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50/50 transition-all duration-200 border border-transparent hover:border-indigo-100">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-gray-900 group-hover:text-indigo-900 transition-colors">
-              {booking.venue?.venueName || "Venue Name"}
-            </p>
-            <div className="flex items-center gap-4 mt-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {date}
-              </p>
-              {booking.customer?.name && (
-                <p className="text-sm text-gray-500 flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {booking.customer.name}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="text-right">
-          <p className="font-bold text-gray-900 mb-2">
-            Rs. {booking.totalPrice?.toLocaleString() ?? 0}
-          </p>
-          <span
-            className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium border ${getStatusColor(
-              booking.status
-            )}`}
-          >
-            {getStatusIcon(booking.status)}
-            {booking.status ?? "pending"}
-          </span>
-        </div>
-      </div>
-    );
-  };
+  const needsReply = (inquiries.data ?? []).filter((q) => q.status === "pending" && !q.booking);
+  const now = Date.now();
+  const upcoming = (bookings.data ?? [])
+    .filter((b) => ["confirmed", "pending_deposit"].includes(b.status) && new Date(b.startTime).getTime() >= now)
+    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+  const monthIndex = new Date().getMonth();
+  const monthEarnings = earnings.data?.[monthIndex]?.totalEarnings ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-              <p className="text-sm text-gray-600">
-                Welcome back! Here's your venue performance overview.
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <NotificationDropdown />
-            </div>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        eyebrow="Dashboard"
+        title={`${greeting()}, ${user?.name?.split(" ")[0] ?? "there"}`}
+        description="Here is what needs you today and how your venues are doing."
+        actions={
+          <Link to="/owner/venues" className={btnPrimary}>
+            <Plus aria-hidden="true" className="size-4" /> Add a venue
+          </Link>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat label="Waiting for a reply" value={needsReply.length} hint={needsReply.length ? "Send a quotation to hold their date" : "You are all caught up"} icon={Inbox} to="/owner/inquiries" loading={inquiries.isPending} />
+        <Stat label="Upcoming events" value={upcoming.length} hint="Confirmed or awaiting deposit" icon={CalendarCheck} to="/owner/bookings" loading={bookings.isPending} />
+        <Stat label="Booked this month" value={npr(monthEarnings)} hint="Total value of confirmed events" icon={Wallet} to="/owner/payments" loading={earnings.isPending} />
+        <Stat label="Active venues" value={venues.data ?? 0} hint="Listed on Venure" icon={Building2} to="/owner/venues" loading={venues.isPending} />
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Monthly Revenue"
-            value={
-              isLoadingEarnings
-                ? "Loading..."
-                : `Rs. ${currentMonthEarnings.toLocaleString()}`
-            }
-            subtitle="This month"
-            icon={DollarSign}
-            trend={12.5}
-            color="green"
-          />
-          <StatCard
-            title="Total Bookings"
-            value={
-              isLoadingBookingCount ? "Loading..." : totalBookingCountData || 0
-            }
-            subtitle="This month"
-            icon={Calendar}
-            trend={8.2}
-            color="blue"
-          />
-          <StatCard
-            title="Active Venues"
-            value={
-              isLoadingActiveVenueCount
-                ? "Loading..."
-                : activeVenueCountData?.data?.count || 0
-            }
-            subtitle="Currently listed"
-            icon={Building2}
-            color="purple"
-          />
-          
-        </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Panel
+          title="Needs your reply"
+          description="Newest requests first"
+          bodyClassName="p-0"
+          action={<Link to="/owner/inquiries" className="font-body text-caption text-gold-800 underline underline-offset-4 hover:text-ink">See all</Link>}
+        >
+          {inquiries.isPending ? (
+            <RowsSkeleton />
+          ) : inquiries.isError ? (
+            <ErrorState onRetry={inquiries.refetch} />
+          ) : needsReply.length === 0 ? (
+            <EmptyState icon={Inbox} title="No requests waiting">New requests from customers will show up here, and in your notifications.</EmptyState>
+          ) : (
+            <ul className="divide-y divide-line">
+              {needsReply.slice(0, 5).map((q) => (
+                <li key={q._id}>
+                  <Link to={`/owner/inquiries/${q._id}`} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-cream focus-visible:bg-cream focus-visible:outline-none">
+                    <div className="min-w-0">
+                      <p className="truncate font-body text-body text-ink">{q.customer?.name ?? q.contactName}</p>
+                      <p className="mt-0.5 truncate font-body text-caption text-taupe">
+                        {q.venue?.venueName} · {shortDate(q.preferredDate)}
+                        {q.preferredShift ? ` · ${shiftLabel(q.preferredShift)}` : ""} · {q.numberOfGuests} guests
+                      </p>
+                    </div>
+                    <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-taupe" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
 
-        {/* Charts and Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Monthly Earnings Chart */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Monthly Earnings
-                </h2>
-              </div>
-
-              {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-gray-600">
-                    Loading earnings data...
-                  </span>
-                </div>
-              ) : error ? (
-                <div className="flex items-center justify-center h-64 text-red-600">
-                  <div className="text-center">
-                    <p className="text-lg font-medium">
-                      Error loading chart data
+        <Panel
+          title="Coming up"
+          description="Your next events"
+          bodyClassName="p-0"
+          action={<Link to="/owner/bookings" className="font-body text-caption text-gold-800 underline underline-offset-4 hover:text-ink">All bookings</Link>}
+        >
+          {bookings.isPending ? (
+            <RowsSkeleton />
+          ) : bookings.isError ? (
+            <ErrorState onRetry={bookings.refetch} />
+          ) : upcoming.length === 0 ? (
+            <EmptyState icon={CalendarDays} title="No upcoming events">When a customer pays a deposit, the booking appears here.</EmptyState>
+          ) : (
+            <ul className="divide-y divide-line">
+              {upcoming.slice(0, 5).map((b) => (
+                <li key={b._id} className="flex items-center justify-between gap-4 px-6 py-4">
+                  <div className="min-w-0">
+                    <p className="truncate font-body text-body text-ink">{b.venue?.venueName ?? "Venue"}</p>
+                    <p className="mt-0.5 truncate font-body text-caption text-taupe">
+                      {shortDate(b.startTime)} <span className="text-taupe-light">({bsLabel(b.startTime)})</span>
+                      {b.shift ? ` · ${shiftLabel(b.shift)}` : ""} · {b.customer?.name ?? b.contactName}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Please try refreshing the page
-                    </p>
-                    <button className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-                      Retry
-                    </button>
                   </div>
-                </div>
-              ) : (
-                <div className="h-64">
-                  <MonthlyEarningsChart
-                    data={data ?? []}
-                    isLoading={isLoading}
-                    error={error}
-                  />{" "}
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Recent Bookings */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-            <div className="p-8 pb-0">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Recent Bookings
-                  </h2>
-                  <p className="text-gray-600 text-sm mt-1">
-                    Latest venue reservations
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-4 pb-6">
-              {isLoadingBookings ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-                  <span className="ml-3 text-gray-600">
-                    Loading bookings...
-                  </span>
-                </div>
-              ) : paginatedBookings.length > 0 ? (
-                <div className="space-y-2">
-                  {paginatedBookings.map((booking) => (
-                    <BookingRow key={booking._id} booking={booking} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-8 h-8 text-gray-400" />
+                  <div className="shrink-0 text-right">
+                    <p className="font-body text-small text-ink">{npr(b.totalPrice)}</p>
+                    <StatusPill status={b.status} />
                   </div>
-                  <p className="font-medium text-gray-900">
-                    No recent bookings
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    New bookings will appear here
-                  </p>
-                </div>
-              )}
-            </div>
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex justify-end items-center gap-2 mt-4 text-sm text-gray-700">
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                  className="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-50"
-                >
-                  Prev
-                </button>
-                <span className="px-2">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
-    </div>
+
+      <Panel title="Booked value by month" description={`${new Date().getFullYear()}, confirmed and completed events`} className="mt-6">
+        {earnings.isError ? (
+          <ErrorState onRetry={earnings.refetch} />
+        ) : earnings.isPending ? (
+          <div role="status" aria-label="Loading" className="h-64 animate-pulse rounded-card-sm bg-gold-100" />
+        ) : (
+          <div className="h-64">
+            <MonthlyEarningsChart data={earnings.data ?? []} />
+          </div>
+        )}
+      </Panel>
+    </>
   );
 }

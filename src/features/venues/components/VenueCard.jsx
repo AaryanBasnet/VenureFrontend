@@ -1,153 +1,105 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { MapPin, Users, Heart, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Heart, MapPin, Star, Users } from "lucide-react";
+import ResponsiveImage from "../../../components/ui/ResponsiveImage";
+import { images } from "../../../assets/landing/images";
+import { cloudinaryTransform, CARD_TRANSFORM } from "../../../utils/cloudinary";
+import { categoryLabel, cheapestPlatePrice, locationLine, priceFormatter } from "../venueFormat";
 
-// ── Skeleton loader ───────────────────────────────────────────────────────────
-// Exported so any list consumer can render N skeletons while isPending is true.
 export function VenueCardSkeleton() {
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-gray-100 animate-pulse">
-      <div className="h-56 bg-gradient-to-br from-slate-200 to-slate-300" />
-      <div className="p-5 space-y-3">
-        <div className="h-5 bg-slate-200 rounded-full w-3/4" />
-        <div className="h-3.5 bg-slate-100 rounded-full w-2/3" />
-        <div className="flex gap-2 pt-1">
-          <div className="h-6 w-16 bg-rose-100 rounded-full" />
-          <div className="h-6 w-20 bg-rose-100 rounded-full" />
-          <div className="h-6 w-14 bg-rose-100 rounded-full" />
-        </div>
-        <div className="h-10 bg-slate-100 rounded-full mt-2" />
+    <li aria-hidden="true" className="overflow-hidden rounded-card-xl border border-line bg-white">
+      <div className="aspect-[4/3] animate-pulse bg-gold-100" />
+      <div className="space-y-3 p-5">
+        <div className="h-5 w-2/3 animate-pulse rounded bg-gold-100" />
+        <div className="h-4 w-1/2 animate-pulse rounded bg-gold-100" />
+        <div className="h-4 w-1/3 animate-pulse rounded bg-gold-100" />
       </div>
-    </div>
+    </li>
   );
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
-/**
- * VenueCard — feature-slice card component.
- *
- * Image handling: the new backend streams images to Cloudinary and returns
- * absolute URLs, so venue.venueImages[0].url is used directly — no local
- * BASE_URL prefix required.
- *
- * Props
- * ─────
- * venue             Venue document from the backend
- * index             Stagger delay index for Framer Motion entry animation
- * isFavorite        Controls the heart fill state
- * onToggleFavorite  Called when the heart button is pressed
- */
-export default function VenueCard({
-  venue,
-  index = 0,
-  isFavorite = false,
-  onToggleFavorite,
-}) {
-  const navigate = useNavigate();
-
-  // Cloudinary absolute URL — no prefix needed
-  const imageUrl =
-    venue.venueImages?.[0]?.url ||
-    "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80";
+// Venue card for the listing and favorites pages. The whole card links to the venue; the heart sits above that link.
+export default function VenueCard({ venue, isFavorite = false, onToggleFavorite, favoriteDisabled = false }) {
+  const photo = venue.venueImages?.[0]?.url;
+  const category = categoryLabel(venue.category);
+  const from = cheapestPlatePrice(venue);
+  const hasRating = venue.totalReviews > 0;
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.5, ease: "easeOut", delay: index * 0.07 }}
-      whileHover={{ y: -4 }}
-      className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100"
-    >
-      {/* ── Image ── */}
-      <div className="relative h-56 overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={venue.venueName}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-        />
-
-        {/* Bottom-fade overlay — makes price badge legible on any image */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-
-        {/* Favorite toggle */}
-        {onToggleFavorite && (
-          <motion.button
-            whileTap={{ scale: 0.8 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite();
-            }}
-            aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
-            className="absolute top-4 right-4 bg-white/80 backdrop-blur-md p-2.5 rounded-full shadow-lg hover:bg-white transition-colors duration-200"
-          >
-            <Heart
-              size={17}
-              className={`transition-all duration-200 ${
-                isFavorite ? "text-rose-500 fill-rose-500" : "text-gray-400"
-              }`}
-            />
-          </motion.button>
-        )}
-
-        {/* Price badge */}
-        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
-          <span className="text-sm font-semibold text-rose-600">
-            Rs.&nbsp;{venue.pricePerHour?.toLocaleString()}
-          </span>
-          <span className="text-xs text-gray-400 ml-1">/ hr</span>
-        </div>
-      </div>
-
-      {/* ── Body ── */}
-      <div className="p-5">
-        <h3 className="text-xl font-serif text-gray-800 mb-2 leading-snug line-clamp-1">
-          {venue.venueName}
-        </h3>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 mb-3">
-          <span className="flex items-center gap-1.5">
-            <MapPin size={13} className="text-rose-400 shrink-0" />
-            {venue.location?.city}, {venue.location?.state}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Users size={13} className="text-rose-400 shrink-0" />
-            {venue.capacity} guests
-          </span>
-        </div>
-
-        {/* Amenity chips — first 3 visible, rest collapsed */}
-        {venue.amenities?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {venue.amenities.slice(0, 3).map((amenity, i) => (
-              <span
-                key={i}
-                className="text-xs bg-rose-50 text-rose-600 px-2.5 py-1 rounded-full"
-              >
-                {amenity}
-              </span>
-            ))}
-            {venue.amenities.length > 3 && (
-              <span className="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full">
-                +{venue.amenities.length - 3} more
-              </span>
-            )}
-          </div>
-        )}
-
-        <button
-          onClick={() => navigate(`/venue/${venue._id}`)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 border border-rose-200 text-rose-500 text-sm font-medium rounded-full hover:bg-rose-50 hover:border-rose-400 transition-all duration-200 group/btn"
-        >
-          View Details
-          <ArrowRight
-            size={14}
-            className="group-hover/btn:translate-x-1 transition-transform duration-200"
+    <li className="group relative flex flex-col overflow-hidden rounded-card-xl border border-line bg-white transition-shadow duration-300 hover:shadow-xl focus-within:shadow-xl">
+      <div className="relative aspect-[4/3] overflow-hidden bg-sand">
+        {photo ? (
+          <img
+            src={cloudinaryTransform(photo, CARD_TRANSFORM)}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
           />
-        </button>
+        ) : (
+          <ResponsiveImage image={images.heritageCourtyards} alt="" sizes="400px" className="size-full object-cover opacity-70" />
+        )}
+        {category && (
+          <span className="absolute left-4 top-4 rounded-full bg-ink/75 px-3 py-1 font-body text-eyebrow uppercase text-gold-50 backdrop-blur">
+            {category}
+          </span>
+        )}
       </div>
-    </motion.article>
+
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="font-display text-h4 font-light text-ink">
+          <Link
+            to={`/venue/${venue._id}`}
+            className="after:absolute after:inset-0 after:z-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+          >
+            {venue.venueName}
+          </Link>
+        </h3>
+        <p className="mt-2 flex items-center gap-1.5 font-body text-small text-taupe">
+          <MapPin aria-hidden="true" className="size-4 shrink-0 text-gold-800" strokeWidth={1.5} />
+          <span className="truncate">{locationLine(venue.location)}</span>
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-body text-small text-ink">
+          {venue.maxCapacity > 0 ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Users aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} />
+              Up to {venue.maxCapacity} guests
+              {venue.spaceCount > 1 && <span className="text-taupe">· {venue.spaceCount} spaces</span>}
+            </span>
+          ) : (
+            <span className="text-taupe">Spaces coming soon</span>
+          )}
+          {hasRating && (
+            <span className="inline-flex items-center gap-1">
+              <Star aria-hidden="true" className="size-4 fill-gold text-gold" />
+              {venue.averageRating.toFixed(1)} <span className="text-taupe">({venue.totalReviews})</span>
+            </span>
+          )}
+        </div>
+
+        <p className="mt-auto pt-5 font-body text-small text-taupe">
+          {from > 0 ? (
+            <>
+              From <span className="font-display text-h5 font-normal text-ink">NPR {priceFormatter.format(from)}</span> per plate
+            </>
+          ) : (
+            "Request a quotation"
+          )}
+        </p>
+      </div>
+
+      {onToggleFavorite && (
+        <button
+          type="button"
+          onClick={() => onToggleFavorite(venue._id)}
+          disabled={favoriteDisabled}
+          aria-pressed={isFavorite}
+          aria-label={isFavorite ? `Remove ${venue.venueName} from favorites` : `Save ${venue.venueName} to favorites`}
+          className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-cream/90 text-ink shadow transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-60"
+        >
+          <Heart aria-hidden="true" className={`size-5 ${isFavorite ? "fill-gold-800 text-gold-800" : ""}`} strokeWidth={1.5} />
+        </button>
+      )}
+    </li>
   );
 }

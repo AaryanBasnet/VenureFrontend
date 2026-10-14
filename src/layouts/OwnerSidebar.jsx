@@ -1,240 +1,136 @@
-import React, { useContext, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useContext, useEffect } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { BarChart3, Building2, CalendarCheck, ExternalLink, Inbox, LayoutDashboard, LogOut, MessageSquare, Star, Wallet, X } from "lucide-react";
 import { AuthContext } from "../auth/AuthProvider";
-import { FiLogOut, FiBarChart2, FiMessageSquare, FiStar } from "react-icons/fi";
-import { FaBuildingColumns } from "react-icons/fa6";
-import { MdDashboard, MdPayment } from "react-icons/md";
-import { BiCalendarEvent } from "react-icons/bi";
-import SidebarToggle from "../components/SidebarToggle";
+import Logo from "../components/ui/Logo";
+import { useOwnerInquiries } from "../features/inquiry/hooks/useInquiries";
 
-import useActiveVenueCount from "../hooks/owner/useGetActiveVenueCount";
-import { useGetMonthlyEarningsForOwner } from "../hooks/owner/useGetMonthlyEarningForOwner";
+const SECTIONS = [
+  {
+    title: "Overview",
+    items: [
+      { Icon: LayoutDashboard, label: "Dashboard", to: "/owner/dashboard" },
+      { Icon: BarChart3, label: "Analytics", to: "/owner/analytics" },
+    ],
+  },
+  {
+    title: "Requests",
+    items: [
+      { Icon: Inbox, label: "Inquiries", to: "/owner/inquiries", badge: true },
+      { Icon: CalendarCheck, label: "Bookings", to: "/owner/bookings" },
+      { Icon: MessageSquare, label: "Messages", to: "/owner/chat" },
+    ],
+  },
+  {
+    title: "Your venues",
+    items: [
+      { Icon: Building2, label: "Venues", to: "/owner/venues" },
+      { Icon: Star, label: "Reviews", to: "/owner/reviews" },
+    ],
+  },
+  {
+    title: "Money",
+    items: [{ Icon: Wallet, label: "Payments", to: "/owner/payments" }],
+  },
+];
 
-const OwnerSidebar = ({ sidebarOpen, setSidebarOpen }) => {
+// Dark navigation rail, like the site header: ink background, gold for the current page.
+export default function OwnerSidebar({ open, onClose }) {
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useContext(AuthContext);
-  const ownerId = user?._id;
+  const { data: inquiries = [] } = useOwnerInquiries();
+  const waiting = inquiries.filter((q) => q.status === "pending" && !q.booking).length;
 
-  const { data: activeVenueCountData } = useActiveVenueCount(ownerId);
-  const { data: monthlyEarningsData } = useGetMonthlyEarningsForOwner();
-  const currentMonthIndex = new Date().getMonth();
-  const currentMonthEarnings =
-    monthlyEarningsData?.[currentMonthIndex]?.totalEarnings ?? 0;
+  // The drawer closes when you go somewhere, and on Escape
+  useEffect(() => {
+    onClose();
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
-  const [hoveredItem, setHoveredItem] = useState(null);
-
-  const handleLogout = () => {
+  const signOut = () => {
     logout();
     navigate("/login");
   };
 
-  const navigationSections = [
-    {
-      title: "Overview",
-      items: [
-        {
-          Icon: MdDashboard,
-          title: "Dashboard",
-          path: "/owner/dashboard",
-          description: "Main overview",
-        },
-        {
-          Icon: FiBarChart2,
-          title: "Analytics",
-          path: "/owner/analytics",
-          description: "Performance metrics",
-        },
-      ],
-    },
-    {
-      title: "Venue Management",
-      items: [
-        {
-          Icon: FaBuildingColumns,
-          title: "My Venues",
-          path: "/owner/venues",
-          description: "Manage your venues",
-        },
-        {
-          Icon: FiStar,
-          title: "Reviews",
-          path: "/owner/reviews",
-          description: "Customer feedback",
-        },
-      ],
-    },
-    {
-      title: "Bookings & Revenue",
-      items: [
-        {
-          Icon: BiCalendarEvent,
-          title: "Bookings",
-          path: "/owner/bookings",
-          description: "Manage reservations",
-        },
-        {
-          Icon: MdPayment,
-          title: "Payments",
-          path: "/owner/payments",
-          description: "Revenue & payouts",
-        },
-      ],
-    },
-    {
-      title: "Communication",
-      items: [
-        {
-          Icon: FiMessageSquare,
-          title: "Messages",
-          path: "/owner/chat",
-          description: "Customer inquiries",
-        },
-      ],
-    },
-  ];
-
   return (
     <>
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {open && <div aria-hidden="true" className="fixed inset-0 z-40 bg-ink/50 lg:hidden" onClick={onClose} />}
 
-      {/* Sidebar */}
-      <nav
-        className={`
-          fixed lg:relative top-0 left-0 h-screen flex flex-col
-          bg-white border-r border-gray-200 shadow-lg z-50 transition-all duration-300
-          ${sidebarOpen ? "w-72" : "w-20"}
-        `}
+      <aside
+        aria-label="Owner navigation"
+        className={`fixed inset-y-0 left-0 z-50 flex w-[17rem] flex-col bg-ink text-gold-50 transition-transform duration-300 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* User Info + Stats */}
-        <div className="px-4 pt-6 pb-4 border-b border-gray-200">
-          {sidebarOpen && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg border w-full border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                  {(user?.name || "O").charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 overflow-hidden">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {user?.name || "Owner"}
-                  </div>
-                  <div className="text-xs text-gray-600 truncate">
-                    {user?.email || "owner@example.com"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Stats */}
-          {sidebarOpen && (
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <div className="bg-gray-50 rounded-lg p-2 text-center border border-gray-200">
-                <div className="text-lg font-bold text-gray-900">
-                  {activeVenueCountData?.data?.count || 0}
-                </div>
-                <div className="text-xs text-gray-600">Active Venues</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-2 text-center border border-gray-200">
-                <div className="text-lg font-bold text-blue-600">
-                  Rs.{currentMonthEarnings}
-                </div>
-                <div className="text-xs text-gray-600">This Month</div>
-              </div>
-            </div>
-          )}
+        <div className="flex h-[var(--spacing-header)] shrink-0 items-center justify-between px-6">
+          <Link to="/owner/dashboard" aria-label="Venure owner dashboard" className="flex items-end gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
+            <Logo className="w-14 text-gold-50" label="Venure" />
+            <span className="pb-1 font-body text-eyebrow uppercase text-gold">Owner</span>
+          </Link>
+          <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-full p-2 text-gold-50 hover:bg-white/10 lg:hidden">
+            <X aria-hidden="true" className="size-5" />
+          </button>
         </div>
 
-        {/* Nav Links */}
-        <div className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-gray-300">
-          {navigationSections.map((section, i) => (
-            <div key={section.title} className={i > 0 ? "mt-6" : ""}>
-              {sidebarOpen && (
-                <div className="px-4 mb-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    {section.title}
-                  </h3>
-                </div>
-              )}
-              <div className="space-y-1 px-2">
-                {section.items.map((item) => (
-                  <div
-                    key={item.path}
-                    onMouseEnter={() => setHoveredItem(item.path)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    onClick={() => navigate(item.path)}
-                    className={`
-                      relative transition-all duration-200 rounded-lg mx-1 cursor-pointer
-                      ${
-                        location.pathname === item.path
-                          ? "bg-blue-50 text-blue-600 border border-blue-200"
-                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        <nav className="flex-1 overflow-y-auto px-4 pb-6">
+          {SECTIONS.map((section) => (
+            <div key={section.title} className="mt-6 first:mt-2">
+              <p className="px-3 font-body text-eyebrow uppercase text-taupe-light">{section.title}</p>
+              <ul className="mt-2 space-y-0.5">
+                {section.items.map(({ Icon, label, to, badge }) => (
+                  <li key={to}>
+                    <NavLink
+                      to={to}
+                      className={({ isActive }) =>
+                        `group relative flex items-center gap-3 rounded-card-sm px-3 py-2.5 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-gold ${
+                          isActive ? "bg-white/10 text-white" : "text-gold-50/75 hover:bg-white/5 hover:text-white"
+                        }`
                       }
-                    `}
-                  >
-                    <div
-                      className={`flex items-center gap-3 px-3 py-3 ${
-                        !sidebarOpen ? "justify-center" : ""
-                      }`}
                     >
-                      <item.Icon className="w-5 h-5 flex-shrink-0" />
-                      {sidebarOpen && (
-                        <span className="font-medium truncate">
-                          {item.title}
-                        </span>
+                      {({ isActive }) => (
+                        <>
+                          {isActive && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-gold" />}
+                          <Icon aria-hidden="true" className={`size-[18px] ${isActive ? "text-gold" : ""}`} strokeWidth={1.5} />
+                          <span className="flex-1">{label}</span>
+                          {badge && waiting > 0 && (
+                            <span aria-label={`${waiting} waiting for a reply`} className="rounded-full bg-gold px-2 py-0.5 font-body text-caption font-medium leading-none text-ink">
+                              {waiting}
+                            </span>
+                          )}
+                        </>
                       )}
-                    </div>
-
-                    {/* Tooltip for collapsed sidebar */}
-                    {!sidebarOpen && hoveredItem === item.path && (
-                      <div className="absolute left-16 top-1/2 transform -translate-y-1/2 z-50">
-                        <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
-                          <div className="font-medium">{item.title}</div>
-                          <div className="text-xs text-gray-300">
-                            {item.description}
-                          </div>
-                          <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1">
-                            <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </NavLink>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           ))}
-        </div>
+        </nav>
 
-        {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex items-center justify-between gap-2">
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:text-white hover:bg-red-500 transition-all duration-200 ${
-              !sidebarOpen ? "w-full justify-center" : ""
-            }`}
-          >
-            <FiLogOut className="w-5 h-5" />
-            {sidebarOpen && <span className="text-sm">Logout</span>}
-          </button>
-
-          {/* Sidebar Toggle */}
-          <SidebarToggle
-            open={sidebarOpen}
-            setOpen={setSidebarOpen}
-            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg p-2 transition-all duration-200"
-          />
+        <div className="shrink-0 border-t border-white/10 p-4">
+          <div className="flex items-center gap-3 px-2">
+            <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gold font-display text-h5 text-ink">
+              {(user?.name || "O").charAt(0).toUpperCase()}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-body text-small text-white">{user?.name || "Owner"}</p>
+              <p className="truncate font-body text-caption text-taupe-light">{user?.email}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Link to="/" className="flex flex-1 items-center justify-center gap-2 rounded-card-sm border border-white/15 px-3 py-2 font-body text-caption text-gold-50 hover:bg-white/5">
+              <ExternalLink aria-hidden="true" className="size-3.5" /> View site
+            </Link>
+            <button type="button" onClick={signOut} className="flex flex-1 items-center justify-center gap-2 rounded-card-sm border border-white/15 px-3 py-2 font-body text-caption text-gold-50 hover:bg-white/5">
+              <LogOut aria-hidden="true" className="size-3.5" /> Sign out
+            </button>
+          </div>
         </div>
-      </nav>
+      </aside>
     </>
   );
-};
-
-export default OwnerSidebar;
+}

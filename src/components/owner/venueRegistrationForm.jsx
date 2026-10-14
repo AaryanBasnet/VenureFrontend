@@ -4,7 +4,12 @@ import * as Yup from "yup";
 import { AuthContext } from "../../auth/AuthProvider";
 import useAddVenue from "../../hooks/owner/useAddVenue";
 import { useUpdateVenue } from "../../hooks/owner/useUpdateVenue";
+import { assetUrl } from "../../utils/assetUrl";
 import { venueTypes } from "../../features/landing/content/landingContent";
+import { errorClass, inputClass, labelClass } from "../ui/formStyles";
+import { btnPrimary } from "./ownerStyles";
+import { DrinkOptionsEditor, PackagesEditor } from "./MenuEditors";
+import { drinksFromVenue, drinksToPayload, menuError, packagesFromVenue, packagesToPayload } from "./menuEditorUtils";
 
 const amenitiesOptions = ["WiFi", "Parking", "AC", "Music", "Catering", "Stage"];
 
@@ -19,19 +24,22 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
   const [previewImages, setPreviewImages] = useState([]);
   const [existingVenueImages, setExistingVenueImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [packageRows, setPackageRows] = useState([]);
+  const [drinkRows, setDrinkRows] = useState([]);
+  const [menuProblem, setMenuProblem] = useState("");
 
   // Load initial data for edit mode
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setSelectedAmenities(Array.isArray(initialData.amenities) ? initialData.amenities : []);
+      setPackageRows(packagesFromVenue(initialData.packages));
+      setDrinkRows(drinksFromVenue(initialData.drinkOptions));
 
       const images = Array.isArray(initialData.venueImages)
         ? initialData.venueImages
             .map((img) => {
               if (img && typeof img.url === "string") {
-                return img.url.startsWith("http")
-                  ? img.url
-                  : `http://localhost:5050/${img.url.replace(/^\/+/, "")}`;
+                return assetUrl(img.url);
               }
               return null;
             })
@@ -41,6 +49,8 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
       setExistingVenueImages(images);
     } else {
       setSelectedAmenities([]);
+      setPackageRows([]);
+      setDrinkRows([]);
       setExistingVenueImages([]);
     }
   }, [initialData, mode]);
@@ -50,8 +60,7 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
     initialValues: {
       venueName: initialData?.venueName || "",
       category: initialData?.category || "",
-      capacity: initialData?.capacity || "",
-      pricePerHour: initialData?.pricePerHour || "",
+      contactPhone: initialData?.contactPhone || "",
       description: initialData?.description || "",
       address: initialData?.location?.address || "",
       city: initialData?.location?.city || "",
@@ -61,8 +70,7 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
     validationSchema: Yup.object({
       venueName: Yup.string().required("Required"),
       category: Yup.string().required("Required"),
-      capacity: Yup.number().required("Required").min(1, "Minimum 1"),
-      pricePerHour: Yup.number().required("Required").min(0),
+      contactPhone: Yup.string().matches(/^(\+?[\d\s-]{7,16})?$/, "Enter a valid phone number"),
       description: Yup.string().required("Required"),
       address: Yup.string().required("Required"),
       city: Yup.string().required("Required"),
@@ -71,6 +79,10 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
     }),
     onSubmit: async (values, { resetForm }) => {
       if (!user?._id) return;
+
+      const problem = menuError(packageRows);
+      setMenuProblem(problem);
+      if (problem) return;
 
       setIsSubmitting(true);
 
@@ -82,6 +94,8 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
           Object.entries(rest).forEach(([key, val]) => formData.append(key, val));
           formData.append("location", JSON.stringify({ address, city, state, country }));
           formData.append("amenities", JSON.stringify(selectedAmenities));
+          formData.append("packages", JSON.stringify(packagesToPayload(packageRows)));
+          formData.append("drinkOptions", JSON.stringify(drinksToPayload(drinkRows)));
           venueImages.forEach((file) => formData.append("venueImages", file));
 
           await updateVenueMutation.mutateAsync({ venueId: initialData._id, updatedData: formData });
@@ -94,19 +108,22 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
           onSuccess?.(values);
         } else {
           // Create new venue
-          await addVenueMutation.mutateAsync({
+          const created = await addVenueMutation.mutateAsync({
             form: values,
             amenities: selectedAmenities,
             images: venueImages,
-            ownerId: user._id,
+            packages: packagesToPayload(packageRows),
+            drinkOptions: drinksToPayload(drinkRows),
           });
 
           resetForm();
           setVenueImages([]);
           setPreviewImages([]);
           setSelectedAmenities([]);
+          setPackageRows([]);
+          setDrinkRows([]);
 
-          onSuccess?.();
+          onSuccess?.(created?.data);
         }
       } catch {
         // error surfaced via toast in the mutation's onError handler
@@ -130,200 +147,167 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
   };
 
   if (mode === "edit" && !initialData) {
-    return <div className="text-red-500 font-semibold">Venue data missing, cannot edit.</div>;
+    return <p role="alert" className="font-body text-small text-red-700">Venue data missing, cannot edit.</p>;
   }
 
   const isLoading = isSubmitting || addVenueMutation.isLoading || updateVenueMutation.isLoading;
 
+  // One labelled control with its validation message.
+  const field = (name, label, { required = true, hint, as, children, ...rest } = {}) => {
+    const id = `venue-${name}`;
+    const err = formik.touched[name] && formik.errors[name];
+    const props = {
+      id,
+      name,
+      disabled: isLoading,
+      "aria-invalid": err ? "true" : undefined,
+      "aria-describedby": err ? `${id}-err` : hint ? `${id}-hint` : undefined,
+      ...formik.getFieldProps(name),
+      ...rest,
+    };
+    return (
+      <div key={name}>
+        <label htmlFor={id} className={labelClass}>
+          {label}
+          {required && <span aria-hidden="true"> *</span>}
+        </label>
+        {as === "select" ? (
+          <select className={inputClass} {...props}>{children}</select>
+        ) : as === "textarea" ? (
+          <textarea className={`${inputClass} resize-none`} {...props} />
+        ) : (
+          <input className={inputClass} {...props} />
+        )}
+        {hint && !err && <p id={`${id}-hint`} className="mt-1.5 font-body text-caption text-taupe">{hint}</p>}
+        {err && <p id={`${id}-err`} role="alert" className={errorClass}>{formik.errors[name]}</p>}
+      </div>
+    );
+  };
+
+  const heading = "mb-4 font-display text-h4 font-light text-ink";
+
   return (
-    <div className="p-2 font-poppins">
-      <h2 className="text-center text-lg font-semibold text-gray-800 mb-4">
-        {mode === "edit" ? "Edit Venue" : "New Venue"}
-      </h2>
-      <form
-        onSubmit={formik.handleSubmit}
-        className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar"
-      >
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            Category <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="category"
-            className="w-full px-2 py-1.5 text-sm border rounded-md focus:ring-purple-500 focus:outline-none"
-            {...formik.getFieldProps("category")}
-            disabled={isLoading}
-          >
-            <option value="" disabled>
-              Select a category
-            </option>
-            {venueTypes.map((type) => (
-              <option key={type.slug} value={type.slug}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-          {formik.touched.category && formik.errors.category && (
-            <div className="text-red-500 text-xs mt-1">{formik.errors.category}</div>
-          )}
+    <form onSubmit={formik.handleSubmit} className="space-y-10" noValidate>
+      <section aria-labelledby="venue-basics">
+        <h2 id="venue-basics" className={heading}>The basics</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {field("venueName", "Venue name", { placeholder: "e.g. Hotel Himalaya Banquet" })}
+          {field("category", "Category", {
+            as: "select",
+            children: (
+              <>
+                <option value="" disabled>Select a category</option>
+                {venueTypes.map((type) => (
+                  <option key={type.slug} value={type.slug}>{type.name}</option>
+                ))}
+              </>
+            ),
+          })}
+          <div className="sm:col-span-2">
+            {field("description", "Description", { as: "textarea", rows: 3, placeholder: "A few lines on the venue, its setting and what it does best." })}
+          </div>
+          <div className="sm:col-span-2">
+            {field("contactPhone", "Contact phone for customers", {
+              required: false,
+              type: "tel",
+              placeholder: "98XXXXXXXX",
+              hint: "Shown to customers as Call and WhatsApp buttons.",
+            })}
+          </div>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[
-            { label: "Name", name: "venueName" },
-            { label: "Capacity", name: "capacity", type: "number" },
-            { label: "Price/hr", name: "pricePerHour", type: "number" },
-            { label: "City", name: "city" },
-            { label: "State", name: "state" },
-            { label: "Country", name: "country" },
-          ].map(({ label, name, type = "text" }) => (
-            <div key={name}>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                {label} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type={type}
-                name={name}
-                placeholder={label}
-                className="w-full px-2 py-1.5 text-sm border rounded-md focus:ring-purple-500 focus:outline-none"
-                {...formik.getFieldProps(name)}
-                disabled={isLoading}
-              />
-              {formik.touched[name] && formik.errors[name] && (
-                <div className="text-red-500 text-xs mt-1">{formik.errors[name]}</div>
-              )}
-            </div>
-          ))}
+      <section aria-labelledby="venue-location">
+        <h2 id="venue-location" className={heading}>Location</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">{field("address", "Street address", { placeholder: "Street address" })}</div>
+          {field("city", "City")}
+          {field("state", "State")}
+          {field("country", "Country")}
         </div>
+      </section>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            Address <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="address"
-            placeholder="Street address"
-            className="w-full px-2 py-1.5 text-sm border rounded-md focus:ring-purple-500 focus:outline-none"
-            {...formik.getFieldProps("address")}
-            disabled={isLoading}
-          />
-          {formik.touched.address && formik.errors.address && (
-            <div className="text-red-500 text-xs mt-1">{formik.errors.address}</div>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            rows={2}
-            name="description"
-            placeholder="Short description..."
-            className="w-full px-2 py-1.5 text-sm border rounded-md focus:ring-purple-500 focus:outline-none resize-none"
-            {...formik.getFieldProps("description")}
-            disabled={isLoading}
-          />
-          {formik.touched.description && formik.errors.description && (
-            <div className="text-red-500 text-xs mt-1">{formik.errors.description}</div>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-2">Amenities</label>
-          <div className="flex flex-wrap gap-2">
-            {amenitiesOptions.map((item) => (
+      <fieldset>
+        <legend className={heading}>Amenities</legend>
+        <div className="flex flex-wrap gap-2">
+          {amenitiesOptions.map((item) => {
+            const on = selectedAmenities.includes(item);
+            return (
               <label
                 key={item}
-                className="flex items-center gap-1 border px-2 py-1 rounded-md text-xs text-gray-700 bg-gray-50 hover:bg-purple-50 cursor-pointer"
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 font-body text-small has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink ${
+                  on ? "border-gold bg-gold-100 text-ink" : "border-border-strong bg-white text-taupe hover:border-ink"
+                }`}
               >
                 <input
                   type="checkbox"
                   value={item}
-                  checked={selectedAmenities.includes(item)}
+                  checked={on}
                   onChange={handleAmenitiesChange}
-                  className="accent-purple-500"
+                  className="size-4 accent-ink"
                   disabled={isLoading}
                 />
                 {item}
               </label>
-            ))}
-          </div>
+            );
+          })}
         </div>
+      </fieldset>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Venue Images</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="block w-full text-xs file:px-3 file:py-1 file:rounded file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-            disabled={isLoading}
-          />
+      <section aria-labelledby="venue-menu" className="space-y-5">
+        <h2 id="venue-menu" className={heading.replace("mb-4", "mb-0")}>Food and drinks</h2>
+        <PackagesEditor rows={packageRows} onChange={setPackageRows} disabled={isLoading} />
+        <DrinkOptionsEditor rows={drinkRows} onChange={setDrinkRows} disabled={isLoading} />
+        {menuProblem && <p role="alert" className={errorClass}>{menuProblem}</p>}
+      </section>
 
-          {/* Preview new images */}
-          {previewImages.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mt-2">
+      <section aria-labelledby="venue-photos">
+        <h2 id="venue-photos" className={heading}>Photos</h2>
+        <label htmlFor="venue-images" className={labelClass}>Venue images</label>
+        <input
+          id="venue-images"
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageChange}
+          className="block w-full rounded-card-sm border border-dashed border-border-strong bg-cream p-3 font-body text-small text-taupe file:mr-4 file:cursor-pointer file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:font-body file:text-button file:uppercase file:text-gold-50 hover:file:bg-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          disabled={isLoading}
+        />
+
+        {previewImages.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 font-body text-caption text-taupe">New photos to upload</p>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
               {previewImages.map((src, idx) => (
+                <img key={idx} src={src} alt={`Preview ${idx + 1}`} className="aspect-[4/3] w-full rounded-card-sm border border-line object-cover" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {existingVenueImages.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 font-body text-caption text-taupe">Current photos</p>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {existingVenueImages.map((src, idx) => (
                 <img
                   key={idx}
                   src={src}
-                  alt={`Preview ${idx + 1}`}
-                  className="h-16 w-full object-cover rounded shadow"
+                  className="aspect-[4/3] w-full rounded-card-sm border border-line object-cover"
+                  alt={`Image ${idx + 1}`}
+                  onError={(e) => (e.target.style.display = "none")}
                 />
               ))}
             </div>
-          )}
+          </div>
+        )}
+      </section>
 
-          {/* Show existing images when editing */}
-          {existingVenueImages.length > 0 && (
-            <div className="mt-3">
-              <p className="text-xs font-medium text-gray-600 mb-1">Existing</p>
-              <div className="grid grid-cols-3 gap-2">
-                {existingVenueImages.map((src, idx) => (
-                  <img
-                    key={idx}
-                    src={src}
-                    className="h-16 w-full object-cover rounded shadow"
-                    alt={`Image ${idx + 1}`}
-                    onError={(e) => (e.target.style.display = "none")}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="pt-2 text-right">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`px-5 py-2 text-sm rounded-md font-semibold transition ${
-              isLoading
-                ? "bg-purple-400 cursor-not-allowed"
-                : "bg-purple-600 hover:bg-purple-700 text-white"
-            }`}
-          >
-            {mode === "edit" ? (isLoading ? "Updating..." : "Update") : isLoading ? "Creating..." : "Create"}
-          </button>
-        </div>
-      </form>
-
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #c4b5fd;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f0f0f0;
-          border-radius: 10px;
-        }
-      `}</style>
-    </div>
+      <div className="flex justify-end border-t border-line pt-6">
+        <button type="submit" disabled={isLoading} className={btnPrimary}>
+          {mode === "edit" ? (isLoading ? "Saving..." : "Save changes") : isLoading ? "Creating..." : "Create venue"}
+        </button>
+      </div>
+    </form>
   );
 }

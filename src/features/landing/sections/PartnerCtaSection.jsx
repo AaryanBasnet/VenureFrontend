@@ -21,7 +21,7 @@ export default function PartnerCtaSection() {
           className="pt-6"
         />
         <p className="mt-5 max-w-xl font-body text-body-lg font-light text-gold-800">{partnerCta.description}</p>
-        <Button to="/contact" arrow className="mt-8">
+        <Button to="/contact?topic=partner" arrow className="mt-8">
           Apply as a venue partner
         </Button>
       </div>

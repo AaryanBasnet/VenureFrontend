@@ -110,40 +110,10 @@ export const featuredFallbackImages = ["featuredDarbarPavilion", "featuredKumari
 
 export const testimonialsIntro = {
   eyebrow: "Testimonials",
-  title: "Loved by our clients.",
-  accent: "Remembered forever.",
+  title: "What guests say",
+  accent: "after their event",
 };
 
-// Static for now — reviews from the API rarely have a photo (see docs/design-system.md §4).
-export const testimonials = [
-  {
-    name: "Priya & Aditya Sharma",
-    initial: "P",
-    location: "Patan, Lalitpur",
-    occasionVenue: "Wedding · Darbar Pavilion",
-    quote:
-      "Venure found us a courtyard that felt like it had been waiting for our wedding. Every guest said it was the most beautiful venue they had ever seen.",
-    image: "testimonialPriyaAditya",
-  },
-  {
-    name: "Anita Gurung",
-    initial: "A",
-    location: "Thamel, Kathmandu",
-    occasionVenue: "Corporate Gala · Kumari Hall",
-    quote:
-      "The heritage halls gave our product launch an atmosphere no hotel ballroom could ever match. Clients are still talking about it months later.",
-    image: "testimonialAnita",
-  },
-  {
-    name: "Rohan & Sunita Thapa",
-    initial: "R",
-    location: "Bandipur",
-    occasionVenue: "Private Ceremony · Heritage Lodge",
-    quote:
-      "We wanted something intimate and deeply Nepali. Venure delivered a hidden gem that made our day feel truly timeless.",
-    image: "testimonialRohanSunita",
-  },
-];
 
 export const partnerCta = {
   eyebrow: "Partner with Venure",

@@ -1,185 +1,76 @@
-import React, { useCallback, useMemo } from "react";
+import { useContext } from "react";
+import { ArrowLeft, MessageCircle } from "lucide-react";
 import ChatList from "../../components/ChatList";
 import ChatBox from "../../components/ChatBox";
-import { useChat } from "../../hooks/useChat";
-import { useContext } from "react";
 import { AuthContext } from "../../auth/AuthProvider";
-import { MessageCircle, Users, Clock } from "lucide-react";
+import { useChat } from "../../hooks/useChat";
+import { PageHeader, EmptyState } from "../../components/owner/ui";
 
 export default function OwnerChatPage() {
   const { user } = useContext(AuthContext);
-  const { chats, activeChat, messages, loadMessages, sendNewMessage } =
-    useChat(user);
+  const { chats, activeChat, messages, loadMessages, sendNewMessage, closeChat } = useChat(user);
 
-  // Memoize callbacks to prevent unnecessary re-renders
-  const handleLoadMessages = useCallback(
-    (chat) => {
-      loadMessages(chat);
-    },
-    [loadMessages]
-  );
-
-  const handleSendMessage = useCallback(
-    (message) => {
-      sendNewMessage(message);
-    },
-    [sendNewMessage]
-  );
-
-  // Memoize computed values
-  const chatCount = useMemo(() => chats?.length || 0, [chats?.length]);
-
-  // Memoize the chat list component to prevent unnecessary re-renders
-  const chatListComponent = useMemo(
-    () => (
-      <ChatList
-        chats={chats}
-        activeChat={activeChat}
-        onSelect={handleLoadMessages}
-        currentUserId={user?._id}
-      />
-    ),
-    [chats, activeChat, handleLoadMessages, user?._id]
-  );
-
-  // Memoize the empty state to prevent re-renders
-  const emptyState = useMemo(
-    () => (
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-20 h-20 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <MessageCircle className="w-10 h-10 text-blue-600" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            No conversation selected
-          </h3>
-          <p className="text-gray-500 mb-6">
-            Choose a conversation from the sidebar to start responding to
-            customer inquiries
-          </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              💡 <strong>Tip:</strong> New messages will appear in real-time
-              when customers reach out
-            </p>
-          </div>
-        </div>
-      </div>
-    ),
-    []
-  );
+  const customerName =
+    activeChat?.participants
+      ?.filter((p) => p._id !== user?._id)
+      .map((p) => p.name)
+      .filter(Boolean)
+      .join(", ") || "Customer";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <MessageCircle className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Customer Support Chat
-              </h1>
-              <p className="text-gray-600">
-                Manage and respond to customer inquiries
-              </p>
-            </div>
-          </div>
+    <>
+      <PageHeader
+        eyebrow="Messages"
+        title="Customer conversations"
+        description="Questions from customers who messaged you from your venue pages."
+      />
 
-          {/* Stats Bar */}
-          <div className="flex gap-4 mt-4">
-            <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  {chatCount} Active Chats
-                </span>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  Online
-                </span>
-              </div>
-            </div>
-          </div>
+      <div className="grid h-[calc(100vh-17rem)] min-h-[480px] overflow-hidden rounded-card-xl border border-line bg-white grid-cols-[minmax(0,1fr)] md:grid-cols-[320px_minmax(0,1fr)]">
+        <div className={`${activeChat ? "hidden md:block" : ""} min-h-0 border-line md:border-r`}>
+          {chats.length === 0 ? (
+            <EmptyState icon={MessageCircle} title="No conversations yet">
+              No conversations yet. When a customer messages you from your venue page, it appears here.
+            </EmptyState>
+          ) : (
+            <ChatList chats={chats} activeChat={activeChat} onSelect={loadMessages} currentUserId={user?._id} />
+          )}
         </div>
 
-        {/* Main Chat Interface */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-          <div className="flex h-[700px]">
-            {/* Chat List Sidebar */}
-            <div className="w-80 border-r border-gray-200 bg-gray-50">
-              <div className="p-4 border-b border-gray-200 bg-white">
-                <h2 className="font-semibold text-gray-900">Conversations</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {chatCount} total conversations
-                </p>
+        <div className={`${activeChat ? "flex" : "hidden md:flex"} min-h-0 flex-col`}>
+          {activeChat ? (
+            <>
+              <div className="flex items-center gap-3 border-b border-line bg-white px-4 py-3">
+                <button
+                  type="button"
+                  onClick={closeChat}
+                  aria-label="Back to conversations"
+                  className="rounded-full p-2 text-taupe hover:bg-sand hover:text-ink focus-visible:outline-2 focus-visible:outline-ink md:hidden"
+                >
+                  <ArrowLeft aria-hidden="true" className="size-5" />
+                </button>
+                <h2 className="truncate font-display text-h5 font-normal text-ink">{customerName}</h2>
               </div>
-              <div className="overflow-y-auto h-full scrollbar-thin scrollbar-thumb-gray-300">
-                {chatListComponent}
+              <div className="min-h-0 flex-1">
+                <ChatBox
+                  key={activeChat._id}
+                  messages={messages}
+                  onSend={sendNewMessage}
+                  activeChat={activeChat}
+                  currentUserId={user?._id}
+                />
               </div>
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center bg-cream p-8 text-center">
+              <span className="flex size-14 items-center justify-center rounded-full bg-gold-100 text-gold-800">
+                <MessageCircle aria-hidden="true" className="size-6" strokeWidth={1.5} />
+              </span>
+              <p className="mt-4 font-display text-h5 font-normal text-ink">Choose a conversation</p>
+              <p className="mt-1 font-body text-small text-taupe">Pick one from the list to read and reply.</p>
             </div>
-
-            {/* Chat Area */}
-            <div className="flex-1 flex flex-col bg-white">
-              {activeChat ? (
-                <>
-                  {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
-                            {activeChat.customerName?.[0]?.toUpperCase() || "U"}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {activeChat.customerName || "Customer"}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {activeChat.status || "Active conversation"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-gray-500">Online</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Chat Messages */}
-                  <div className="flex-1 bg-gradient-to-b from-gray-50 to-white overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
-                    {" "}
-                    <ChatBox
-                      key={activeChat._id} // Force re-mount when chat changes
-                      messages={messages}
-                      onSend={handleSendMessage}
-                      activeChat={activeChat}
-                      currentUserId={user?._id}
-                    />
-                  </div>
-                </>
-              ) : (
-                emptyState
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions Footer */}
-        <div className="mt-6 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            Last updated: {new Date().toLocaleTimeString()}
-          </div>
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

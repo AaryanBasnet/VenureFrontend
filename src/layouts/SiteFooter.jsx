@@ -10,7 +10,7 @@ const SPACES_LINKS = venueTypes.map((type) => ({ label: type.name, to: `/venues?
 // These sit in the Figma design but have no page behind them yet — rendered as
 // plain text instead of dead links until Company/Experiences/Resources content exists.
 const EXPERIENCES_LABELS = ["Weddings", "Corporate", "Private Dining", "Festival Events"];
-const COMPANY_LABELS = ["Our Story", "The Team", "Press", "Sustainability"];
+const COMPANY_LINKS = [{ label: "Our Story", to: "/about" }, { label: "The Team" }, { label: "Press" }, { label: "Sustainability" }];
 const RESOURCES_LINKS = [
   { label: "Planning Guide" },
   { label: "Vendor Partners" },
@@ -109,7 +109,7 @@ export default function SiteFooter() {
 
           <FooterColumn title="Spaces" items={SPACES_LINKS} />
           <FooterColumn title="Experiences" items={EXPERIENCES_LABELS.map((label) => ({ label }))} />
-          <FooterColumn title="Company" items={COMPANY_LABELS.map((label) => ({ label }))} />
+          <FooterColumn title="Company" items={COMPANY_LINKS} />
           <FooterColumn title="Resources" items={RESOURCES_LINKS} />
         </div>
 

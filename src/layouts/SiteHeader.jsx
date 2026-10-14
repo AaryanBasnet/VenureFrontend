@@ -4,6 +4,8 @@ import { Menu, X } from "lucide-react";
 import Logo from "../components/ui/Logo";
 import Button from "../components/ui/Button";
 import ProfileDropdown from "../components/common/ProfileDropdown";
+import NotificationBell from "../components/common/NotificationBell";
+import { accountLinksFor } from "./accountLinks";
 import { AuthContext } from "../auth/AuthProvider";
 
 // Anchors point at landing-page sections until dedicated pages exist
@@ -96,7 +98,9 @@ export default function SiteHeader({ overlay = false }) {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4">
+          {/* One bell for every screen size, so each notification raises a single toast */}
+          {user && <NotificationBell userId={user._id} />}
           <div className="hidden items-center gap-5 lg:flex">
             {user ? (
               <ProfileDropdown user={user} logout={logout} avatarUrl={user.avatar || null} />
@@ -105,7 +109,7 @@ export default function SiteHeader({ overlay = false }) {
                 Sign in
               </Link>
             )}
-            <Button to="/contact" size="sm" arrow>
+            <Button to="/contact?topic=tour" size="sm" arrow>
               Book a tour
             </Button>
           </div>
@@ -140,8 +144,20 @@ export default function SiteHeader({ overlay = false }) {
               {item.label}
             </NavLink>
           ))}
+          {user && (
+            <ul aria-label="Your account" className="mt-6 flex flex-col">
+              {accountLinksFor(user).map(({ label, to, icon: Icon }) => (
+                <li key={to}>
+                  <NavLink to={to} className="flex items-center gap-3 border-b border-white/10 py-3.5 font-body text-body text-gold-50 focus-visible:outline-2 focus-visible:outline-white">
+                    <Icon aria-hidden="true" className="size-5 text-gold" strokeWidth={1.5} />
+                    {label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-8 flex flex-col gap-4">
-            <Button to="/contact" arrow>
+            <Button to="/contact?topic=tour" arrow>
               Book a tour
             </Button>
             {user ? (

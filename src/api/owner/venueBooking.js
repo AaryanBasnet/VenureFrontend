@@ -1,27 +1,14 @@
 import instance from "../api";
 
-export const fetchBookingsForOwner = async () => {
-  const res = await instance.get("/bookings/owner");
-  return res.data.data;
-};
+export const fetchBookingsForOwner = async () => (await instance.get("/bookings/owner-bookings")).data.data;
 
-export const getMonthlyEarningsForOwner = async () => {
-  return await instance.get("/bookings/owner/monthly-earning");
-};
+export const getMonthlyEarningsForOwner = async () => instance.get("/bookings/owner-earnings");
 
-export const cancelBooking = async (bookingId) => {
-  const res = await instance.put(`/bookings/${bookingId}/cancel`);
-  return res.data;
-};
+// Owners and customers both cancel through the same route; the server decides the refund.
+export const cancelBooking = async (bookingId) => (await instance.put(`/bookings/${bookingId}/cancel`)).data;
 
-export const approveBooking = async (bookingId) => {
-  const res = await instance.put(`/bookings/${bookingId}/approve`);
-  return res.data;
-};
+// The balance is paid to the venue directly (cash or bank transfer); the owner records that it arrived.
+export const settleBalance = async ({ id, method, note }) =>
+  (await instance.put(`/bookings/${id}/settle-balance`, { method, ...(note ? { note } : {}) })).data.data;
 
-export const getApprovedBookingsCountForVenues = async (venueIds) => {
-  const res = await instance.post(`/bookings/venues/approved-bookings-count`, {
-    venueIds,
-  });
-  return res.data.data;
-};
+export const completeBooking = async (id) => (await instance.put(`/bookings/${id}/complete`)).data.data;

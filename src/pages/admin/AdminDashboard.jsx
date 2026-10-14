@@ -122,7 +122,7 @@ const AdminDashboard = () => {
         title: "Total Revenue",
         value: isRevenueLoading
           ? "Loading..."
-          : `Nrs. ${currentMonthEarnings.toLocaleString()}`,
+          : `NPR ${currentMonthEarnings.toLocaleString()}`,
 
         icon: FaDollarSign,
         color: "green",

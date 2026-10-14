@@ -1,359 +1,234 @@
-import React, { useState } from "react";
-import {
-  Phone,
-  Mail,
-  MapPin,
-  Clock,
-  Send,
-  MessageCircle,
-  Calendar,
-  Star,
-  Sparkles,
-  Crown,
-  CheckCircle,
-  ArrowRight,
-} from "lucide-react";
-import { toast } from "react-toastify";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { CheckCircle2, Clock, Loader2, Mail, MapPin, Phone } from "lucide-react";
+import PageHero from "../../components/ui/PageHero";
+import SectionHeading from "../../components/ui/SectionHeading";
+import Button from "../../components/ui/Button";
+import { errorClass, inputClass, labelClass } from "../../components/ui/formStyles";
+import { images } from "../../assets/landing/images";
+import { contactDetails } from "../../config/contact";
 import useSubmitContact from "../../hooks/useSubmitContact";
 
-const ContactUs = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    eventType: "",
-    guestCount: "",
-    date: "",
-    budget: "",
-    message: "",
+const TOPICS = [
+  { id: "event", label: "Plan an event" },
+  { id: "tour", label: "Book a venue tour" },
+  { id: "partner", label: "List my venue" },
+  { id: "other", label: "Something else" },
+];
+
+const STEPS = [
+  "We read your message and note anything specific to your date or guest count.",
+  "We reply by email or phone, whichever you gave us.",
+  "If it helps, we point you to venues that fit and you can send a request straight from the venue page.",
+];
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate(v) {
+  const e = {};
+  if (v.name.trim().length < 2) e.name = "Please tell us your name.";
+  if (!v.email.trim() && !v.phone.trim()) e.email = "Add an email or a phone number so we can reply.";
+  else if (v.email.trim() && !emailPattern.test(v.email.trim())) e.email = "That email address does not look right.";
+  if (v.phone.trim() && v.phone.replace(/\D/g, "").length < 7) e.phone = "Enter a phone number we can call.";
+  if (v.message.trim().length < 10) e.message = "Please write at least 10 characters.";
+  return e;
+}
+
+function Field({ id, label, error, children }) {
+  return (
+    <div>
+      <label htmlFor={id} className={labelClass}>
+        {label}
+      </label>
+      {children}
+      {error && (
+        <p id={`${id}-error`} className={errorClass}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DetailRow({ icon: Icon, label, children }) {
+  return (
+    <li className="flex items-start gap-4">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gold-100 text-gold-800">
+        <Icon aria-hidden="true" className="size-5" strokeWidth={1.5} />
+      </span>
+      <div>
+        <p className="font-body text-eyebrow uppercase text-taupe">{label}</p>
+        <div className="mt-1 font-body text-body text-ink">{children}</div>
+      </div>
+    </li>
+  );
+}
+
+export default function ContactUs() {
+  const [params] = useSearchParams();
+  const initialTopic = TOPICS.some((t) => t.id === params.get("topic")) ? params.get("topic") : "event";
+  const [topic, setTopic] = useState(initialTopic);
+  const [values, setValues] = useState({ name: "", email: "", phone: "", date: "", guests: "", message: "" });
+  const [errors, setErrors] = useState({});
+  const [sent, setSent] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const { mutateAsync: submitContact, isPending } = useSubmitContact();
+
+  const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }));
+  const control = (id, key) => ({
+    id,
+    value: values[key],
+    onChange: set(key),
+    className: inputClass,
+    "aria-invalid": errors[key] ? "true" : undefined,
+    "aria-describedby": errors[key] ? `${id}-error` : undefined,
   });
 
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [hoveredCard, setHoveredCard] = useState(null);
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-  const { mutateAsync: submitContact } = useSubmitContact();
-
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
+    const found = validate(values);
+    setErrors(found);
+    setFailed(false);
+    if (Object.keys(found).length) return;
+
+    // The contact API stores name, email, phone and a message, so the extra details travel inside the message.
+    const label = TOPICS.find((t) => t.id === topic)?.label;
+    const extra = [values.date && `Event date: ${values.date}`, values.guests && `Guests: ${values.guests}`].filter(Boolean);
+    const message = [`Topic: ${label}`, ...extra, "", values.message.trim()].join("\n").slice(0, 2000);
+
     try {
-      await submitContact(formData);
-      setIsSubmitted(true);
-      toast.success("Message sent successfully!");
-      setFormData({ name: "", email: "", phone: "", message: "" });
-      setTimeout(() => setIsSubmitted(false), 3000);
+      await submitContact({ name: values.name.trim(), email: values.email.trim(), phone: values.phone.trim(), message });
+      setSent({ name: values.name.trim().split(" ")[0], via: values.email.trim() || values.phone.trim() });
     } catch {
-      toast.error("Failed to send message");
+      setFailed(true);
     }
   };
 
-  const contactInfo = [
-    {
-      icon: Phone,
-      title: "Phone",
-      detail: "+1 (555) 123-4567",
-      subtitle: "Mon-Fri 9AM-8PM EST",
-      color: "text-rose-500",
-    },
-    {
-      icon: Mail,
-      title: "Email",
-      detail: "hello@premiumvenues.com",
-      subtitle: "We reply within 2 hours",
-      color: "text-pink-500",
-    },
-    {
-      icon: MapPin,
-      title: "Office",
-      detail: "123 Luxury Avenue, NYC",
-      subtitle: "By appointment only",
-      color: "text-purple-500",
-    },
-    {
-      icon: Clock,
-      title: "Support Hours",
-      detail: "24/7 Available",
-      subtitle: "Emergency support anytime",
-      color: "text-yellow-500",
-    },
-  ];
+  const details = [
+    contactDetails.email && { icon: Mail, label: "Email", node: <a href={`mailto:${contactDetails.email}`} className="underline underline-offset-4 hover:text-gold-800">{contactDetails.email}</a> },
+    contactDetails.phone && { icon: Phone, label: "Phone", node: <a href={`tel:${contactDetails.phone.replace(/[^\d+]/g, "")}`} className="underline underline-offset-4 hover:text-gold-800">{contactDetails.phone}</a> },
+    contactDetails.address && { icon: MapPin, label: "Visit", node: contactDetails.address },
+    contactDetails.hours && { icon: Clock, label: "Hours", node: contactDetails.hours },
+  ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-slate-50 overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute animate-pulse rounded-full opacity-20"
-            style={{
-              width: Math.random() * 4 + 2 + "px",
-              height: Math.random() * 4 + 2 + "px",
-              left: Math.random() * 100 + "%",
-              top: Math.random() * 100 + "%",
-              animationDelay: Math.random() * 3 + "s",
-              animationDuration: Math.random() * 3 + 2 + "s",
-              background: `linear-gradient(45deg, #e11d48, #db2777, #7e22ce)`,
-            }}
-          />
-        ))}
-      </div>
+    <>
+      <PageHero image={images.storyAmbience} eyebrow="Contact" title="Let us plan" accent="your occasion" id="contact-title">
+        Tell us what you are planning, or the venue you would like to list, and we will take it from there.
+      </PageHero>
 
-      {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center text-white px-6">
-          <div className="mb-8 inline-flex items-center space-x-2 bg-gradient-to-r from-rose-500/20 to-pink-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-rose-300/30">
-            <MessageCircle className="w-5 h-5 text-rose-400 animate-pulse" />
-            <span className="text-sm font-medium text-rose-100">
-              Let's Talk
-            </span>
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-rose-200 to-pink-200 bg-clip-text text-transparent">
-            Get in Touch
-          </h1>
-
-          <p className="text-xl md:text-2xl mb-8 text-slate-300 font-light leading-relaxed max-w-2xl mx-auto">
-            Ready to create an extraordinary celebration? Our expert team is
-            here to bring your vision to life
-          </p>
-        </div>
-      </section>
-
-      {/* Contact Cards */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {contactInfo.map((info, index) => (
-              <div
-                key={index}
-                className="group p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div className="mb-4">
-                  <div
-                    className={`w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform`}
-                  >
-                    <info.icon className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-bold text-slate-800 mb-2">
-                  {info.title}
-                </h3>
-                <p className="text-slate-900 font-medium mb-1">{info.detail}</p>
-                <p className="text-slate-500 text-sm">{info.subtitle}</p>
-
-                {hoveredCard === index && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 rounded-2xl pointer-events-none" />
-                )}
+      <section aria-label="Contact form" className="bg-cream py-16 lg:py-[88px]">
+        <div className="container-site grid gap-12 lg:grid-cols-[1fr_380px] lg:gap-16">
+          {sent ? (
+            <div className="self-start rounded-card-xl border border-line bg-white p-8 lg:p-10" role="status">
+              <CheckCircle2 aria-hidden="true" className="size-10 text-success" />
+              <h2 className="mt-4 font-display text-h2 font-light text-ink">Thank you, {sent.name}</h2>
+              <p className="mt-3 max-w-md font-body text-body text-ink/85">
+                Your message is with us. We will reply to {sent.via} as soon as we can.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Button to="/venues" arrow>
+                  Explore venues
+                </Button>
+                <Button variant="outline-dark" type="button" onClick={() => { setSent(null); setValues({ name: "", email: "", phone: "", date: "", guests: "", message: "" }); }}>
+                  Send another message
+                </Button>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
+          ) : (
+            <form onSubmit={submit} noValidate className="rounded-card-xl border border-line bg-white p-6 sm:p-8 lg:p-10">
+              <SectionHeading eyebrow="Send a message" title="How can we help?" as="h2" className="[&_h2]:text-h2" />
 
-      {/* Contact Form */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
-              Plan Your Perfect
-              <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
-                {" "}
-                Event
-              </span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Tell us about your vision and we'll help you find the perfect
-              venue
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 border border-slate-200">
-            {isSubmitted ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-white" />
+              <fieldset className="mt-8">
+                <legend className={labelClass}>I would like to</legend>
+                <div className="flex flex-wrap gap-2">
+                  {TOPICS.map((t) => (
+                    <label
+                      key={t.id}
+                      className={`cursor-pointer rounded-full border px-5 py-2.5 font-body text-small transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink ${
+                        topic === t.id ? "border-ink bg-ink text-gold-50" : "border-border-strong bg-paper-white text-ink hover:border-ink"
+                      }`}
+                    >
+                      <input type="radio" name="topic" value={t.id} checked={topic === t.id} onChange={() => setTopic(t.id)} className="sr-only" />
+                      {t.label}
+                    </label>
+                  ))}
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">
-                  Thank You!
-                </h3>
-                <p className="text-slate-600 text-lg">
-                  We've received your message and will get back to you within 2
-                  hours.
+              </fieldset>
+
+              <div className="mt-8 grid gap-5 sm:grid-cols-2">
+                <Field id="c-name" label="Your name" error={errors.name}>
+                  <input {...control("c-name", "name")} autoComplete="name" />
+                </Field>
+                <Field id="c-email" label="Email" error={errors.email}>
+                  <input {...control("c-email", "email")} type="email" autoComplete="email" />
+                </Field>
+                <Field id="c-phone" label="Phone (optional)" error={errors.phone}>
+                  <input {...control("c-phone", "phone")} type="tel" autoComplete="tel" placeholder="98XXXXXXXX" />
+                </Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field id="c-date" label="Event date">
+                    <input {...control("c-date", "date")} type="date" />
+                  </Field>
+                  <Field id="c-guests" label="Guests">
+                    <input {...control("c-guests", "guests")} type="number" min="1" inputMode="numeric" />
+                  </Field>
+                </div>
+                <div className="sm:col-span-2">
+                  <Field id="c-message" label="Your message" error={errors.message}>
+                    <textarea {...control("c-message", "message")} rows={5} maxLength={1800} placeholder="Tell us about the occasion, the kind of place you imagine, or the venue you would like to list." />
+                  </Field>
+                </div>
+              </div>
+
+              {failed && (
+                <p role="alert" className="mt-6 font-body text-small text-red-700">
+                  We could not send your message. Please check your connection and try again.
                 </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-slate-700 font-medium mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all"
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-700 font-medium mb-2">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all"
-                      placeholder="your@email.com"
-                    />
-                  </div>
-                </div>
+              )}
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-slate-700 font-medium mb-2">
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all"
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
-                </div>
+              <Button type="submit" disabled={isPending} className="mt-8" arrow={!isPending}>
+                {isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+                {isPending ? "Sending" : "Send message"}
+              </Button>
+            </form>
+          )}
 
-                <div>
-                  <label className="block text-slate-700 font-medium mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all resize-none"
-                    placeholder="Tell us about your vision, special requirements, or any questions you have..."
-                  />
-                </div>
-
-                <div className="text-center">
-                  <button
-                    onClick={handleSubmit}
-                    className="bg-gradient-to-r from-rose-500 to-pink-500 text-white px-8 py-4 rounded-full font-medium hover:from-rose-600 hover:to-pink-600 transition-all transform hover:scale-105 flex items-center space-x-2 mx-auto"
-                  >
-                    <Send className="w-5 h-5" />
-                    <span>Send Message</span>
-                  </button>
-                </div>
+          <aside aria-label="Contact details and next steps" className="space-y-10 lg:pt-4">
+            {details.length > 0 && (
+              <div>
+                <h2 className="font-display text-h4 font-light text-ink">Reach us directly</h2>
+                <ul className="mt-6 space-y-6">
+                  {details.map((d) => (
+                    <DetailRow key={d.label} icon={d.icon} label={d.label}>
+                      {d.node}
+                    </DetailRow>
+                  ))}
+                </ul>
               </div>
             )}
-          </div>
+
+            <div>
+              <h2 className="font-display text-h4 font-light text-ink">What happens next</h2>
+              <ol className="mt-6 space-y-5">
+                {STEPS.map((text, i) => (
+                  <li key={text} className="flex gap-4">
+                    <span aria-hidden="true" className="font-display text-h3 font-light italic text-gold-700">
+                      {i + 1}
+                    </span>
+                    <p className="font-body text-small text-ink/85">{text}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <p className="font-body text-small text-taupe">
+              Looking at a specific venue? You can send it a request directly from its page, with your date and guest count.{" "}
+              <Link to="/venues" className="text-gold-800 underline underline-offset-4">Browse venues</Link>
+            </p>
+          </aside>
         </div>
       </section>
-
-      {/* Quick Stats */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-              Why Choose Our
-              <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
-                {" "}
-                Expert Team
-              </span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
-                <Clock className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-slate-800 mb-2">
-                2 Hours
-              </div>
-              <div className="text-slate-600">Average Response Time</div>
-            </div>
-
-            <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-slate-800 mb-2">
-                4.9/5
-              </div>
-              <div className="text-slate-600">Client Satisfaction</div>
-            </div>
-
-            <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
-                <Crown className="w-8 h-8 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-slate-800 mb-2">15+</div>
-              <div className="text-slate-600">Years Experience</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="mb-8">
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-rose-500/20 to-pink-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-rose-300/30">
-              <Sparkles className="w-4 h-4 text-rose-400" />
-              <span className="text-sm font-medium text-rose-100">
-                Premium Support
-              </span>
-            </div>
-          </div>
-
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-            Need immediate
-            <span className="bg-gradient-to-r from-rose-400 to-pink-400 bg-clip-text text-transparent">
-              {" "}
-              assistance?
-            </span>
-          </h2>
-
-          <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            Our dedicated team is available 24/7 for urgent inquiries and
-            last-minute bookings
-          </p>
-
-          <div className="flex justify-center">
-            <a
-              href="tel:+15551234567"
-              className="bg-gradient-to-r from-rose-500 to-pink-500 text-white px-8 py-4 rounded-full font-medium hover:from-rose-600 hover:to-pink-600 transition-all transform hover:scale-105 flex items-center space-x-2"
-            >
-              <Phone className="w-5 h-5" />
-              <span>Call Now: (555) 123-4567</span>
-            </a>
-          </div>
-        </div>
-      </section>
-    </div>
+    </>
   );
-};
-
-export default ContactUs;
+}

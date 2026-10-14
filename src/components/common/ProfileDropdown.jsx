@@ -1,95 +1,83 @@
-import React, { useRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { UserCircle2, Calendar, Heart, Settings, LogOut } from "lucide-react";
+import { LogOut, UserCircle2 } from "lucide-react";
+import { accountLinksFor } from "../../layouts/accountLinks";
+import { assetUrl } from "../../utils/assetUrl";
 
-const dropdownVariants = {
-  initial: { opacity: 0, y: -10 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -10 },
-  transition: { duration: 0.3 },
-};
-
-const ProfileDropdown = ({ logout, avatarUrl }) => {
+// Account menu in the site header: avatar button that opens a short list of the account's pages.
+const ProfileDropdown = ({ user, logout, avatarUrl }) => {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
+  const ref = useRef(null);
+  const links = accountLinksFor(user);
+  const photo = assetUrl(avatarUrl);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpen(false);
-      }
+    if (!open) return undefined;
+    const onPointer = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleNavigate = (path) => {
-    navigate(path);
-    setOpen(false);
-  };
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen((prev) => !prev)}
-        className="p-1.5 rounded-full border border-slate-200 bg-white hover:border-rose-300 transition-all shadow-md hover:shadow-lg"
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-label="Account menu"
+        className="flex size-10 items-center justify-center overflow-hidden rounded-full border border-gold-200/70 bg-gold-50 text-gold-800 transition-colors hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt="User avatar"
-            className="w-10 h-10 rounded-full object-cover border border-rose-400 shadow-sm"
-          />
-        ) : (
-          <UserCircle2 className="w-6 h-6 text-gray-500" />
-        )}
+        {photo ? <img src={photo} alt="" className="size-full object-cover" /> : <UserCircle2 aria-hidden="true" className="size-6" strokeWidth={1.5} />}
       </button>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            key="dropdown"
-            variants={dropdownVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="absolute right-0 z-50 mt-3 w-64 overflow-hidden rounded-card-md border border-line bg-cream shadow-xl"
           >
+            <div className="border-b border-line px-5 py-4">
+              <p className="truncate font-display text-h5 font-normal text-ink">{user?.name ?? "Your account"}</p>
+              {user?.email && <p className="truncate font-body text-caption text-taupe">{user.email}</p>}
+            </div>
+            <ul className="py-2">
+              {links.map(({ label, to, icon: Icon }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-5 py-2.5 font-body text-small text-ink hover:bg-sand focus-visible:bg-sand focus-visible:outline-none"
+                  >
+                    <Icon aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} />
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
             <button
-              onClick={() => handleNavigate("/profile")}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-            >
-              <UserCircle2 size={16} /> View Profile
-            </button>
-            <button
-              onClick={() => handleNavigate("/my-bookings")}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-            >
-              <Calendar size={16} /> My Bookings
-            </button>
-            <button
-              onClick={() => handleNavigate("/favorites")}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-            >
-              <Heart size={16} /> Favorites
-            </button>
-            <button
-              onClick={() => handleNavigate("/settings")}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-            >
-              <Settings size={16} /> Settings
-            </button>
-            <hr className="my-1 border-slate-100" />
-            <button
+              type="button"
               onClick={() => {
-                logout();
                 setOpen(false);
+                logout();
               }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
+              className="flex w-full items-center gap-3 border-t border-line px-5 py-3 font-body text-small text-taupe hover:bg-sand hover:text-ink focus-visible:bg-sand focus-visible:outline-none"
             >
-              <LogOut size={16} /> Logout
+              <LogOut aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              Sign out
             </button>
           </motion.div>
         )}

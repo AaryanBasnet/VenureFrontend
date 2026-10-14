@@ -2,12 +2,12 @@ import { Outlet, useLocation } from "react-router-dom";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
 
-// Pages that start with a full-bleed hero get the transparent overlay header
-const OVERLAY_HEADER_ROUTES = ["/"];
+// Pages that start with a full-bleed hero (landing, venue details) get the transparent overlay header
+const OVERLAY_HEADER_ROUTES = ["/", "/about", "/contact", "/profile"];
 
 export default function MainLayout() {
   const { pathname } = useLocation();
-  const overlay = OVERLAY_HEADER_ROUTES.includes(pathname);
+  const overlay = OVERLAY_HEADER_ROUTES.includes(pathname) || (pathname.startsWith("/venue/") && !pathname.endsWith("/inquire"));
 
   return (
     <div className="flex min-h-screen flex-col">

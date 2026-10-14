@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useAfterLogin } from "../../auth/returnTo";
 import { toast } from "react-toastify";
 import { googleAuthApi } from "../../api/authApi";
 import { useAuthStore } from "../../store/authStore";
 
 export const useGoogleLogin = () => {
   const setUser = useAuthStore((s) => s.setUser);
-  const navigate = useNavigate();
+  const afterLogin = useAfterLogin();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -19,9 +19,7 @@ export const useGoogleLogin = () => {
       queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
       toast.success("Welcome back!");
 
-      if (user?.role === "Admin") navigate("/admin/dashboard");
-      else if (user?.role === "VenueOwner") navigate("/owner/dashboard");
-      else navigate("/");
+      afterLogin(user);
     },
     onError: (err) => {
       toast.error(

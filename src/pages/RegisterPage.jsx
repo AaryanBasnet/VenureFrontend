@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import RegisterForm from "../components/auth/RegisterForm";
 import GoogleSignInButton from "../components/auth/GoogleSignInButton";
 import Logo from "../components/ui/Logo";
@@ -8,6 +8,7 @@ import { images } from "../assets/landing/images";
 // Figma 255:5282 "Venure register" — full split-panel page (form on the left,
 // venue story on the right; mirrored from the login page).
 export default function RegisterPage() {
+  const location = useLocation();
   return (
     <div className="flex h-dvh justify-center overflow-hidden bg-[#e7dfd2]">
       <div className="flex w-full max-w-[1600px]">
@@ -45,6 +46,7 @@ export default function RegisterPage() {
               <span className="font-body text-caption text-taupe">Already a member?</span>
               <Link
                 to="/login"
+                state={location.state}
                 className="rounded-full border border-border-strong px-4 py-2.5 font-body text-[12px] font-medium text-charcoal hover:border-charcoal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-charcoal"
               >
                 Sign in

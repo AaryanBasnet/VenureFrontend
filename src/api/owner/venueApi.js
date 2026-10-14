@@ -1,37 +1,29 @@
-import instance from "../api"; // your base Axios instance
+import instance from "../api";
 
-export const getActiveVenues = (ownerId) => {
-  // ✅
-  return instance.get("/venueOwner/venues/approvedCountByOwner", {
-    params: { ownerId },
-  });
-};
+// Owner endpoints live under /venues (the old /venueOwner/... paths no longer exist on the backend).
+
+export const getActiveVenues = () => instance.get("/venues/owner/approved-count"); // { data: { count } }
 
 // 1. Create venue WITHOUT images (basic data only)
-export const createVenue = (venueData) => {
-  return instance.post("/venueOwner/venues", venueData);
-};
+export const createVenue = (venueData) => instance.post("/venues", venueData);
 
 // 2. Upload images after venue creation using venueId
-export const uploadVenueImages = (venueId, formData) => {
-  return instance.post(`/venueOwner/venues/${venueId}/images`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
+export const uploadVenueImages = (venueId, formData) =>
+  instance.post(`/venues/${venueId}/images`, formData, { headers: { "Content-Type": "multipart/form-data" } });
 
-// 3. Update venue info (optionally with new images)
-export const updateVenue = (venueId, formData) => {
-  return instance.put(`/venueOwner/venues/${venueId}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
+// 3. Update venue info (optionally with new images). Arrays such as packages are sent as JSON strings.
+export const updateVenue = (venueId, formData) =>
+  instance.put(`/venues/${venueId}`, formData, { headers: { "Content-Type": "multipart/form-data" } });
 
 // 4. Delete venue by ID
-export const deleteVenue = (venueId) => {
-  return instance.delete(`/venueOwner/venues/${venueId}`);
-};
+export const deleteVenue = (venueId) => instance.delete(`/venues/${venueId}`);
 
-// 5. Get venues by owner ID (query param)
-export const getVenuesByOwner = (ownerId) => {
-  return instance.get(`/venueOwner/venues`, { params: { ownerId } });
-};
+// 5. The signed-in owner's venues
+// Paged by the backend ({ venues, total, pages }); ask for a generous page so owners see all their venues.
+export const getVenuesByOwner = () => instance.get("/venues/owner/me", { params: { limit: 50 } });
+
+// 6. Halls and spaces of a venue (list is public; the rest need the VenueOwner role)
+export const getSpaces = async (venueId) => (await instance.get(`/venues/${venueId}/spaces`)).data.data;
+export const createSpace = async ({ venueId, ...payload }) => (await instance.post(`/venues/${venueId}/spaces`, payload)).data.data;
+export const updateSpace = async ({ id, ...payload }) => (await instance.put(`/spaces/${id}`, payload)).data.data;
+export const deactivateSpace = async (id) => (await instance.delete(`/spaces/${id}`)).data;
