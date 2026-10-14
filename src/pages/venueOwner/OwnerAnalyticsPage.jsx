@@ -121,6 +121,8 @@ const OwnerAnalyticsPage = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "approved":
+      case "confirmed":
+      case "completed":
         return <CheckCircle className="w-4 h-4" />;
       case "cancelled":
         return <XCircle className="w-4 h-4" />;
@@ -132,6 +134,8 @@ const OwnerAnalyticsPage = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case "approved":
+      case "confirmed":
+      case "completed":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "cancelled":
         return "bg-red-100 text-red-800 border-red-200";
@@ -370,7 +374,7 @@ const OwnerAnalyticsPage = () => {
                     <td className="p-6">
                       <div>
                         <p className="font-medium text-gray-900">
-                          {new Date(booking.bookingDate).toLocaleDateString(
+                          {new Date(booking.startTime).toLocaleDateString(
                             "en-IN",
                             {
                               day: "numeric",
@@ -381,7 +385,7 @@ const OwnerAnalyticsPage = () => {
                         </p>
                         <p className="text-xs text-gray-500 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {booking.timeSlot}
+                          {booking.shift ? booking.shift.replace("_", " ") : ""}
                         </p>
                       </div>
                     </td>

@@ -11,7 +11,7 @@ export const getMyBookings = async () => {
 
 ///owner/bookings/total
 export const getTotalBookingsForOwner = async () => {
-  return await instance.get("/bookings/owner/total");
+  return await instance.get("/bookings/owner-count");
 };
 
 export const createPaymentIntentApi = async ({

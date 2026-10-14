@@ -18,7 +18,7 @@ export function useChat(currentUser, venueId = null) {
 
   useEffect(() => {
     if (!currentUser) return;
-    fetchChats(venueId).then((res) => setChats(res.data));
+    fetchChats(venueId).then(setChats).catch(() => setChats([]));
     connectSocket(currentUser._id);
 
     return () => unsubscribeFromMessages();
@@ -37,7 +37,7 @@ export function useChat(currentUser, venueId = null) {
   const loadMessages = useCallback(
     (chat) => {
       setActiveChat(chat);
-      fetchMessages(chat._id).then((res) => setMessages(res.data));
+      fetchMessages(chat._id).then(setMessages).catch(() => setMessages([]));
     },
     []
   );
@@ -55,14 +55,16 @@ export function useChat(currentUser, venueId = null) {
   };
 
   const startChatWith = async (participantId) => {
-    const res = await createOrGetChat(participantId, venueId);
-    const chat = res.data;
+    const chat = await createOrGetChat(participantId, venueId);
     if (!chats.find((c) => c._id === chat._id)) {
       setChats((prev) => [...prev, chat]);
     }
     loadMessages(chat);
     return chat; // Return chat so caller can use it
   };
+
+  // Lets a small-screen layout go back from a thread to the conversation list.
+  const closeChat = () => setActiveChat(null);
 
   return {
     chats,
@@ -71,5 +73,6 @@ export function useChat(currentUser, venueId = null) {
     loadMessages,
     sendNewMessage,
     startChatWith,
+    closeChat,
   };
 }

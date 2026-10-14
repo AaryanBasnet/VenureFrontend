@@ -1,175 +1,100 @@
-import React, { useMemo } from "react";
-import { User, MessageCircle, Clock, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { MessageCircle, Search } from "lucide-react";
 
-export default function ChatList({ chats, activeChat, onSelect, currentUserId }) {
-  const formatTime = (timestamp) => {
-    if (!timestamp) return "";
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = (now - date) / (1000 * 60 * 60);
+const initials = (name = "") =>
+  name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0].toUpperCase()).join("") || "V";
 
-    if (diffInHours < 1) {
-      const minutes = Math.floor((now - date) / (1000 * 60));
-      return minutes <= 1 ? "now" : `${minutes}m`;
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h`;
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
+const timeLabel = (timestamp) => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  const minutes = Math.floor((Date.now() - date) / 60000);
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)}h`;
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+};
 
-  const getUnreadCount = (chat) => chat.unreadCount || 0;
+// Conversation list. Shared by the customer and owner chat pages.
+export default function ChatList({ chats = [], activeChat, onSelect, currentUserId }) {
+  const [query, setQuery] = useState("");
 
-  const getInitials = (name) =>
-    name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U";
+  const rows = useMemo(
+    () =>
+      chats.map((chat) => ({
+        chat,
+        name: chat.participants.filter((p) => p._id !== currentUserId).map((p) => p.name || "Guest").join(", ") || "Conversation",
+      })),
+    [chats, currentUserId]
+  );
+  const shown = rows.filter((r) => r.name.toLowerCase().includes(query.trim().toLowerCase()));
 
-  const isOnline = (chat) => chat.isOnline || Math.random() > 0.5;
-
-  // 🔥 Precompute participant names excluding self
-  const participantNameMap = useMemo(() => {
-    const map = {};
-    chats.forEach(chat => {
-      const names = chat.participants
-        .filter(p => p._id !== currentUserId)
-        .map(p => p.name || "Customer")
-        .join(", ");
-      map[chat._id] = names;
-    });
-    return map;
-  }, [chats, currentUserId]);
-
-  if (!chats || chats.length === 0) {
+  if (rows.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <MessageCircle className="w-8 h-8 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No conversations</h3>
-        <p className="text-sm text-gray-500">New customer chats will appear here</p>
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <span className="flex size-14 items-center justify-center rounded-full bg-gold-100 text-gold-800">
+          <MessageCircle aria-hidden="true" className="size-6" strokeWidth={1.5} />
+        </span>
+        <h3 className="mt-4 font-display text-h5 font-normal text-ink">No conversations yet</h3>
+        <p className="mt-1 font-body text-small text-taupe">Message a venue from its page and the conversation will appear here.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Search Bar */}
-      <div className="sticky top-0 z-10 bg-white p-4 border-b border-gray-100">
-        <input
-          type="text"
-          placeholder="Search conversations..."
-          className="w-full pl-3 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+    <div className="flex h-full flex-col bg-white">
+      <div className="border-b border-line p-4">
+        <label htmlFor="chat-search" className="sr-only">Search conversations</label>
+        <div className="relative">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-taupe-light" />
+          <input
+            id="chat-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search conversations"
+            className="w-full rounded-full border border-border bg-paper-white py-2.5 pl-10 pr-4 font-body text-small text-charcoal placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+          />
+        </div>
       </div>
 
-      {/* Chat Items */}
-      <div className="overflow-y-auto flex-1">
-        {chats.map((chat) => {
-          const participantNames = participantNameMap[chat._id];
-          const unreadCount = getUnreadCount(chat);
-          const isActive = activeChat?._id === chat._id;
-          const online = isOnline(chat);
-
+      <ul className="flex-1 overflow-y-auto">
+        {shown.length === 0 && <li className="p-6 text-center font-body text-small text-taupe">No conversation matches that name.</li>}
+        {shown.map(({ chat, name }) => {
+          const active = activeChat?._id === chat._id;
+          const unread = chat.unreadCount || 0;
           return (
-            <div
-              key={chat._id}
-              className={`relative p-4 cursor-pointer transition-all duration-200 border-b border-gray-50 hover:bg-gray-50 ${
-                isActive
-                  ? "bg-blue-50 border-l-4 border-l-blue-500 shadow-sm"
-                  : "hover:shadow-sm"
-              }`}
-              onClick={() => onSelect(chat)}
-            >
-              <div className="flex items-start gap-3">
-                {/* Avatar */}
-                <div className="relative flex-shrink-0">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
-                      isActive
-                        ? "bg-gradient-to-r from-blue-500 to-blue-600"
-                        : "bg-gradient-to-r from-gray-400 to-gray-500"
-                    }`}
-                  >
-                    {getInitials(participantNames)}
-                  </div>
-                  {online && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
-                  )}
-                </div>
-
-                {/* Chat Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3
-                      className={`font-semibold truncate ${
-                        isActive ? "text-blue-900" : "text-gray-900"
-                      }`}
-                    >
-                      {participantNames || "Customer"}
-                    </h3>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {chat.lastMessage?.timestamp && (
-                        <span className="text-xs text-gray-500">
-                          {formatTime(chat.lastMessage.timestamp)}
-                        </span>
-                      )}
-                      {isActive && (
-                        <ChevronRight className="w-4 h-4 text-blue-500" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <p
-                      className={`text-sm truncate ${
-                        isActive ? "text-blue-700" : "text-gray-600"
-                      }`}
-                    >
-                      {chat.lastMessage?.text || "No messages yet"}
-                    </p>
-                    {unreadCount > 0 && (
-                      <span className="ml-2 bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full flex-shrink-0">
-                        {unreadCount > 99 ? "99+" : unreadCount}
+            <li key={chat._id}>
+              <button
+                type="button"
+                onClick={() => onSelect(chat)}
+                aria-current={active ? "true" : undefined}
+                className={`flex w-full items-center gap-3 border-b border-line border-l-4 px-4 py-4 text-left transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink ${
+                  active ? "border-l-gold bg-sand" : "border-l-transparent hover:bg-cream"
+                }`}
+              >
+                <span aria-hidden="true" className={`flex size-11 shrink-0 items-center justify-center rounded-full font-display text-h5 ${active ? "bg-ink text-gold-50" : "bg-gold-100 text-gold-800"}`}>
+                  {initials(name)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="truncate font-body text-body font-medium text-ink">{name}</span>
+                    {(chat.lastMessage?.timestamp || chat.updatedAt) && <span className="shrink-0 font-body text-caption text-taupe">{timeLabel(chat.lastMessage?.timestamp || chat.updatedAt)}</span>}
+                  </span>
+                  <span className="mt-0.5 flex items-center justify-between gap-2">
+                    <span className="truncate font-body text-small text-taupe">{chat.lastMessage?.text || "Open conversation"}</span>
+                    {unread > 0 && (
+                      <span className="shrink-0 rounded-full bg-gold-800 px-2 py-0.5 font-body text-caption text-white">
+                        <span className="sr-only">{unread} unread, </span>
+                        {unread > 99 ? "99+" : unread}
                       </span>
                     )}
-                  </div>
-
-                  <div className="flex items-center gap-3 mt-2">
-                    {online && (
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-green-600 font-medium">Online</span>
-                      </div>
-                    )}
-                    {chat.priority === "high" && (
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
-                        High Priority
-                      </span>
-                    )}
-                    {chat.status === "waiting" && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-orange-500" />
-                        <span className="text-xs text-orange-600 font-medium">Waiting</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {isActive && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-              )}
-            </div>
+                  </span>
+                </span>
+              </button>
+            </li>
           );
         })}
-      </div>
-
-      {/* Footer Summary */}
-      <div className="p-4 border-t border-gray-100 bg-gray-50 text-sm text-gray-600 flex justify-between">
-        <span>{chats.length} total conversations</span>
-        <span className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-          {chats.filter((c) => isOnline(c)).length} online
-        </span>
-      </div>
+      </ul>
     </div>
   );
 }

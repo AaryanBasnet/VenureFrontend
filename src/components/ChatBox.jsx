@@ -1,226 +1,129 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Send,
-  Paperclip,
-  Smile,
-  MoreVertical,
-  Clock,
-  Check,
-  CheckCheck,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, CheckCheck, Clock, Send, MessageCircle } from "lucide-react";
 
-export default function ChatBox({
-  messages = [],
-  onSend,
-  currentUserId,
-  isTyping = false,
-}) {
+const timeOf = (t) => (t ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
+const senderId = (msg) => (typeof msg.sender === "object" ? msg.sender?._id : msg.sender);
+const senderName = (msg) => (typeof msg.sender === "object" ? msg.sender?.name : null) || "Guest";
+const initials = (name) => name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "V";
+
+function Ticks({ status }) {
+  const label = { sent: "Sent", delivered: "Delivered", read: "Read" }[status] ?? "Sending";
+  const Icon = status === "sent" ? Check : status === "delivered" || status === "read" ? CheckCheck : Clock;
+  return (
+    <span title={label}>
+      <Icon aria-hidden="true" className={`size-3 ${status === "read" ? "text-gold" : "text-gold-200/70"}`} />
+      <span className="sr-only">{label}</span>
+    </span>
+  );
+}
+
+// Message thread and composer. Shared by the customer and owner chat pages.
+export default function ChatBox({ messages = [], onSend, currentUserId, isTyping = false }) {
   const [text, setText] = useState("");
-  const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const logRef = useRef(null);
+  const areaRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll only the message list, never the whole page.
+    const log = logRef.current;
+    if (log) log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        120
-      )}px`;
-    }
+    const el = areaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, [text]);
 
-  const handleSend = () => {
-    if (text.trim() === "") return;
-    onSend(text.trim());
+  const send = () => {
+    const value = text.trim();
+    if (!value) return;
+    onSend(value);
     setText("");
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const isOwnerMessage = (msg) => {
-    const senderId =
-      typeof msg.sender === "object" ? msg.sender._id : msg.sender;
-    return senderId === currentUserId;
-  };
-
-  const formatTime = (timestamp) => {
-    if (!timestamp) return "";
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const getMessageStatus = (msg) => {
-    if (msg.status === "sent") return <Check className="w-3 h-3 text-gray-400" />;
-    if (msg.status === "delivered") return <CheckCheck className="w-3 h-3 text-gray-400" />;
-    if (msg.status === "read") return <CheckCheck className="w-3 h-3 text-blue-500" />;
-    return <Clock className="w-3 h-3 text-gray-300" />;
-  };
-
-  const getSenderName = (msg) => {
-    if (isOwnerMessage(msg)) return "You";
-    return msg.sender?.name || msg.sender || "Customer";
-  };
-
-  const getSenderInitials = (msg) => {
-    const name = getSenderName(msg);
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase();
-  };
-
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+    <div className="flex h-full flex-col bg-cream">
+      <div ref={logRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-6" role="log" aria-live="polite" aria-label="Messages">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center text-gray-500">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Send className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Start the conversation
-            </h3>
-            <p className="text-sm">Send a message to begin chatting with the customer.</p>
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <span className="flex size-14 items-center justify-center rounded-full bg-gold-100 text-gold-800">
+              <MessageCircle aria-hidden="true" className="size-6" strokeWidth={1.5} />
+            </span>
+            <h3 className="mt-4 font-display text-h5 font-normal text-ink">Start the conversation</h3>
+            <p className="mt-1 max-w-xs font-body text-small text-taupe">Send a message to say hello. Replies appear here as they arrive.</p>
           </div>
         ) : (
-          <>
-            {messages.map((msg, i) => {
-              const isOwner = isOwnerMessage(msg);
-              const showAvatar =
-                i === 0 || isOwnerMessage(messages[i - 1]) !== isOwner;
-
-              return (
-                <div
-                  key={i}
-                  className={`flex ${isOwner ? "justify-end" : "justify-start"}`}
+          messages.map((msg, i) => {
+            const mine = senderId(msg) === currentUserId;
+            const first = i === 0 || (senderId(messages[i - 1]) === currentUserId) !== mine;
+            const name = mine ? "You" : senderName(msg);
+            return (
+              <div key={msg._id ?? i} className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
+                <span
+                  aria-hidden="true"
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-full font-body text-caption ${first ? (mine ? "bg-ink text-gold-50" : "bg-gold-100 text-gold-800") : "invisible"}`}
                 >
-                  <div
-                    className={`flex items-end gap-2 max-w-xs lg:max-w-md ${
-                      isOwner ? "flex-row-reverse" : "flex-row"
-                    }`}
-                  >
-                    {showAvatar && (
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 ${
-                          isOwner
-                            ? "bg-gradient-to-r from-blue-500 to-blue-600"
-                            : "bg-gradient-to-r from-gray-400 to-gray-500"
-                        }`}
-                      >
-                        {getSenderInitials(msg)}
-                      </div>
-                    )}
-                    <div
-                      className={`relative group ${
-                        !showAvatar && !isOwner ? "ml-10" : ""
-                      } ${!showAvatar && isOwner ? "mr-10" : ""}`}
-                    >
-                      <div
-                        className={`px-4 py-2 rounded-2xl shadow-sm ${
-                          isOwner
-                            ? "bg-blue-600 text-white"
-                            : "bg-white text-gray-900 border border-gray-200"
-                        } ${
-                          showAvatar
-                            ? isOwner
-                              ? "rounded-br-md"
-                              : "rounded-bl-md"
-                            : ""
-                        }`}
-                      >
-                        {!isOwner && showAvatar && (
-                          <div className="text-xs font-medium text-gray-600 mb-1">
-                            {getSenderName(msg)}
-                          </div>
-                        )}
-                        <div className="text-sm whitespace-pre-wrap">{msg.text}</div>
-                        <div
-                          className={`flex items-center justify-end gap-1 mt-1 text-xs ${
-                            isOwner ? "text-blue-100" : "text-gray-500"
-                          }`}
-                        >
-                          <span>{formatTime(msg.timestamp)}</span>
-                          {isOwner && getMessageStatus(msg)}
-                        </div>
-                      </div>
-
-                      <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1 hover:bg-gray-100 rounded">
-                          <MoreVertical className="w-4 h-4 text-gray-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                  <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-md px-4 py-2">
-                    <div className="flex gap-1 items-center">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                        <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.1s" }}
-                        />
-                        <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 ml-2">Typing…</span>
-                    </div>
-                  </div>
+                  {initials(name)}
+                </span>
+                <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 sm:max-w-md ${mine ? "rounded-br-md bg-ink text-gold-50" : "rounded-bl-md border border-line bg-white text-ink"}`}>
+                  {!mine && first && <p className="mb-0.5 font-body text-caption font-medium text-gold-800">{name}</p>}
+                  <p className="whitespace-pre-wrap break-words font-body text-small">{msg.text}</p>
+                  <p className={`mt-1 flex items-center justify-end gap-1.5 font-body text-caption ${mine ? "text-gold-200/80" : "text-taupe"}`}>
+                    {timeOf(msg.timestamp)}
+                    {mine && <Ticks status={msg.status} />}
+                  </p>
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </>
+            );
+          })
+        )}
+
+        {isTyping && (
+          <p className="flex items-center gap-2 font-body text-caption text-taupe" role="status">
+            <span aria-hidden="true" className="flex gap-1">
+              {[0, 1, 2].map((d) => (
+                <span key={d} className="size-1.5 animate-bounce rounded-full bg-gold" style={{ animationDelay: `${d * 0.12}s` }} />
+              ))}
+            </span>
+            Typing
+          </p>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-gray-200 bg-white p-4">
-        <div className="flex items-end gap-3">
-          <div className="flex-1 relative">
-            <textarea
-              ref={textareaRef}
-              value={text}
-              placeholder="Type your message..."
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full resize-none border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm max-h-32"
-              rows={1}
-            />
-            
-          </div>
-          <button
-            onClick={handleSend}
-            disabled={text.trim() === ""}
-            className={`p-3 rounded-lg transition-all duration-200 ${
-              text.trim() === ""
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md"
-            }`}
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-
-        
-      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+        className="flex items-end gap-3 border-t border-line bg-white p-3 sm:p-4"
+      >
+        <label htmlFor="chat-message" className="sr-only">Type your message</label>
+        <textarea
+          id="chat-message"
+          ref={areaRef}
+          rows={1}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          placeholder="Type your message"
+          className="max-h-32 min-h-11 w-full resize-none rounded-card-md border border-border-strong bg-paper-white px-4 py-3 font-body text-small text-charcoal placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+        />
+        <button
+          type="submit"
+          disabled={!text.trim()}
+          aria-label="Send message"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-gold-50 transition-colors hover:bg-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:bg-line disabled:text-taupe"
+        >
+          <Send aria-hidden="true" className="size-5" strokeWidth={1.5} />
+        </button>
+      </form>
     </div>
   );
 }

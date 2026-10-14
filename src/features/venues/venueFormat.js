@@ -52,3 +52,14 @@ export const estimateForGuests = (pkg, guests) => {
   const subtotal = plates * pkg.pricePerPlate;
   return { plates, total: subtotal * (1 + VAT_RATE), minApplied: plates > (Number(guests) || 0) };
 };
+
+// wa.me needs the full international number. Nepali mobiles are typed as 98XXXXXXXX, so add 977.
+export const toWhatsAppNumber = (raw = "") => {
+  const trimmed = String(raw).trim();
+  const digits = trimmed.replace(/\D/g, "");
+  if (trimmed.startsWith("+")) return digits;
+  if (digits.startsWith("977")) return digits;
+  if (digits.length === 10 && digits.startsWith("9")) return `977${digits}`;
+  if (digits.startsWith("0")) return `977${digits.slice(1)}`; // landline with a trunk 0, e.g. 01-4412345
+  return digits;
+};

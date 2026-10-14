@@ -3,7 +3,7 @@ import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
 
 // Pages that start with a full-bleed hero (landing, venue details) get the transparent overlay header
-const OVERLAY_HEADER_ROUTES = ["/"];
+const OVERLAY_HEADER_ROUTES = ["/", "/about", "/contact", "/profile"];
 
 export default function MainLayout() {
   const { pathname } = useLocation();

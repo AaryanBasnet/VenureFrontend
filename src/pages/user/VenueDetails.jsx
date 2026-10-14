@@ -12,7 +12,7 @@ import VenueOverview from "../../features/venues/sections/VenueOverview";
 import VenueSpaces from "../../features/venues/sections/VenueSpaces";
 import VenueLocation from "../../features/venues/sections/VenueLocation";
 import VenuePackages from "../../features/venues/sections/VenuePackages";
-import { cheapestPlatePrice } from "../../features/venues/venueFormat";
+import { cheapestPlatePrice, toWhatsAppNumber } from "../../features/venues/venueFormat";
 import VenueSectionNav from "../../features/venues/sections/VenueSectionNav";
 import VenueReviews from "../../features/venues/sections/VenueReviews";
 
@@ -69,7 +69,7 @@ const VenueDetails = () => {
   const hasMenu = (venue.packages?.length ?? 0) + (venue.drinkOptions?.length ?? 0) > 0;
   const available = ["overview", "spaces", ...(hasMenu ? ["menu"] : []), "location", "reviews"];
   const phoneDigits = (venue.contactPhone ?? "").replace(/[^\d+]/g, "");
-  const whatsappNumber = phoneDigits.replace(/^\+/, "");
+  const whatsappNumber = toWhatsAppNumber(venue.contactPhone);
 
   // "Check a date" starts the inquiry wizard; a chosen space, package and drink come along as preferences.
   const handleCheckDate = (space) => {

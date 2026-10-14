@@ -1,157 +1,128 @@
-import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Camera, Loader2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import Button from "../ui/Button";
+import { errorClass, inputClass, labelClass } from "../ui/formStyles";
+import { assetUrl } from "../../utils/assetUrl";
 
-const EditProfileModal = ({ isOpen = true, user, onClose, onSubmit, isLoading }) => {
-  const [formData, setFormData] = useState({
-    name: user.name || "",
-    phone: user.phone || "",
-    address: user.address || "",
-    avatarFile: null,
-  });
-
-  const [avatarPreview, setAvatarPreview] = useState(user.avatar || "");
+// Edit-profile dialog. Sends multipart form data: name, phone, address and an optional profile image.
+const EditProfileModal = ({ user, onClose, onSubmit, isLoading }) => {
+  const [form, setForm] = useState({ name: user.name || "", phone: user.phone || "", address: user.address || "" });
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(assetUrl(user.avatar));
+  const [errors, setErrors] = useState({});
+  const firstField = useRef(null);
 
   useEffect(() => {
-    if (formData.avatarFile) {
-      const objectUrl = URL.createObjectURL(formData.avatarFile);
-      setAvatarPreview(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
-    }
-  }, [formData.avatarFile]);
+    firstField.current?.focus();
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => e.key === "Escape" && !isLoading && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [onClose, isLoading]);
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "avatarFile" && files.length > 0) {
-      setFormData((prev) => ({ ...prev, avatarFile: files[0] }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
+  useEffect(() => {
+    if (!file) return undefined;
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
-  const handleSubmit = (e) => {
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const submit = (e) => {
     e.preventDefault();
-    const submitData = new FormData();
-    submitData.append("name", formData.name);
-    submitData.append("phone", formData.phone);
-    submitData.append("address", formData.address);
-    if (formData.avatarFile) {
-      submitData.append("profileImage", formData.avatarFile);
-    }
-    onSubmit(submitData);
+    const found = {};
+    if (form.name.trim().length < 2) found.name = "Please enter your name.";
+    if (form.phone.length > 20) found.phone = "That phone number is too long.";
+    if (form.address.length > 150) found.address = "Please keep the address under 150 characters.";
+    if (file && file.size > 5 * 1024 * 1024) found.file = "Please choose an image under 5 MB.";
+    setErrors(found);
+    if (Object.keys(found).length) return;
+
+    const data = new FormData();
+    data.append("name", form.name.trim());
+    data.append("phone", form.phone.trim());
+    data.append("address", form.address.trim());
+    if (file) data.append("profileImage", file);
+    onSubmit(data);
   };
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      <motion.div
+        className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/60 px-4 py-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={() => !isLoading && onClose()}
+      >
         <motion.div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={onClose}
-          aria-modal="true"
           role="dialog"
+          aria-modal="true"
           aria-labelledby="edit-profile-title"
+          className="relative max-h-full w-full max-w-lg overflow-y-auto rounded-card-xl bg-cream p-6 shadow-2xl sm:p-8"
+          initial={{ opacity: 0, scale: 0.97, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 320, damping: 28 }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <motion.div
-            className="bg-white rounded-2xl max-w-lg w-full p-8 relative shadow-xl"
-            initial={{ opacity: 0, scale: 0.95, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: "spring", stiffness: 320, damping: 28 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Close"
-            >
-              <X className="w-6 h-6 text-gray-600" />
-            </button>
-            <h3 id="edit-profile-title" className="text-2xl font-semibold mb-6">
-              Edit Profile
-            </h3>
+          <button type="button" onClick={onClose} disabled={isLoading} aria-label="Close" className="absolute right-4 top-4 rounded-full p-2 text-taupe hover:bg-sand hover:text-ink focus-visible:outline-2 focus-visible:outline-ink">
+            <X aria-hidden="true" className="size-5" />
+          </button>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex flex-col items-center gap-4">
-                <img
-                  src={avatarPreview}
-                  alt="Avatar Preview"
-                  className="w-24 h-24 rounded-full object-cover border border-gray-300"
-                />
-                <label htmlFor="avatarFile" className="sr-only">
-                  Profile photo
-                </label>
-                <input
-                  id="avatarFile"
-                  type="file"
-                  accept="image/*"
-                  name="avatarFile"
-                  onChange={handleChange}
-                  className="text-sm"
-                  aria-label="Upload profile photo"
-                />
-              </div>
+          <p className="font-body text-eyebrow uppercase text-gold-800">Your account</p>
+          <h2 id="edit-profile-title" className="mt-2 font-display text-h3 font-light text-ink">Edit profile</h2>
 
+          <form onSubmit={submit} noValidate className="mt-6 space-y-5">
+            <div className="flex items-center gap-4">
+              {preview ? (
+                <img src={preview} alt="" className="size-20 rounded-full border border-line object-cover" />
+              ) : (
+                <span aria-hidden="true" className="flex size-20 items-center justify-center rounded-full bg-gold-100 text-gold-800">
+                  <Camera className="size-7" strokeWidth={1.25} />
+                </span>
+              )}
               <div>
-                <label htmlFor="name" className="block mb-1 font-medium">
-                  Name
+                <label htmlFor="avatar" className="cursor-pointer font-body text-small text-gold-800 underline underline-offset-4 hover:text-ink has-[:focus-visible]:outline-2">
+                  {preview ? "Change photo" : "Add a photo"}
+                  <input id="avatar" type="file" accept="image/*" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={isLoading} />
                 </label>
-                <input
-                  id="name"
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
-                  aria-required="true"
-                />
+                {errors.file && <p className={errorClass}>{errors.file}</p>}
               </div>
+            </div>
 
-              <div>
-                <label htmlFor="phone" className="block mb-1 font-medium">
-                  Phone
-                </label>
-                <input
-                  id="phone"
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
-                />
-              </div>
+            <div>
+              <label htmlFor="p-name" className={labelClass}>Full name</label>
+              <input ref={firstField} id="p-name" value={form.name} onChange={set("name")} autoComplete="name" className={inputClass} aria-invalid={errors.name ? "true" : undefined} aria-describedby={errors.name ? "p-name-error" : undefined} disabled={isLoading} />
+              {errors.name && <p id="p-name-error" className={errorClass}>{errors.name}</p>}
+            </div>
+            <div>
+              <label htmlFor="p-phone" className={labelClass}>Phone</label>
+              <input id="p-phone" type="tel" value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="98XXXXXXXX" className={inputClass} aria-invalid={errors.phone ? "true" : undefined} disabled={isLoading} />
+              {errors.phone && <p className={errorClass}>{errors.phone}</p>}
+            </div>
+            <div>
+              <label htmlFor="p-address" className={labelClass}>Address</label>
+              <input id="p-address" value={form.address} onChange={set("address")} autoComplete="street-address" className={inputClass} aria-invalid={errors.address ? "true" : undefined} disabled={isLoading} />
+              {errors.address && <p className={errorClass}>{errors.address}</p>}
+            </div>
 
-              <div>
-                <label htmlFor="address" className="block mb-1 font-medium">
-                  Address
-                </label>
-                <input
-                  id="address"
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
-                />
-              </div>
-
-              <motion.button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                whileHover={{ scale: isLoading ? 1 : 1.01 }}
-                whileTap={{ scale: isLoading ? 1 : 0.98 }}
-              >
-                {isLoading ? "Saving..." : "Save Changes"}
-              </motion.button>
-            </form>
-          </motion.div>
+            <div className="flex flex-wrap justify-end gap-3 pt-2">
+              <Button type="button" variant="outline-dark" onClick={onClose} disabled={isLoading}>Cancel</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+                {isLoading ? "Saving" : "Save changes"}
+              </Button>
+            </div>
+          </form>
         </motion.div>
-      )}
+      </motion.div>
     </AnimatePresence>
   );
 };

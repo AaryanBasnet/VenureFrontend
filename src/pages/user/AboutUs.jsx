@@ -1,404 +1,99 @@
-import React, { useState, useEffect } from "react";
-import {
-  Star,
-  Award,
-  Users,
-  Calendar,
-  Check,
-  ChevronRight,
-  Sparkles,
-  Heart,
-  Shield,
-  Crown,
-  Trophy,
-  MapPin,
-  Clock,
-  Camera,
-  Music,
-  Utensils,
-  Gem,
-} from "lucide-react";
+import { CalendarCheck, FileText, MessageSquareText, Search, ShieldCheck, Sunset, Utensils } from "lucide-react";
+import PageHero from "../../components/ui/PageHero";
+import ResponsiveImage from "../../components/ui/ResponsiveImage";
+import SectionHeading from "../../components/ui/SectionHeading";
+import Button from "../../components/ui/Button";
+import VenueTypesSection from "../../features/landing/sections/VenueTypesSection";
+import PartnerCtaSection from "../../features/landing/sections/PartnerCtaSection";
+import { images } from "../../assets/landing/images";
 
-const AboutUs = () => {
-  const [currentStat, setCurrentStat] = useState(0);
-  const [hoveredTeam, setHoveredTeam] = useState(null);
+// Every statement here describes what the platform actually does today.
+const STEPS = [
+  { icon: Search, title: "Browse venues", text: "See each venue's halls, capacity, photos and food packages on one page." },
+  { icon: MessageSquareText, title: "Send one request", text: "Choose your date, shift and guest count. One request replaces the round of phone calls." },
+  { icon: FileText, title: "Receive a clear quote", text: "The venue replies with an itemised quotation: what is included, the total, and the deposit." },
+  { icon: CalendarCheck, title: "Hold your date", text: "Pay the deposit to confirm. You settle the balance with the venue directly." },
+];
 
-  const stats = [
-    {
-      number: "2500+",
-      label: "Venues Curated",
-      icon: MapPin,
-      color: "text-rose-500",
-    },
-    {
-      number: "50K+",
-      label: "Events Hosted",
-      icon: Calendar,
-      color: "text-purple-500",
-    },
-    {
-      number: "100K+",
-      label: "Happy Guests",
-      icon: Users,
-      color: "text-pink-500",
-    },
-    {
-      number: "4.9/5",
-      label: "Guest Rating",
-      icon: Star,
-      color: "text-yellow-500",
-    },
-  ];
+const PRINCIPLES = [
+  { icon: Utensils, title: "Priced per plate", text: "Packages show the price per plate and the minimum plates, the way venues in Nepal quote." },
+  { icon: Sunset, title: "Day, night or full day", text: "Ask for a day or night shift, or the whole day, in the hall that fits your guest count." },
+  { icon: ShieldCheck, title: "Reviewed venues", text: "Venues are reviewed before they are listed, and only guests who completed a booking can review one." },
+];
 
-  const features = [
-    {
-      icon: Crown,
-      title: "Curated Excellence",
-      description:
-        "Each venue undergoes rigorous selection ensuring only the finest spaces for your celebration",
-      color: "text-rose-500",
-    },
-    {
-      icon: Shield,
-      title: "Trusted Partners",
-      description:
-        "Verified vendors and 24/7 support ensuring seamless, worry-free event planning",
-      color: "text-purple-500",
-    },
-    {
-      icon: Gem,
-      title: "Bespoke Experiences",
-      description:
-        "Tailored recommendations matching your vision with personalized concierge service",
-      color: "text-pink-500",
-    },
-    {
-      icon: Trophy,
-      title: "Award-Winning Service",
-      description:
-        "Industry recognition for exceptional quality and innovative event solutions",
-      color: "text-yellow-500",
-    },
-  ];
-
-  const teamMembers = [
-    {
-      name: "Klein Moretti",
-      role: "Chief Experience Officer",
-      image: "/src/assets/Klein.jpg",
-      bio: "Former luxury hotel director with 15+ years crafting memorable celebrations",
-    },
-    {
-      name: "Aaryan Basnet",
-      role: "Venue Relations Director",
-      image: "/src/assets/Klein.jpg",
-      bio: "Expert in curating exclusive partnerships with premium venues worldwide",
-    },
-    {
-      name: "Gherman Sparrow",
-      role: "Creative Director",
-      image: "/src/assets/Klein.jpg",
-      bio: "Visionary designer specializing in luxury event aesthetics and experiences",
-    },
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStat((prev) => (prev + 1) % stats.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [stats.length]);
-
+export default function AboutUs() {
   return (
-    <div className="min-h-screen bg-slate-50 overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute animate-pulse rounded-full opacity-20"
-            style={{
-              width: Math.random() * 6 + 2 + "px",
-              height: Math.random() * 6 + 2 + "px",
-              left: Math.random() * 100 + "%",
-              top: Math.random() * 100 + "%",
-              animationDelay: Math.random() * 3 + "s",
-              animationDuration: Math.random() * 3 + 2 + "s",
-              background: `linear-gradient(45deg, #e11d48, #db2777, #7e22ce)`,
-            }}
+    <>
+      <PageHero image={images.storyNewariCourtyard} eyebrow="About Venure" title="Heritage venues," accent="made simple" id="about-title">
+        A place to find and book event venues across Nepal, from valley courtyards to mountain retreats.
+      </PageHero>
+
+      <section aria-labelledby="story-title" className="bg-cream py-16 lg:py-[88px]">
+        <div className="container-site grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <div>
+            <SectionHeading id="story-title" eyebrow="Our story" title="Finding the right place" accent="should feel like a celebration" className="[&_h2]:text-h2" />
+            <div className="mt-8 space-y-5 font-body text-body-lg font-light text-ink/85">
+              <p>
+                Planning a wedding, a bratabandha or a birthday usually means calling venue after venue, comparing menus over the phone, and waiting on quotations.
+                Venure puts a venue, its halls, capacity and food packages on one page, and turns the back and forth into a single request.
+              </p>
+              <p>
+                You tell the venue your date, shift and guest count. It replies with an itemised quotation, and a deposit holds your date. The people who run the venue
+                stay in charge of the details, and you always see what you are agreeing to.
+              </p>
+            </div>
+            <Button to="/venues" arrow className="mt-10">
+              Explore venues
+            </Button>
+          </div>
+          <ResponsiveImage
+            image={images.storyWedding}
+            alt="A wedding celebration at a heritage venue"
+            sizes="(min-width: 1024px) 560px, 100vw"
+            className="aspect-[4/5] w-full rounded-card-xl object-cover"
           />
-        ))}
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 opacity-95" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-
-        <div className="relative z-10 text-center text-white px-6 max-w-4xl">
-          <div className="mb-8 inline-flex items-center space-x-2 bg-gradient-to-r from-rose-500/20 to-pink-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-rose-300/30">
-            <Sparkles className="w-5 h-5 text-rose-400 animate-pulse" />
-            <span className="text-sm font-medium text-rose-100">
-              Premium Venue Experiences
-            </span>
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-rose-200 to-pink-200 bg-clip-text text-transparent">
-            Crafting Extraordinary
-            <span className="block italic text-rose-400">Moments</span>
-          </h1>
-
-          <p className="text-xl md:text-2xl mb-8 text-slate-300 font-light leading-relaxed">
-            Where luxury meets celebration, and every detail whispers elegance
-          </p>
-
-          <div className="flex justify-center">
-            <button className="bg-gradient-to-r from-rose-500 to-pink-500 text-white px-8 py-3 rounded-full font-medium hover:from-rose-600 hover:to-pink-600 transition-all transform hover:scale-105 flex items-center space-x-2">
-              <Crown className="w-5 h-5" />
-              <span>Explore Our Venues</span>
-            </button>
-          </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className={`text-center p-8 rounded-2xl transition-all duration-500 transform hover:scale-105 ${
-                  currentStat === index
-                    ? "bg-gradient-to-br from-rose-50 to-pink-50 shadow-xl"
-                    : "bg-slate-50 hover:bg-gradient-to-br hover:from-rose-50 hover:to-pink-50"
-                }`}
-              >
-                <div className="mb-4 flex justify-center">
-                  <div
-                    className={`w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center`}
-                  >
-                    <stat.icon className="w-8 h-8 text-white" />
-                  </div>
+      <section aria-labelledby="how-title" className="bg-sand py-16 lg:py-[88px]">
+        <div className="container-site">
+          <SectionHeading id="how-title" eyebrow="How it works" title="From first look" accent="to a held date" className="[&_h2]:text-h2" />
+          <ol className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map(({ icon: Icon, title, text }, i) => (
+              <li key={title} className="rounded-card-lg border border-line bg-cream p-6">
+                <div className="flex items-center justify-between">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-gold-100 text-gold-800">
+                    <Icon aria-hidden="true" className="size-5" strokeWidth={1.5} />
+                  </span>
+                  <span aria-hidden="true" className="font-display text-h3 font-light italic text-gold-700">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                 </div>
-                <div className="text-4xl font-bold text-slate-800 mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-slate-600 font-medium">{stat.label}</div>
-              </div>
+                <h3 className="mt-6 font-display text-h4 font-light text-ink">{title}</h3>
+                <p className="mt-2 font-body text-small text-ink/80">{text}</p>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
-      {/* Story Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="mb-6">
-                <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-                  <Heart className="w-4 h-4" />
-                  <span>Our Story</span>
-                </div>
-              </div>
-
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-8 leading-tight">
-                Born from a passion for
-                <span className="bg-gradient-to-r from-rose-400 to-pink-400 bg-clip-text text-transparent">
-                  {" "}
-                  perfection
-                </span>
-              </h2>
-
-              <div className="space-y-6 text-slate-300 text-lg leading-relaxed">
-                <p>
-                  Founded by a team of luxury hospitality experts, we discovered
-                  that finding the perfect venue was often the greatest
-                  challenge in creating unforgettable celebrations.
-                </p>
-                <p>
-                  From intimate gatherings to grand celebrations, we curate only
-                  the most exceptional spaces that embody elegance,
-                  sophistication, and timeless charm.
-                </p>
-                <p>
-                  Today, we're proud to be the trusted partner for discerning
-                  hosts who refuse to compromise on quality.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="relative z-10 bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 rounded-2xl p-8 shadow-2xl">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      2025
-                    </div>
-                    <div className="text-pink-100 text-sm">Founded</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      50+
-                    </div>
-                    <div className="text-pink-100 text-sm">Cities</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      98%
-                    </div>
-                    <div className="text-pink-100 text-sm">Satisfaction</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-white mb-2">
-                      24/7
-                    </div>
-                    <div className="text-pink-100 text-5">Support</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -top-4 -right-4 w-full h-full bg-gradient-to-br from-yellow-400 to-orange-400 rounded-2xl -z-10 blur-sm opacity-50" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
-              Why Choose Our
-              <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
-                {" "}
-                Premium Collection
-              </span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Every detail meticulously curated to ensure your celebration
-              exceeds expectations
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="group p-8 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                <div className="mb-6">
-                  <div
-                    className={`w-14 h-14 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform`}
-                  >
-                    <feature.icon className="w-7 h-7 text-white" />
-                  </div>
-                </div>
-
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">
-                  {feature.title}
-                </h3>
-                <p className="text-slate-600 text-lg leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
+      <section aria-labelledby="principles-title" className="bg-cream py-16 lg:py-[88px]">
+        <div className="container-site">
+          <SectionHeading id="principles-title" eyebrow="Built for Nepal" title="Details that match" accent="how events are booked here" className="[&_h2]:text-h2" />
+          <ul className="mt-12 grid gap-10 md:grid-cols-3">
+            {PRINCIPLES.map(({ icon: Icon, title, text }) => (
+              <li key={title} className="border-t border-line pt-6">
+                <Icon aria-hidden="true" className="size-7 text-gold-800" strokeWidth={1.25} />
+                <h3 className="mt-5 font-display text-h4 font-light text-ink">{title}</h3>
+                <p className="mt-2 font-body text-body text-ink/80">{text}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
-              Meet Our
-              <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
-                {" "}
-                Expert Team
-              </span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Passionate professionals dedicated to bringing your vision to life
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {teamMembers.map((member, index) => (
-              <div
-                key={index}
-                className="group relative"
-                onMouseEnter={() => setHoveredTeam(index)}
-                onMouseLeave={() => setHoveredTeam(null)}
-              >
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-50 to-pink-50 p-8 transition-all duration-300 transform group-hover:scale-105">
-                  <div className="relative z-10">
-                    <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-br from-rose-500 to-pink-500 p-1">
-                      <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                        <span className="text-3xl font-bold text-slate-800">
-                          {member.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </span>
-                      </div>
-                    </div>
-
-                    <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                      {member.name}
-                    </h3>
-                    <p className="text-rose-500 font-medium mb-4">
-                      {member.role}
-                    </p>
-                    <p className="text-slate-600 leading-relaxed">
-                      {member.bio}
-                    </p>
-                  </div>
-
-                  {hoveredTeam === index && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 pointer-events-none" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="mb-8">
-            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-              <Sparkles className="w-4 h-4" />
-              <span>Ready to Begin?</span>
-            </div>
-          </div>
-
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-            Let's create your perfect
-            <span className="bg-gradient-to-r from-rose-400 to-pink-400 bg-clip-text text-transparent">
-              {" "}
-              celebration
-            </span>
-          </h2>
-
-          <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            Join thousands of satisfied hosts who trusted us to make their
-            special moments extraordinary
-          </p>
-
-          <div className="flex justify-center">
-            <button className="bg-gradient-to-r from-rose-500 to-pink-500 text-white px-8 py-4 rounded-full font-medium hover:from-rose-600 hover:to-pink-600 transition-all transform hover:scale-105 flex items-center space-x-2">
-              <Calendar className="w-5 h-5" />
-              <span>Start Planning</span>
-            </button>
-          </div>
-        </div>
-      </section>
-    </div>
+      <VenueTypesSection />
+      <PartnerCtaSection />
+    </>
   );
-};
-
-export default AboutUs;
+}

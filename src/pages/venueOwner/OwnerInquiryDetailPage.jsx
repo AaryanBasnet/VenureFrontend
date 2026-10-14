@@ -14,6 +14,7 @@ import StatusBadge from "../../features/inquiry/components/StatusBadge";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
 import QuotationBuilder from "../../features/inquiry/components/QuotationBuilder";
 import { effectiveStatus, formatDate, shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { toWhatsAppNumber } from "../../features/venues/venueFormat";
 
 const chip = "inline-flex items-center gap-1.5 rounded-full border border-ink px-4 py-2 font-body text-small text-ink hover:bg-ink hover:text-gold-50";
 
@@ -85,7 +86,7 @@ export default function OwnerInquiryDetailPage() {
           {phone && (
             <div className="mt-4 flex flex-wrap gap-2">
               <a href={`tel:${phone}`} className={chip}><Phone aria-hidden="true" className="size-3.5" /> Call</a>
-              <a href={`https://wa.me/${phone.replace(/^\+/, "")}`} target="_blank" rel="noopener noreferrer" className={chip}>WhatsApp</a>
+              <a href={`https://wa.me/${toWhatsAppNumber(inquiry.phoneNumber)}`} target="_blank" rel="noopener noreferrer" className={chip}>WhatsApp</a>
             </div>
           )}
         </aside>

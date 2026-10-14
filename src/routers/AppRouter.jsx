@@ -1,8 +1,9 @@
 import React, { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 // Layouts
 import MainLayout from "../layouts/MainLayout";
+import LoadingPage from "../components/LoadingPage";
 import AdminLayout from "../layouts/AdminLayout";
 import OwnerLayout from "../layouts/OwnerLayout";
 
@@ -24,10 +25,7 @@ const VenueList = lazy(() => import("../components/user/VenueList"));
 const FavoriteSection = lazy(() =>
   import("../components/user/FavoriteSection")
 );
-const MyBookings = lazy(() => import("../components/user/MyBookings"));
-const TestimonialForm = lazy(() =>
-  import("../components/user/TestimonialForm")
-);
+const MyBookings = lazy(() => import("../pages/user/MyBookingsPage"));
 const VenueDetails = lazy(() => import("../pages/user/VenueDetails"));
 const InquiryPage = lazy(() => import("../pages/user/InquiryPage"));
 const MyInquiriesPage = lazy(() => import("../pages/user/MyInquiriesPage"));
@@ -69,7 +67,7 @@ const OwnerVenueReviewsPage = lazy(() =>
   import("../pages/venueOwner/OwnerVenueReviewsPage")
 );
 const OwnerBookingsPage = lazy(() =>
-  import("../pages/venueOwner/OwnerBookingPage")
+  import("../pages/venueOwner/OwnerBookingsPage")
 );
 const OwnerVenuePage = lazy(() => import("../pages/venueOwner/OwnerVenuePage"));
 const OwnerChatPage = lazy(() => import("../pages/venueOwner/OwnerChatPage"));
@@ -83,18 +81,15 @@ const NotFound = lazy(() => import("../pages/NotFound"));
 export default function AppRouter() {
   return (
     <BrowserRouter>
-      <Suspense
-        fallback={
-          <div className="text-center mt-20 text-rose-500">Loading...</div>
-        }
-      >
+      <Suspense fallback={<LoadingPage />}>
         <Routes>
           {/* Public pages accessible by all (no guard) */}
           <Route element={<MainLayout />}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/contact" element={<ContactUs />} />
-            <Route path="/testimonial" element={<TestimonialForm />} />
+            {/* Testimonials were replaced by reviews of completed bookings */}
+            <Route path="/testimonial" element={<Navigate to="/my-bookings" replace />} />
           </Route>
 
           {/* Routes restricted to guests and customers only */}
