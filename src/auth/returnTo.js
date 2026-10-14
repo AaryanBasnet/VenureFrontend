@@ -17,11 +17,12 @@ export const afterLoginPath = (user, from) => {
 };
 
 // Returns a function that opens the login page and remembers the current page.
+// Pass { from } to send them somewhere else afterwards, e.g. the inquiry form they were about to open.
 export function useGoToLogin() {
   const navigate = useNavigate();
   const location = useLocation();
   return useCallback(
-    (options = {}) => navigate("/login", { ...options, state: { from: currentPath(location) } }),
+    ({ from, ...options } = {}) => navigate("/login", { ...options, state: { from: from ?? currentPath(location) } }),
     [navigate, location]
   );
 }

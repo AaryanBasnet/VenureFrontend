@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Link } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { User, Mail, Phone, LockKeyhole } from "lucide-react";
@@ -128,10 +129,18 @@ export default function RegisterForm() {
           onBlur={formik.handleBlur}
           aria-invalid={termsError ? "true" : undefined}
           aria-describedby={termsError ? "agreeToTerms-error" : undefined}
-          className="mt-0.5 size-[18px] shrink-0 rounded border-border-strong accent-ink"
+          className="mt-1 size-6 shrink-0 rounded border-border-strong accent-ink"
         />
         <label htmlFor="agreeToTerms" className="font-body text-small text-taupe">
-          I agree to Venure&rsquo;s terms of service and privacy policy.
+          I agree to Venure&rsquo;s{" "}
+          <Link to="/terms" target="_blank" rel="noopener" className="inline-block py-1 text-charcoal underline underline-offset-4 hover:text-gold-800">
+            terms of use<span className="sr-only"> (opens in a new tab)</span>
+          </Link>{" "}
+          and{" "}
+          <Link to="/privacy" target="_blank" rel="noopener" className="inline-block py-1 text-charcoal underline underline-offset-4 hover:text-gold-800">
+            privacy page<span className="sr-only"> (opens in a new tab)</span>
+          </Link>
+          .
         </label>
       </div>
       {termsError && (

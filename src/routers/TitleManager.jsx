@@ -26,6 +26,13 @@ const EXACT = {
   "/owner/reviews": "Reviews",
   "/owner/chat": "Messages",
   "/admin/dashboard": "Admin dashboard",
+  "/admin/user": "Admin users",
+  "/admin/venue": "Admin venues",
+  "/admin/contact": "Admin contact messages",
+  "/admin/owner": "Admin: add a venue owner",
+  "/admin/reviews": "Admin reviews",
+  "/terms": "Terms of use",
+  "/privacy": "Privacy",
 };
 
 const titleFor = (path) => {

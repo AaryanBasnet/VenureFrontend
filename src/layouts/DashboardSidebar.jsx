@@ -9,7 +9,7 @@ import Logo from "../components/ui/Logo";
 //   sections: [{ title, items: [{ Icon, label, to, badgeKey? }] }]
 //   badges:   { [badgeKey]: number }  small gold counters next to a link
 export default function DashboardSidebar({ role, homeTo, sections, badges = {}, open, onClose }) {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, loggingOut } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,9 +24,9 @@ export default function DashboardSidebar({ role, homeTo, sections, badges = {}, 
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const signOut = () => {
-    logout();
-    navigate("/login");
+  const signOut = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -99,7 +99,7 @@ export default function DashboardSidebar({ role, homeTo, sections, badges = {}, 
             <Link to="/" className="flex flex-1 items-center justify-center gap-2 rounded-card-sm border border-white/15 px-3 py-2 font-body text-caption text-gold-50 hover:bg-white/5">
               <ExternalLink aria-hidden="true" className="size-3.5" /> View site
             </Link>
-            <button type="button" onClick={signOut} className="flex flex-1 items-center justify-center gap-2 rounded-card-sm border border-white/15 px-3 py-2 font-body text-caption text-gold-50 hover:bg-white/5">
+            <button type="button" onClick={signOut} disabled={loggingOut} className="flex flex-1 disabled:opacity-60 items-center justify-center gap-2 rounded-card-sm border border-white/15 px-3 py-2 font-body text-caption text-gold-50 hover:bg-white/5">
               <LogOut aria-hidden="true" className="size-3.5" /> Sign out
             </button>
           </div>

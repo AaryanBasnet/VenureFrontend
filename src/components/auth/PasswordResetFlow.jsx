@@ -4,6 +4,7 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import VerifyResetCodeForm from "./VerifyResetCodeForm";
 import ResetPasswordForm from "./ResetPasswordForm";
 import Logo from "../ui/Logo";
+import { ResetHeadingContext } from "./ResetShell";
 
 // The password-reset steps on a page of their own (the /password-reset link). From the sign-in page the
 // same steps open in a dialog instead. Resetting finishes by sending the person to sign in.
@@ -19,6 +20,7 @@ export default function PasswordResetFlow() {
         <Logo height={56} label="Venure home" />
       </Link>
       <div className="flex w-full max-w-md flex-1 items-center py-8">
+        <ResetHeadingContext.Provider value="h1">
         <div className="w-full">
           {step === "email" && (
             <ForgotPasswordForm
@@ -42,6 +44,7 @@ export default function PasswordResetFlow() {
           )}
           {step === "password" && <ResetPasswordForm email={email} code={code} />}
         </div>
+        </ResetHeadingContext.Provider>
       </div>
     </main>
   );

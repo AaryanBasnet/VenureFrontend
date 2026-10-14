@@ -12,6 +12,8 @@ import { useToggleVenueFeatured } from "../../hooks/admin/useToggleVenueFeatured
 import { useDebounce } from "../../hooks/useDebounce";
 import { getErrorMessage } from "../../api/api";
 import { assetUrl } from "../../utils/assetUrl";
+import { plural } from "../../utils/plural";
+import { useRovingTabs } from "../../hooks/useRovingTabs";
 
 const LIMIT = 10;
 
@@ -151,7 +153,7 @@ function VenueRow({ venue, onSetStatus, onToggleFeatured, statusBusy, featuredBu
               <dt className="text-caption uppercase text-taupe">Pricing</dt>
               <dd className="text-ink">
                 {cheapest > 0 ? `Packages from ${npr(cheapest)} per plate` : "No food packages yet"}
-                {venue.packages?.length > 1 ? ` (${venue.packages.length} packages)` : ""}
+                {venue.packages?.length > 1 ? ` (${plural(venue.packages.length, "package")})` : ""}
               </dd>
             </div>
             <div>
@@ -217,6 +219,9 @@ function VenueRow({ venue, onSetStatus, onToggleFeatured, statusBusy, featuredBu
   );
 }
 
+const TAB_IDS = TABS.map((t) => t.id);
+const tabDomId = (id) => `venue-tab-${id}`;
+
 export default function AdminVenuePage() {
   const [tab, setTab] = useState("pending");
   const [search, setSearch] = useState("");
@@ -235,6 +240,7 @@ export default function AdminVenuePage() {
   const venues = data?.venues ?? [];
   const total = data?.total ?? 0;
   const pages = Math.max(1, data?.pages ?? 1);
+  const roving = useRovingTabs({ ids: TAB_IDS, selected: tab, onSelect: setTab, idFor: tabDomId });
   const current = TABS.find((t) => t.id === tab);
 
   const setStatus = async (venue, status) => {
@@ -266,17 +272,13 @@ export default function AdminVenuePage() {
       />
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div role="tablist" aria-label="Venue status" className="flex flex-wrap gap-2">
+        <div role="tablist" aria-label="Venue status" {...roving.listProps} className="flex flex-wrap gap-2">
           {TABS.map((t) => (
             <button
               key={t.id}
-              id={`venue-tab-${t.id}`}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
+              {...roving.tabProps(t.id)}
               aria-controls="venue-panel"
-              onClick={() => setTab(t.id)}
-              className={`rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+              className={`min-h-11 rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
                 tab === t.id ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"
               }`}
             >

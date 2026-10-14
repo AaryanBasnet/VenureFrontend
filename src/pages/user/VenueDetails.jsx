@@ -113,7 +113,7 @@ const VenueDetails = () => {
   // "Request a date" starts the inquiry wizard; a chosen space, package and drink come along as preferences.
   const handleCheckDate = (space) => {
     if (!isAuthenticated) {
-      goToLogin();
+      goToLogin({ from: `/venue/${venue._id}/inquire` }); // after signing in they land on the form they asked for
       return;
     }
     navigate(`/venue/${venue._id}/inquire`, {

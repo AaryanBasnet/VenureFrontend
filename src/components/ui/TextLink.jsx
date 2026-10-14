@@ -6,9 +6,9 @@ export default function TextLink({ to, className = "", children }) {
   return (
     <Link
       to={to}
-      className={`group relative inline-flex items-center gap-1.5 border-b after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] border-ink pb-1 font-body text-button uppercase text-ink transition-colors hover:border-gold-800 hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink ${className}`}
+      className={`group inline-flex min-h-11 items-center gap-1.5 font-body text-button uppercase text-ink transition-colors hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${className}`}
     >
-      {children}
+      <span className="border-b border-ink pb-1 transition-colors group-hover:border-gold-800">{children}</span>
       <ArrowRight
         aria-hidden="true"
         className="size-3 transition-transform duration-300 group-hover:translate-x-0.5"

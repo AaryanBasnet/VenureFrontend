@@ -5,13 +5,13 @@ import Button from "../components/ui/Button";
 import { AuthContext } from "../auth/AuthProvider";
 
 export default function UnAuthorized() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, loggingOut } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // The sign-in page is closed to signed-in people, so switching accounts means signing out first
-  const switchAccount = () => {
-    logout();
-    navigate("/login");
+  const switchAccount = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -24,7 +24,7 @@ export default function UnAuthorized() {
             Go to home
           </Button>
           {user ? (
-            <Button variant="outline-dark" onClick={switchAccount}>
+            <Button variant="outline-dark" onClick={switchAccount} disabled={loggingOut}>
               Sign in with another account
             </Button>
           ) : (

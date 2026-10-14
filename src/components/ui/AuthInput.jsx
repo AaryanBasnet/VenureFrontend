@@ -41,7 +41,7 @@ export default function AuthInput({
           type={isPassword && revealed ? "text" : type}
           aria-invalid={!!error}
           aria-describedby={describedBy}
-          className="w-full min-w-0 flex-1 bg-transparent font-body text-body-lg text-charcoal placeholder:text-taupe-light focus:outline-none sm:text-small"
+          className="w-full min-w-0 flex-1 bg-transparent font-body text-body-lg text-charcoal placeholder:text-taupe focus:outline-none sm:text-small"
           {...inputProps}
         />
         {isPassword && (

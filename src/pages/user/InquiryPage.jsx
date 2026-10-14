@@ -14,9 +14,10 @@ import { inquiryErrorMessage, useCreateInquiry } from "../../features/inquiry/ho
 import { useMyInquiries } from "../../features/inquiry/hooks/useInquiries";
 import { EVENT_TYPES, SHIFT_OPTIONS, formatDate, formatHours, serverDay, shiftLabel, toInquiryDate } from "../../features/inquiry/inquiryOptions";
 import Select from "../../components/ui/Select";
+import { plural } from "../../utils/plural";
 
 const field =
-  "w-full rounded-card-sm border border-border-strong bg-white px-4 py-3 font-body text-body text-ink placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-[invalid=true]:border-red-700";
+  "w-full rounded-card-sm border border-border-strong bg-white px-4 py-3 font-body text-body text-ink placeholder:text-taupe focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-[invalid=true]:border-red-700";
 const label = "mb-1.5 block font-body text-eyebrow uppercase text-taupe";
 const errorText = "mt-1.5 font-body text-small text-red-700";
 const choice = (active, disabled) =>
@@ -126,8 +127,8 @@ export default function InquiryPage() {
   else if (unavailableFor(date)) step1Errors.date = "That date is already booked for your choice of hall and shift. Pick another date, hall or shift.";
   if (guestCount < 1) step1Errors.guests = "Enter how many guests you expect.";
   else if (guestCount > 5000) step1Errors.guests = "Enter 5,000 guests or fewer.";
-  else if (space && guestCount > space.capacity) step1Errors.guests = `${space.name} holds up to ${space.capacity} guests. Choose another space or fewer guests.`;
-  else if (!space && largest && guestCount > largest) step1Errors.guests = `The largest hall here holds ${largest} guests. Enter a smaller number.`;
+  else if (space && guestCount > space.capacity) step1Errors.guests = `${space.name} holds up to ${plural(space.capacity, "guest")}. Choose another space or fewer guests.`;
+  else if (!space && largest && guestCount > largest) step1Errors.guests = `The largest hall here holds ${plural(largest, "guest")}. Enter a smaller number.`;
 
   const phoneDigits = phone.replace(/\D/g, "");
   const step2Errors = {};
@@ -370,7 +371,7 @@ export default function InquiryPage() {
                   <p id="guests-error" role="alert" className={errorText}>{errors.guests}</p>
                 ) : (
                   <p id="guests-hint" className="mt-1.5 font-body text-caption text-taupe">
-                    {space ? `${space.name} holds up to ${space.capacity} guests.` : largest ? `Halls here hold up to ${largest} guests.` : "An estimate is fine; you can change it later."}
+                    {space ? `${space.name} holds up to ${plural(space.capacity, "guest")}.` : largest ? `Halls here hold up to ${plural(largest, "guest")}.` : "An estimate is fine; you can change it later."}
                   </p>
                 )}
               </div>
@@ -389,7 +390,7 @@ export default function InquiryPage() {
                       <label key={s._id} className={choice(spaceId === s._id, tooSmall)}>
                         <input type="radio" name="space" className="sr-only" disabled={tooSmall} checked={spaceId === s._id} onChange={() => setSpaceId(s._id)} />
                         <span className="block font-body text-body text-ink">{s.name}</span>
-                        <span className="block font-body text-caption text-taupe">{tooSmall ? `Holds up to ${s.capacity}, too small for ${guestCount} guests` : `Up to ${s.capacity} guests`}</span>
+                        <span className="block font-body text-caption text-taupe">{tooSmall ? `Holds up to ${s.capacity}, too small for ${plural(guestCount, "guest")}` : `Up to ${plural(s.capacity, "guest")}`}</span>
                       </label>
                     );
                   })}

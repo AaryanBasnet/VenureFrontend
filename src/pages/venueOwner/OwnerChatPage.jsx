@@ -8,7 +8,10 @@ import { PageHeader, EmptyState } from "../../components/dashboard/ui";
 
 export default function OwnerChatPage() {
   const { user } = useContext(AuthContext);
-  const { chats, activeChat, messages, loadMessages, sendNewMessage, closeChat } = useChat(user);
+  const {
+    chats, chatsLoading, chatsError, reloadChats, activeChat, messages, messagesLoading, messagesError,
+    retryMessages, loadMessages, sendNewMessage, closeChat,
+  } = useChat(user);
 
   const customerName =
     activeChat?.participants
@@ -27,12 +30,12 @@ export default function OwnerChatPage() {
 
       <div className="grid h-[calc(100vh-17rem)] min-h-[480px] overflow-hidden rounded-card-xl border border-line bg-white grid-cols-[minmax(0,1fr)] md:grid-cols-[320px_minmax(0,1fr)]">
         <div className={`${activeChat ? "hidden md:block" : ""} min-h-0 border-line md:border-r`}>
-          {chats.length === 0 ? (
+          {chats.length === 0 && !chatsLoading && !chatsError ? (
             <EmptyState icon={MessageCircle} title="No conversations yet">
               No conversations yet. When a customer messages you from your venue page, it appears here.
             </EmptyState>
           ) : (
-            <ChatList chats={chats} activeChat={activeChat} onSelect={loadMessages} currentUserId={user?._id} />
+            <ChatList chats={chats} activeChat={activeChat} onSelect={loadMessages} currentUserId={user?._id} loading={chatsLoading} error={chatsError} onRetry={reloadChats} />
           )}
         </div>
 
@@ -57,6 +60,9 @@ export default function OwnerChatPage() {
                   onSend={sendNewMessage}
                   activeChat={activeChat}
                   currentUserId={user?._id}
+                  loading={messagesLoading}
+                  error={messagesError}
+                  onRetry={retryMessages}
                 />
               </div>
             </>

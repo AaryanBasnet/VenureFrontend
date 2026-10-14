@@ -94,11 +94,10 @@ test.describe("protected customer pages", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  // Known product bug: AuthProvider shows the toast and then reloads the page with window.location.replace("/login"),
-  // so the message is lost and the visitor is not returned to the page they were on.
-  test.fixme("when the session ends the visitor is told why and returns to the same page after signing in", async ({ page, context }) => {
+  test("when the session ends the visitor is told why and returns to the same page after signing in", async ({ page, context }) => {
     await login(page, creds.customer);
     await page.goto("/venues");
+    await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
     await context.clearCookies();
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.locator("[data-menu-item]").filter({ hasText: /inquiries/i }).first().click();

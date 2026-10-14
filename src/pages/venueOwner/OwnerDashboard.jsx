@@ -7,10 +7,11 @@ import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat, StatusPi
 import { btnPrimary, npr, shortDate } from "../../components/dashboard/styles";
 import { useOwnerInquiries } from "../../features/inquiry/hooks/useInquiries";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
-import { shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import useActiveVenueCount from "../../hooks/owner/useGetActiveVenueCount";
 import { useGetMonthlyEarningsForOwner } from "../../hooks/owner/useGetMonthlyEarningForOwner";
 import useOwnerBookings from "../../hooks/owner/useOwnerBookings";
+import { plural } from "../../utils/plural";
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -76,7 +77,7 @@ export default function OwnerDashboard() {
                       <p className="truncate font-body text-body text-ink">{q.customer?.name ?? q.contactName}</p>
                       <p className="mt-0.5 truncate font-body text-caption text-taupe">
                         {q.venue?.venueName} · {shortDate(q.preferredDate)}
-                        {q.preferredShift ? ` · ${shiftLabel(q.preferredShift)}` : ""} · {q.numberOfGuests} guests
+                        {q.preferredShift ? ` · ${shiftLabel(q.preferredShift)}` : ""} · {plural(q.numberOfGuests, "guest")}
                       </p>
                     </div>
                     <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-taupe" />
@@ -106,7 +107,7 @@ export default function OwnerDashboard() {
                   <div className="min-w-0">
                     <p className="truncate font-body text-body text-ink">{b.venue?.venueName ?? "Venue"}</p>
                     <p className="mt-0.5 truncate font-body text-caption text-taupe">
-                      {shortDate(b.startTime)} <span className="text-taupe-light">({bsLabel(b.startTime)})</span>
+                      {shortDate(b.startTime)} <span className="text-taupe">({bsLabel(serverDay(b.startTime))})</span>
                       {b.shift ? ` · ${shiftLabel(b.shift)}` : ""} · {b.customer?.name ?? b.contactName}
                     </p>
                   </div>

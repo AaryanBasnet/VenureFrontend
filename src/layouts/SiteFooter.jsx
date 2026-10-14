@@ -17,6 +17,8 @@ const COMPANY_LINKS = [
   { label: "About Venure", to: "/about" },
   { label: "Contact", to: "/contact" },
   { label: "List your venue", to: "/contact?topic=partner" },
+  { label: "Terms of use", to: "/terms" },
+  { label: "Privacy", to: "/privacy" },
 ];
 
 function FooterColumn({ title, items }) {
@@ -28,7 +30,7 @@ function FooterColumn({ title, items }) {
           <li key={item.label}>
             <Link
               to={item.to}
-              className="inline-block py-2.5 font-body lg:py-1.5 text-small font-light text-white/90 transition-colors hover:text-white hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="inline-flex min-h-11 items-center font-body lg:min-h-8 text-small font-light text-white/90 transition-colors hover:text-white hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               {item.label}
             </Link>
@@ -58,7 +60,7 @@ function NewsletterForm() {
       </label>
       <form
         onSubmit={handleSubmit}
-        className="mt-3 flex h-12 items-center rounded-full border border-white/35 focus-within:border-white focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-white"
+        className="mt-3 flex min-h-12 items-center rounded-full border border-white/35 focus-within:border-white focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-white"
       >
         <input
           id={inputId}
@@ -73,13 +75,13 @@ function NewsletterForm() {
           }}
           disabled={isPending}
           aria-describedby={statusId}
-          className="min-w-0 flex-1 rounded-full bg-transparent px-5 font-body text-small text-gold-50 placeholder:text-gold-200/80 focus:outline-none"
+          className="min-h-11 min-w-0 flex-1 rounded-full bg-transparent px-5 font-body text-small text-gold-50 placeholder:text-gold-200/80 focus:outline-none"
         />
         <button
           type="submit"
           disabled={isPending}
           aria-label="Subscribe"
-          className="m-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-gold-800 text-white transition-colors hover:bg-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-60"
+          className="m-0.5 flex size-11 shrink-0 items-center justify-center rounded-full bg-gold-800 text-white transition-colors hover:bg-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-60"
         >
           {isPending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="size-4" strokeWidth={1.75} />}
         </button>

@@ -11,6 +11,7 @@ import { useGoToLogin } from "../../auth/returnTo";
 import Select from "../../components/ui/Select";
 import { venueTypes } from "../../features/landing/content/landingContent";
 import { images } from "../../assets/landing/images";
+import { plural } from "../../utils/plural";
 
 const PAGE_SIZE = 9;
 const CITIES = ["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara", "Nagarkot", "Dhulikhel", "Chitwan"];
@@ -195,7 +196,7 @@ export default function VenuesPage() {
                   : total === 0
                     ? "No venues found"
                     : totalPages > 1
-                      ? `Showing ${(page - 1) * PAGE_SIZE + 1} to ${(page - 1) * PAGE_SIZE + venues.length} of ${total} venues`
+                      ? `Showing ${(page - 1) * PAGE_SIZE + 1} to ${(page - 1) * PAGE_SIZE + venues.length} of ${plural(total, "venue")}`
                       : `${total} ${total === 1 ? "venue" : "venues"}`}
             </p>
             {active > 0 && <button type="button" onClick={clear} className="min-h-11 font-body text-small text-gold-800 underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">Clear all filters</button>}

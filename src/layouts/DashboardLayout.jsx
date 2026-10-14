@@ -1,5 +1,5 @@
-import { useCallback, useContext, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { AuthContext } from "../auth/AuthProvider";
 import DashboardSidebar from "./DashboardSidebar";
@@ -12,6 +12,17 @@ export default function DashboardLayout({ role, homeTo, sections, badges }) {
   const { user } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const { pathname } = useLocation();
+  const mainRef = useRef(null);
+  const lastPath = useRef(pathname);
+
+  // A new page starts at the top and keyboard focus moves to its content (the first load keeps the browser's own position).
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    mainRef.current?.focus({ preventScroll: true });
+  }, [pathname]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-cream">
@@ -36,7 +47,7 @@ export default function DashboardLayout({ role, homeTo, sections, badges }) {
           {user && <NotificationBell userId={user._id} tone="dark" />}
         </header>
 
-        <main id="dashboard-main" className="flex-1 overflow-y-auto">
+        <main id="dashboard-main" ref={mainRef} tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
           <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10">
             <Outlet />
           </div>

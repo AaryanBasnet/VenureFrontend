@@ -24,7 +24,7 @@
   --color-paper-white: #fffdf9; /* button label on dark bg, checkbox fill */
   --color-charcoal: #211c17; /* primary reading text on paper */
   --color-taupe: #6e655a; /* secondary text */
-  --color-taupe-light: #958a7d; /* placeholders, muted labels, footer links */
+  --color-taupe-light: #958a7d; /* decorative icons and borders, and text on dark backgrounds only (3:1 on light, 5.5:1 on ink) */
   --color-border: #d9d0c2; /* input / divider borders */
   --color-border-strong: #c5b8a6; /* pill button / checkbox borders */
   --color-gold-icon: #a8782f; /* accent icon circles */

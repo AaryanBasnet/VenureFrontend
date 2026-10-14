@@ -13,7 +13,7 @@ import { useVenueDetails } from "../../hooks/user/useVenueDetails";
 import { useVenueSpaces } from "../../features/venues/hooks/useVenueSpaces";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
 import QuotationBuilder from "../../features/inquiry/components/QuotationBuilder";
-import { effectiveStatus, formatDate, shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { effectiveStatus, formatDate, serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { toWhatsAppNumber } from "../../features/venues/venueFormat";
 import { ErrorState, PageHeader, Panel, StatusPill } from "../../components/dashboard/ui";
@@ -104,8 +104,8 @@ export default function OwnerInquiryDetailPage() {
         <Panel title="Request details" className="self-start">
           <dl className="-my-3">
             <Row term="Date">
-              {formatDate(new Date(inquiry.preferredDate))}
-              <span className="block text-caption text-taupe-light">{bsLabel(inquiry.preferredDate)}</span>
+              {formatDate(serverDay(inquiry.preferredDate))}
+              <span className="block text-caption text-taupe">{bsLabel(serverDay(inquiry.preferredDate))}</span>
             </Row>
             <Row term="Shift">{inquiry.preferredShift ? shiftLabel(inquiry.preferredShift) : "Flexible"}</Row>
             <Row term="Space">{inquiry.space?.name ?? "Not chosen, you recommend"}</Row>

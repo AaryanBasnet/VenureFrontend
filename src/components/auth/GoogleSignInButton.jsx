@@ -106,7 +106,7 @@ export default function GoogleSignInButton() {
     <div ref={wrapperRef} className="relative h-[50px] flex-1">
       <div id={targetId} ref={targetRef} className="flex justify-center" />
       {(!ready || isPending) && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl border border-border bg-white font-body text-caption text-taupe-light">
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl border border-border bg-white font-body text-caption text-taupe">
           {isPending ? "Signing in…" : "Loading…"}
         </div>
       )}

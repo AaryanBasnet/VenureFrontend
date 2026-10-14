@@ -64,7 +64,7 @@ function useScrolledPast(threshold) {
  * - otherwise: solid ink bar in the normal document flow.
  */
 export default function SiteHeader({ overlay = false }) {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, loggingOut } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const scrolled = useScrolledPast(SOLID_AFTER_PX);
   const location = useLocation();
@@ -132,7 +132,7 @@ export default function SiteHeader({ overlay = false }) {
           {user && <NotificationBell userId={user._id} />}
           <div className="hidden items-center gap-5 lg:flex">
             {user ? (
-              <ProfileDropdown user={user} logout={logout} avatarUrl={user.avatar || null} />
+              <ProfileDropdown user={user} logout={logout} loggingOut={loggingOut} avatarUrl={user.avatar || null} />
             ) : (
               <Link to="/login" className={navLinkClass}>
                 Sign in
@@ -184,7 +184,7 @@ export default function SiteHeader({ overlay = false }) {
               Book a tour
             </Button>
             {user ? (
-              <Button variant="outline-light" onClick={logout}>
+              <Button variant="outline-light" onClick={logout} disabled={loggingOut}>
                 Sign out
               </Button>
             ) : (

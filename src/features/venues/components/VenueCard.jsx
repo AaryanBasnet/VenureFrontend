@@ -3,6 +3,7 @@ import { Heart, MapPin, Star, Users } from "lucide-react";
 import VenueImage from "./VenueImage";
 import { cloudinaryTransform, CARD_TRANSFORM } from "../../../utils/cloudinary";
 import { categoryLabel, cheapestPlatePrice, locationLine, priceFormatter } from "../venueFormat";
+import { plural } from "../../../utils/plural";
 
 export function VenueCardSkeleton() {
   return (
@@ -56,7 +57,7 @@ export default function VenueCard({ venue, isFavorite = false, onToggleFavorite,
             <span className="inline-flex items-center gap-1.5">
               <Users aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} />
               Up to {venue.maxCapacity} {venue.maxCapacity === 1 ? "guest" : "guests"}
-              {venue.spaceCount > 1 && <span className="text-taupe">· {venue.spaceCount} spaces</span>}
+              {venue.spaceCount > 1 && <span className="text-taupe">· {plural(venue.spaceCount, "space")}</span>}
             </span>
           ) : venue.maxCapacity === 0 ? (
             <span className="text-taupe">Spaces coming soon</span>

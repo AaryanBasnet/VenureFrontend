@@ -6,28 +6,8 @@ import { creds, login, missingCreds } from "./helpers.js";
 const PUBLIC = ["/", "/venues", "/about", "/contact", "/login", "/register", "/password-reset", "/unauthorized", "/no-such-page"];
 const SIGNED_IN = ["/favorites", "/my-bookings", "/my-inquiries", "/profile", "/chat"];
 
-// Pages known to fail a check today: the reason is the bug. Remove an entry when the page is fixed (the test then runs for real).
-const KNOWN = {
-  "main landmark": {
-    "/login": "the auth layout has no <main> landmark",
-    "/register": "the auth layout has no <main> landmark",
-    "/password-reset": "the reset flow has no <main> landmark",
-  },
-  "one h1": {
-    "/password-reset": "the reset flow has no <h1> (it starts at h2)",
-  },
-  "reflow at 640px": {
-    "/about": "the venue-type carousel (-mx-5 overflow-x list) is 20px wider than the window",
-  },
-  "reflow at 320px": {
-    "/contact": "the contact form column is 2px wider than a 320px window",
-  },
-  "tap targets": {
-    "/contact": "the email and phone links are 20px tall, under the 24px WCAG 2.2 minimum",
-    "/about": "the \"Explore all venues\" text link is 20px tall, under the 24px WCAG 2.2 minimum",
-    "/": "the \"Explore all venues\" text link is 20px tall, under the 24px WCAG 2.2 minimum",
-  },
-};
+// Pages known to fail a check today: the reason is the bug. Add an entry here (check name, then path) and the test is skipped with that reason.
+const KNOWN = {};
 
 const structure = () => {
   const visible = (el) => {

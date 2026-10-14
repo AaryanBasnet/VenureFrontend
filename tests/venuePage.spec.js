@@ -37,7 +37,7 @@ test("the photo viewer opens as a dialog, Escape closes it and focus returns to 
   await expect(photo).toBeFocused();
 });
 
-test("a signed-out visitor who asks for a date signs in and comes back to the venue, where the request now opens", async ({ page }) => {
+test("a signed-out visitor who asks for a date signs in and lands on the request form", async ({ page }) => {
   test.skip(missingCreds("customer"), "Set the E2E_* environment variables (see tests/helpers.js)");
   await openVenue(page, VENUE);
   const venuePath = new URL(page.url()).pathname;
@@ -47,8 +47,7 @@ test("a signed-out visitor who asks for a date signs in and comes back to the ve
   await page.fill('input[name="email"]', creds.customer.email);
   await page.fill('input[name="password"]', creds.customer.password);
   await page.getByRole("button", { name: /sign in/i }).first().click();
-  await expect(page).toHaveURL(new RegExp(`${venuePath}$`));
-  await page.getByRole("button", { name: /request a date/i }).first().click();
+  await expect(page).toHaveURL(new RegExp(`${venuePath}/inquire$`));
   await expect(page.getByRole("heading", { level: 1, name: "When is your event?" })).toBeVisible();
 });
 

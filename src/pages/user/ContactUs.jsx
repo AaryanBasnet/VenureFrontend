@@ -58,7 +58,7 @@ function DetailRow({ icon: Icon, label, children }) {
       </span>
       <div>
         <p className="font-body text-eyebrow uppercase text-taupe">{label}</p>
-        <div className="mt-1 font-body text-body text-ink">{children}</div>
+        <div className="font-body text-body text-ink">{children}</div>
       </div>
     </li>
   );
@@ -110,8 +110,8 @@ export default function ContactUs() {
   };
 
   const details = [
-    contactDetails.email && { icon: Mail, label: "Email", node: <a href={`mailto:${contactDetails.email}`} className="underline underline-offset-4 hover:text-gold-800">{contactDetails.email}</a> },
-    contactDetails.phone && { icon: Phone, label: "Phone", node: <a href={`tel:${contactDetails.phone.replace(/[^\d+]/g, "")}`} className="underline underline-offset-4 hover:text-gold-800">{contactDetails.phone}</a> },
+    contactDetails.email && { icon: Mail, label: "Email", node: <a href={`mailto:${contactDetails.email}`} className="inline-flex min-h-11 items-center break-all underline underline-offset-4 hover:text-gold-800">{contactDetails.email}</a> },
+    contactDetails.phone && { icon: Phone, label: "Phone", node: <a href={`tel:${contactDetails.phone.replace(/[^\d+]/g, "")}`} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-gold-800">{contactDetails.phone}</a> },
     contactDetails.address && { icon: MapPin, label: "Visit", node: contactDetails.address },
     contactDetails.hours && { icon: Clock, label: "Hours", node: contactDetails.hours },
   ].filter(Boolean);
@@ -171,7 +171,7 @@ export default function ContactUs() {
                 <Field id="c-phone" label="Phone (optional)" error={errors.phone}>
                   <input {...control("c-phone", "phone")} type="tel" autoComplete="tel" placeholder="98XXXXXXXX" />
                 </Field>
-                <div className="grid grid-cols-[3fr_2fr] gap-4">
+                <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-4">
                   <Field id="c-date" label="Event date">
                     <input {...control("c-date", "date")} type="date" min={new Date().toISOString().slice(0, 10)} />
                   </Field>

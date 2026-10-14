@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import LoadingPage from "../components/LoadingPage";
 import TitleManager from "./TitleManager";
+import RouterBridge from "./RouterBridge";
 import AdminLayout from "../layouts/AdminLayout";
 import OwnerLayout from "../layouts/OwnerLayout";
 
@@ -22,6 +23,8 @@ const RegisterPage = lazy(() => import("../pages/RegisterPage"));
 const LandingPage = lazy(() => import("../pages/user/LandingPage"));
 const EsewaReturnPage = lazy(() => import("../pages/user/EsewaReturnPage"));
 const AboutUs = lazy(() => import("../pages/user/AboutUs"));
+const TermsPage = lazy(() => import("../pages/user/TermsPage"));
+const PrivacyPage = lazy(() => import("../pages/user/PrivacyPage"));
 const ContactUs = lazy(() => import("../pages/user/ContactUs"));
 const VenuesPage = lazy(() => import("../pages/user/VenuesPage"));
 const FavoritesPage = lazy(() => import("../pages/user/FavoritesPage"));
@@ -69,6 +72,7 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <TitleManager />
+      <RouterBridge />
       <Suspense fallback={<LoadingPage />}>
         <Routes>
           {/* Public pages accessible by all (no guard) */}
@@ -76,6 +80,8 @@ export default function AppRouter() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/contact" element={<ContactUs />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
             {/* Testimonials were replaced by reviews of completed bookings */}
             <Route path="/testimonial" element={<Navigate to="/my-bookings" replace />} />
           </Route>

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Grid2x2, X } from "lucide-react";
 import { Eyebrow } from "../../../components/ui/SectionHeading";
 import { cloudinaryTransform, GALLERY_TRANSFORM } from "../../../utils/cloudinary";
 import VenueImage from "../components/VenueImage";
+import { plural } from "../../../utils/plural";
 
 const FULL_TRANSFORM = "f_auto,q_auto,w_1600,c_limit";
 const SWIPE_DISTANCE = 50;
@@ -172,7 +173,7 @@ export default function VenueGallery({ images = [], venueName = "Venue" }) {
               onClick={() => setOpen(0)}
               className="inline-flex min-h-11 items-center gap-2 font-body text-small text-ink hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
-              <Grid2x2 aria-hidden="true" className="size-4" /> View all {total} photos
+              <Grid2x2 aria-hidden="true" className="size-4" /> View all {plural(total, "photo")}
             </button>
           )}
         </div>

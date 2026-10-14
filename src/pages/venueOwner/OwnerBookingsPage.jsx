@@ -3,13 +3,15 @@ import { CalendarDays, Phone } from "lucide-react";
 import { toast } from "react-toastify";
 import { apiError } from "../../features/inquiry/hooks/useInquiries";
 import { useCancelBookingNow, useCompleteBooking, useOwnerBookingList, useSettleBalance } from "../../features/bookings/hooks/useBookings";
-import { shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { toWhatsAppNumber } from "../../features/venues/venueFormat";
 import { EmptyState, ErrorState, PageHeader, RowsSkeleton, StatusPill } from "../../components/dashboard/ui";
 import { btnDanger, btnOutline, btnPrimary, npr } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
 import Select from "../../components/ui/Select";
+import { plural } from "../../utils/plural";
+import { useRovingTabs } from "../../hooks/useRovingTabs";
 
 const TABS = [
   { id: "upcoming", label: "Upcoming", match: (s) => s === "confirmed" || s === "pending_deposit", empty: "When a customer pays a deposit, the booking appears here." },
@@ -17,7 +19,7 @@ const TABS = [
   { id: "cancelled", label: "Cancelled", match: (s) => s === "cancelled", empty: "No cancelled bookings." },
 ];
 const METHODS = ["Cash", "Bank transfer", "eSewa", "Khalti", "Other"];
-const day = (d) => new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+const day = (d) => serverDay(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 const chip =
   "inline-flex items-center gap-1.5 rounded-full border border-ink px-3 py-1.5 font-body text-caption text-ink transition-colors hover:bg-ink hover:text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 const linkBtn =
@@ -54,9 +56,9 @@ function BookingCard({ booking }) {
             {booking.customer?.name ?? booking.contactName} <span className="text-taupe">· {booking.venue?.venueName}</span>
           </p>
           <p className="mt-1 font-body text-caption text-taupe">
-            {day(booking.startTime)} <span className="text-taupe-light">({bsLabel(booking.startTime)})</span>
+            {day(booking.startTime)} <span className="text-taupe">({bsLabel(serverDay(booking.startTime))})</span>
             {booking.shift ? ` · ${shiftLabel(booking.shift)}` : ""}
-            {booking.space?.name ? ` · ${booking.space.name}` : ""} · {booking.numberOfGuests} guests · {booking.eventType}
+            {booking.space?.name ? ` · ${booking.space.name}` : ""} · {plural(booking.numberOfGuests, "guest")} · {booking.eventType}
           </p>
         </div>
         <StatusPill status={booking.status} />
@@ -144,9 +146,13 @@ function BookingCard({ booking }) {
   );
 }
 
+const TAB_IDS = TABS.map((t) => t.id);
+const tabDomId = (id) => `btab-${id}`;
+
 export default function OwnerBookingsPage() {
   const { data: bookings = [], isPending, isError, refetch } = useOwnerBookingList();
   const [tab, setTab] = useState("upcoming");
+  const roving = useRovingTabs({ ids: TAB_IDS, selected: tab, onSelect: setTab, idFor: tabDomId });
   const current = TABS.find((t) => t.id === tab);
   const shown = bookings.filter((b) => current.match(b.status)).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
@@ -158,17 +164,13 @@ export default function OwnerBookingsPage() {
         description="Confirmed events. The deposit is paid online; you collect the balance from the customer directly and record it here."
       />
 
-      <div role="tablist" aria-label="Booking status" className="mb-6 flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Booking status" {...roving.listProps} className="mb-6 flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
             key={t.id}
-            id={`btab-${t.id}`}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
+            {...roving.tabProps(t.id)}
             aria-controls="booking-panel"
-            onClick={() => setTab(t.id)}
-            className={`rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+            className={`min-h-11 rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
               tab === t.id ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"
             }`}
           >

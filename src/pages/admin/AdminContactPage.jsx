@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton } from "../../c
 import { btnOutline, btnPrimary, shortDate } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
 import useGetContact from "../../hooks/useGetContact";
+import { plural } from "../../utils/plural";
 
 const PER_PAGE = 10;
 
@@ -152,7 +153,7 @@ export default function AdminContactPage() {
         {filtered.length > PER_PAGE && (
           <nav aria-label="Message pages" className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-6 py-4">
             <p className="font-body text-caption text-taupe" aria-live="polite">
-              Page {page} of {pages} · {filtered.length} messages
+              Page {page} of {pages} · {plural(filtered.length, "message")}
             </p>
             <div className="flex gap-2">
               <button type="button" className={btnOutline} disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>

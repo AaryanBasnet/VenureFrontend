@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { apiError, useCreateQuotation } from "../hooks/useInquiries";
 import { SHIFT_OPTIONS } from "../inquiryOptions";
 import { btnPrimary, npr } from "../../../components/dashboard/styles";
 import Select from "../../../components/ui/Select";
+import { plural } from "../../../utils/plural";
 
 const field =
-  "w-full rounded-card-sm border border-border-strong bg-paper-white px-3 py-2.5 font-body text-small text-ink placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink";
+  "w-full rounded-card-sm border border-border-strong bg-paper-white px-3 py-2.5 font-body text-small text-ink placeholder:text-taupe focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink";
 const lab = "mb-1.5 block font-body text-eyebrow uppercase text-taupe";
 const seg = (on) =>
   `rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
@@ -46,6 +48,8 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
 
+  const noSpaces = spaces.length === 0;
+
   const total = useMemo(() => items.reduce((sum, i) => sum + lineAmount(i, guests), 0), [items, guests]);
   const deposit = depositType === "percentage" ? Math.round(total * (Number(depositValue) / 100)) : Number(depositValue) || 0;
   const setItem = (i, patch) => setItems((list) => list.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
@@ -61,7 +65,7 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
     const space = spaces.find((s) => s._id === spaceId);
     const clean = items.filter((i) => i.label.trim());
     if (!space) return setError("Choose the space you are quoting.");
-    if (Number(guests) > space.capacity) return setError(`${space.name} holds up to ${space.capacity} guests.`);
+    if (Number(guests) > space.capacity) return setError(`${space.name} holds up to ${plural(space.capacity, "guest")}.`);
     if (clean.length === 0) return setError("Add at least one line item.");
     if (clean.some((i) => i.unitPrice === "" || Number(i.unitPrice) < 0)) return setError("Give every line item a price (0 or more).");
     if (total <= 0) return setError("The total must be more than zero.");
@@ -95,6 +99,15 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
       </div>
 
       <div className="space-y-8 p-6">
+        {noSpaces && (
+          <div role="alert" className="rounded-card-md border border-gold-200 bg-gold-50 p-4 font-body text-small text-ink">
+            <p className="font-medium">Add a hall or space to this venue first.</p>
+            <p className="mt-1 text-taupe">A quotation is for a specific space, and this venue has none yet.</p>
+            <Link to="/owner/venues" className="mt-3 inline-flex min-h-11 items-center rounded-full border border-ink px-5 font-medium text-ink hover:bg-ink hover:text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+              Go to my venues
+            </Link>
+          </div>
+        )}
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor="q-space" className={lab}>Space</label>
@@ -143,7 +156,7 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
                   </label>
                   <div className="flex items-center gap-3">
                     <p className="font-body text-small text-ink">
-                      {it.perGuest && <span className="mr-2 text-caption text-taupe">x {Number(guests) || 0} guests</span>}
+                      {it.perGuest && <span className="mr-2 text-caption text-taupe">x {plural(Number(guests) || 0, "guest")}</span>}
                       <span className="font-medium">{npr(lineAmount(it, guests))}</span>
                     </p>
                     <button
@@ -212,7 +225,7 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
         {error && <p role="alert" className="rounded-card-md border border-red-300 bg-red-50 p-3 font-body text-small text-red-700">{error}</p>}
 
         <div className="flex flex-wrap items-center gap-4">
-          <button type="submit" disabled={create.isPending} className={`${btnPrimary} px-8 py-3`}>
+          <button type="submit" disabled={create.isPending || noSpaces} className={`${btnPrimary} px-8 py-3`}>
             {create.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />} Send quotation
           </button>
           <p className="font-body text-caption text-taupe">Total {npr(total)}, deposit {npr(deposit)}</p>

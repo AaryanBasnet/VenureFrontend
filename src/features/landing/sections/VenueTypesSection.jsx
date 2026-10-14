@@ -27,7 +27,7 @@ export default function VenueTypesSection() {
 
         {/* Mobile/tablet: horizontal scroll-snap row. Desktop: flex row with hover expansion. */}
         <ul
-          className="group/row -mx-5 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 sm:-mx-10 sm:scroll-px-10 sm:px-10 lg:mx-0 lg:overflow-visible lg:px-0 lg:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="group/row -mx-5 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 md:-mx-10 md:scroll-px-10 md:px-10 lg:mx-0 lg:overflow-visible lg:px-0 lg:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {venueTypes.map((type) => (
             <VenueTypeCard

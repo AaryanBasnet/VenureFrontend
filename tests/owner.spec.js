@@ -49,8 +49,7 @@ test("the inquiry tabs switch panels and expose their counts", async ({ page }) 
   await expect(page.getByRole("tabpanel")).toBeVisible();
 });
 
-// Known product bug (owner area): role="tab" buttons do not respond to the arrow keys, so a keyboard user must Tab through every tab.
-test.fixme("the inquiry tabs move with the arrow keys", async ({ page }) => {
+test("the inquiry tabs move with the arrow keys", async ({ page }) => {
   await page.goto("/owner/inquiries");
   const tabs = page.getByRole("tablist", { name: "Request status" });
   await tabs.getByRole("tab", { name: /^Waiting for customer/ }).focus();

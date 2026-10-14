@@ -226,7 +226,7 @@ export default function Select({
         onBlur={(e) => {
           if (!listRef.current?.contains(e.relatedTarget)) onBlur?.({ target: { name, id, value: current }, type: "blur" });
         }}
-        className={`${className} flex items-center justify-between gap-3 pr-4 text-left ${showsPlaceholder ? "text-taupe-light" : ""} ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+        className={`${className} flex items-center justify-between gap-3 pr-4 text-left ${showsPlaceholder ? "text-taupe" : ""} ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
       >
         <span className="min-w-0 flex-1 truncate">{selected?.label ?? ""}</span>
         <ChevronDown aria-hidden="true" className={`size-4 shrink-0 text-taupe transition-transform duration-200 ${open ? "rotate-180" : ""}`} strokeWidth={1.5} />
@@ -280,7 +280,7 @@ export default function Select({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => commit(i)}
                   className={`flex min-h-11 items-center justify-between gap-3 px-4 py-2.5 font-body text-body ${
-                    o.disabled ? "cursor-not-allowed text-taupe-light" : "cursor-pointer text-charcoal"
+                    o.disabled ? "cursor-not-allowed text-taupe/70" : "cursor-pointer text-charcoal"
                   } ${i === active && !o.disabled ? "bg-sand" : ""} ${isSelected ? "font-medium" : ""}`}
                 >
                   <span className="min-w-0 truncate">{o.label}</span>

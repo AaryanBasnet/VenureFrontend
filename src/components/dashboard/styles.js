@@ -1,9 +1,11 @@
+import { serverDay } from "../../features/inquiry/inquiryOptions";
 // Formatting helpers and button classes shared by the owner pages.
 
 export const npr = (n) => `NPR ${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
 
 const dateFmt = { day: "numeric", month: "short", year: "numeric" };
-export const shortDate = (d) => (d ? new Date(d).toLocaleDateString("en-GB", dateFmt) : "");
+// Dates belong to Nepal: show the Kathmandu calendar day whatever time zone the device is in.
+export const shortDate = (d) => (d ? serverDay(d).toLocaleDateString("en-GB", dateFmt) : "");
 
 // Buttons for owner screens (same pill language as the customer site, a little smaller).
 export const btnPrimary =

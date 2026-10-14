@@ -7,7 +7,7 @@ import { assetUrl } from "../../utils/assetUrl";
 import { useMenu } from "../../hooks/useMenu";
 
 // Account menu in the site header: avatar button that opens a short list of the account's pages.
-const ProfileDropdown = ({ user, logout, avatarUrl }) => {
+const ProfileDropdown = ({ user, logout, loggingOut = false, avatarUrl }) => {
   const { open, close, toggle, rootRef, buttonRef, onKeyDown, panelId } = useMenu();
   const links = accountLinksFor(user);
   const photo = assetUrl(avatarUrl);
@@ -59,14 +59,15 @@ const ProfileDropdown = ({ user, logout, avatarUrl }) => {
             <button
               type="button"
               data-menu-item
-              onClick={() => {
+              disabled={loggingOut}
+              onClick={async () => {
+                await logout(); // the menu stays open, showing "Signing out", until the server has ended the session
                 close();
-                logout();
               }}
-              className="flex w-full items-center gap-3 border-t border-line px-5 py-3 font-body text-small text-taupe hover:bg-sand hover:text-ink focus-visible:bg-sand focus-visible:outline-none"
+              className="flex w-full items-center gap-3 border-t border-line px-5 py-3 font-body text-small text-taupe hover:bg-sand hover:text-ink disabled:opacity-60 focus-visible:bg-sand focus-visible:outline-none"
             >
               <LogOut aria-hidden="true" className="size-4" strokeWidth={1.5} />
-              Sign out
+              {loggingOut ? "Signing out…" : "Sign out"}
             </button>
           </motion.div>
         )}
