@@ -1,443 +1,212 @@
-import React, { useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
-import {
-  TrendingUp,
-  Users,
-  Banknote,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Download,
-  Eye,
-  CheckCircle,
-  XCircle,
-  Clock,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Banknote, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Landmark, Wallet } from "lucide-react";
+import MonthlyEarningsChart from "../../components/owner/MonthlyEarningsChart";
+import { EmptyState, ErrorState, PageHeader, Panel, Pill, RowsSkeleton, Stat } from "../../components/owner/ui";
+import { btnOutline, npr, shortDate } from "../../components/owner/ownerStyles";
+import { bsLabel } from "../../features/inquiry/bsCalendar";
+import { shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { useGetMonthlyEarningsForOwner } from "../../hooks/owner/useGetMonthlyEarningForOwner";
 import useOwnerBookings from "../../hooks/owner/useOwnerBookings";
-import { Calendar } from "lucide-react";
-const ITEMS_PER_PAGE = 5;
+
+const PER_PAGE = 8;
+// Bookings where the customer has paid the eSewa deposit.
+const PAID = ["confirmed", "completed"];
+
+const FILTERS = [
+  { id: "all", label: "All", match: () => true },
+  { id: "due", label: "Balance due", match: (b) => !b.balanceSettled },
+  { id: "settled", label: "Balance settled", match: (b) => b.balanceSettled },
+];
+
+const sum = (rows, key) => rows.reduce((s, b) => s + (Number(b[key]) || 0), 0);
+
+function BalancePill({ booking }) {
+  return booking.balanceSettled ? (
+    <div>
+      <Pill tone="success">Settled</Pill>
+      {booking.balanceSettledMethod && <p className="mt-1 max-w-56 font-body text-caption text-taupe">{booking.balanceSettledMethod}</p>}
+    </div>
+  ) : (
+    <Pill tone="gold">Due at the venue</Pill>
+  );
+}
+
+function Who({ b }) {
+  return (
+    <>
+      {b.customer?.name ?? b.contactName ?? "Customer"} · {shortDate(b.startTime)} <span className="text-taupe-light">({bsLabel(b.startTime)})</span>
+      {b.shift ? ` · ${shiftLabel(b.shift)}` : ""}
+    </>
+  );
+}
 
 export default function OwnerPaymentPage() {
-  const { data: bookings = [], isLoading: loadingBookings } =
-    useOwnerBookings();
-  const { data: earnings = [], isLoading: loadingEarnings } =
-    useGetMonthlyEarningsForOwner();
+  const bookings = useOwnerBookings();
+  const earnings = useGetMonthlyEarningsForOwner();
+  const [filter, setFilter] = useState("all");
+  const [page, setPage] = useState(1);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // Only events whose deposit was paid count as money coming to the owner.
+  const paid = useMemo(() => (bookings.data ?? []).filter((b) => PAID.includes(b.status)), [bookings.data]);
+  const deposits = sum(paid, "depositAmount");
+  const settled = sum(paid.filter((b) => b.balanceSettled), "balanceAmount");
+  const due = sum(paid.filter((b) => !b.balanceSettled), "balanceAmount");
+  const waitingDeposit = (bookings.data ?? []).filter((b) => b.status === "pending_deposit").length;
 
-  const totalBookings = bookings.length;
-  const totalEarnings =
-    earnings?.reduce((sum, month) => sum + month.totalEarnings, 0) || 0;
-  const approvedBookings = bookings.filter(
-    (b) => b.status === "approved"
-  ).length;
-  const avgEarnings = Math.round(totalEarnings / earnings.length);
-
-  const totalPages = Math.ceil(bookings.length / ITEMS_PER_PAGE);
-  const paginatedBookings = bookings.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const handlePageChange = (direction) => {
-    if (direction === "prev" && currentPage > 1) {
-      setCurrentPage((p) => p - 1);
-    } else if (direction === "next" && currentPage < totalPages) {
-      setCurrentPage((p) => p + 1);
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "approved":
-        return <CheckCircle className="w-4 h-4" />;
-      case "cancelled":
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "approved":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      case "cancelled":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-amber-100 text-amber-800 border-amber-200";
-    }
-  };
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="font-medium text-gray-900">{`${label}`}</p>
-          <p className="text-indigo-600 font-semibold">
-            {`NPR ${payload[0].value.toLocaleString()}`}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  const rows = useMemo(() => {
+    const f = FILTERS.find((x) => x.id === filter);
+    return paid.filter(f.match).sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+  }, [paid, filter]);
+  const pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+  const current = Math.min(page, pages);
+  const visible = rows.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const year = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Payment Dashboard
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Track your earnings and manage bookings
-            </p>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        eyebrow="Payments"
+        title="Deposits and balances"
+        description="Customers pay a deposit online through eSewa. The rest is paid to you at the venue, in cash or by bank transfer, and you record it on the Bookings page."
+        actions={
+          <Link to="/owner/bookings" className={btnOutline}>
+            Record a balance
+          </Link>
+        }
+      />
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-indigo-100 text-sm font-medium">
-                  Total Bookings
-                </p>
-                <h2 className="text-3xl font-bold mt-1">{totalBookings}</h2>
-                
-              </div>
-              <div className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
-                <Calendar className="w-6 h-6 text-purple-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-500 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-emerald-100 text-sm font-medium">
-                  Total Earnings
-                </p>
-                <h2 className="text-3xl font-bold mt-1">
-                  NPR {totalEarnings.toLocaleString()}
-                </h2>
-                <p className="text-emerald-100 text-xs mt-2">
-                  this month
-                </p>
-              </div>
-              <div className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
-                <Banknote className="w-6 h-6 text-green-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm font-medium">Approved</p>
-                <h2 className="text-3xl font-bold mt-1">{approvedBookings}</h2>
-                <p className="text-orange-100 text-xs mt-2">
-                  approval 
-                </p>
-              </div>
-              <div className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
-                <Users className="w-6 h-6 text-orange-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-500 p-6 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-violet-100 text-sm font-medium">
-                  Avg Monthly
-                </p>
-                <h2 className="text-3xl font-bold mt-1">
-                  NPR {avgEarnings.toLocaleString()}
-                </h2>
-                <p className="text-violet-100 text-xs mt-2">
-                  Consistent growth
-                </p>
-              </div>
-              <div className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Bar Chart */}
-        <div className="bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/20">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">
-                Monthly Earnings
-              </h3>
-              <p className="text-gray-600 text-sm mt-1">
-                Track your revenue over time
-              </p>
-            </div>
-            
-          </div>
-          {loadingEarnings ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart
-                data={earnings}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.6} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#e5e7eb"
-                  strokeOpacity={0.5}
-                />
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#6b7280", fontSize: 12 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#6b7280", fontSize: 12 }}
-                  tickFormatter={(value) => `NPR ${value / 1000}k`}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  dataKey="totalEarnings"
-                  fill="url(#barGradient)"
-                  radius={[6, 6, 0, 0]}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-
-        {/* Enhanced Bookings Table */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
-          <div className="p-8 pb-0">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Recent Bookings
-                </h3>
-                <p className="text-gray-600 text-sm mt-1">
-                  Manage your venue bookings and payments
-                </p>
-              </div>
-              
-            </div>
-          </div>
-
-          {loadingBookings ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50/50 border-y border-gray-200/50">
-                      <th className="text-left p-6 text-sm font-semibold text-gray-900">
-                        Customer
-                      </th>
-                      <th className="text-left p-6 text-sm font-semibold text-gray-900">
-                        Venue
-                      </th>
-                      <th className="text-left p-6 text-sm font-semibold text-gray-900">
-                        Date
-                      </th>
-                      <th className="text-left p-6 text-sm font-semibold text-gray-900">
-                        Amount
-                      </th>
-                      <th className="text-left p-6 text-sm font-semibold text-gray-900">
-                        Payment
-                      </th>
-                      <th className="text-left p-6 text-sm font-semibold text-gray-900">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedBookings.map((booking, index) => (
-                      <tr
-                        key={booking._id}
-                        className={`border-b border-gray-100 hover:bg-indigo-50/30 transition-all duration-200 ${
-                          index % 2 === 0 ? "bg-white/50" : "bg-gray-50/30"
-                        }`}
-                      >
-                        <td className="p-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold text-sm">
-                              {booking.customer?.name?.charAt(0) || "N"}
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {booking.customer?.name || "N/A"}
-                              </p>
-                              <p className="text-xs text-gray-500">Customer</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-6">
-                          <p className="font-medium text-gray-900">
-                            {booking.venue?.venueName || "N/A"}
-                          </p>
-                          <p className="text-xs text-gray-500">Venue booking</p>
-                        </td>
-                        <td className="p-6">
-                          <p className="font-medium text-gray-900">
-                            {new Date(booking.bookingDate).toLocaleDateString(
-                              "en-IN",
-                              {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              }
-                            )}
-                          </p>
-                          <p className="text-xs text-gray-500">Booking date</p>
-                        </td>
-                        <td className="p-6">
-                          <p className="font-bold text-gray-900">
-                            NPR {booking.totalPrice?.toLocaleString()}
-                          </p>
-                          <p className="text-xs text-gray-500">Total amount</p>
-                        </td>
-                        <td className="p-6">
-                          <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium border ${
-                              booking.paymentDetails?.status === "completed"
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-amber-50 text-amber-700 border-amber-200"
-                            }`}
-                          >
-                            {booking.paymentDetails?.status || "N/A"}
-                          </span>
-                        </td>
-                        <td className="p-6">
-                          <span
-                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border ${getStatusColor(
-                              booking.status
-                            )}`}
-                          >
-                            {getStatusIcon(booking.status)}
-                            {booking.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {bookings.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan="6"
-                          className="text-center text-gray-500 p-12"
-                        >
-                          <div className="flex flex-col items-center gap-2">
-                            <Calendar className="w-12 h-12 text-gray-300" />
-                            <p className="font-medium">No bookings available</p>
-                            <p className="text-sm">
-                              Bookings will appear here once customers start
-                              booking your venues
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Enhanced Pagination */}
-              {bookings.length > ITEMS_PER_PAGE && (
-                <div className="flex justify-between items-center p-6 bg-gray-50/50 border-t border-gray-200/50">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span>Showing</span>
-                    <span className="font-medium text-gray-900">
-                      {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
-                      {Math.min(currentPage * ITEMS_PER_PAGE, bookings.length)}
-                    </span>
-                    <span>of</span>
-                    <span className="font-medium text-gray-900">
-                      {bookings.length}
-                    </span>
-                    <span>bookings</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handlePageChange("prev")}
-                      disabled={currentPage === 1}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                        currentPage === 1
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-white text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 shadow-sm border border-gray-200"
-                      }`}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      Previous
-                    </button>
-                    <div className="flex items-center gap-1">
-                      {[...Array(totalPages)].map((_, index) => (
-                        <button
-                          key={index + 1}
-                          onClick={() => setCurrentPage(index + 1)}
-                          className={`w-10 h-10 rounded-lg font-medium text-sm transition-all ${
-                            currentPage === index + 1
-                              ? "bg-indigo-600 text-white shadow-sm"
-                              : "bg-white text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 border border-gray-200"
-                          }`}
-                        >
-                          {index + 1}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => handlePageChange("next")}
-                      disabled={currentPage === totalPages}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
-                        currentPage === totalPages
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-white text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 shadow-sm border border-gray-200"
-                      }`}
-                    >
-                      Next
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat label="Deposits received (eSewa)" value={npr(deposits)} hint="Confirmed and completed events" icon={Wallet} loading={bookings.isPending} />
+        <Stat label="Balance due at the venue" value={npr(due)} hint="Still to collect from customers" icon={Landmark} to="/owner/bookings" loading={bookings.isPending} />
+        <Stat label="Balance settled" value={npr(settled)} hint="Recorded as received" icon={CircleCheck} loading={bookings.isPending} />
+        <Stat label="Waiting for a deposit" value={waitingDeposit} hint="Not counted above until paid" icon={CalendarDays} loading={bookings.isPending} />
       </div>
-    </div>
+
+      <Panel title="Booked value by month" description={`${year}, full event price of confirmed and completed events`} className="mt-6">
+        {earnings.isError ? (
+          <ErrorState onRetry={earnings.refetch} />
+        ) : earnings.isPending ? (
+          <div role="status" aria-label="Loading" className="h-64 animate-pulse rounded-card-sm bg-gold-100" />
+        ) : (
+          <>
+            <div className="h-64" aria-hidden="true">
+              <MonthlyEarningsChart data={earnings.data ?? []} />
+            </div>
+            <table className="sr-only">
+              <caption>Booked value by month</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Month</th>
+                  <th scope="col">Booked value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(earnings.data ?? []).map((m) => (
+                  <tr key={m.month}>
+                    <th scope="row">{m.month}</th>
+                    <td>{npr(m.totalEarnings)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </Panel>
+
+      <Panel title="Payments by event" description="One row per event with a paid deposit" bodyClassName="p-0" className="mt-6">
+        <div role="group" aria-label="Filter by balance" className="flex flex-wrap gap-2 border-b border-line px-6 py-4">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={filter === f.id}
+              onClick={() => {
+                setFilter(f.id);
+                setPage(1);
+              }}
+              className={`rounded-full border px-4 py-1.5 font-body text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                filter === f.id ? "border-ink bg-ink text-gold-50" : "border-border-strong text-ink hover:border-ink"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {bookings.isPending ? (
+          <RowsSkeleton rows={4} />
+        ) : bookings.isError ? (
+          <ErrorState onRetry={bookings.refetch} />
+        ) : rows.length === 0 ? (
+          <EmptyState icon={Banknote} title={paid.length ? "Nothing in this view" : "No payments yet"}>
+            {paid.length ? "Try another filter." : "Once a customer pays a deposit, the event and its balance show up here."}
+          </EmptyState>
+        ) : (
+          <>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-line font-body text-eyebrow uppercase text-taupe">
+                    <th scope="col" className="px-6 py-3 font-normal">Event</th>
+                    <th scope="col" className="px-3 py-3 font-normal">Total</th>
+                    <th scope="col" className="px-3 py-3 font-normal">Deposit (eSewa)</th>
+                    <th scope="col" className="px-3 py-3 font-normal">Balance</th>
+                    <th scope="col" className="px-6 py-3 font-normal">Balance status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line font-body text-small text-ink">
+                  {visible.map((b) => (
+                    <tr key={b._id}>
+                      <td className="px-6 py-4">
+                        <p className="max-w-64 truncate text-body">{b.venue?.venueName ?? "Venue"}</p>
+                        <p className="mt-0.5 text-caption text-taupe"><Who b={b} /></p>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4">{npr(b.totalPrice)}</td>
+                      <td className="whitespace-nowrap px-3 py-4">{npr(b.depositAmount)}</td>
+                      <td className="whitespace-nowrap px-3 py-4">{npr(b.balanceAmount)}</td>
+                      <td className="px-6 py-4"><BalancePill booking={b} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <ul className="divide-y divide-line md:hidden">
+              {visible.map((b) => (
+                <li key={b._id} className="px-6 py-4">
+                  <p className="truncate font-body text-body text-ink">{b.venue?.venueName ?? "Venue"}</p>
+                  <p className="mt-0.5 font-body text-caption text-taupe"><Who b={b} /></p>
+                  <dl className="mt-3 grid grid-cols-3 gap-2 font-body text-caption">
+                    <div><dt className="text-taupe">Total</dt><dd className="text-ink">{npr(b.totalPrice)}</dd></div>
+                    <div><dt className="text-taupe">Deposit</dt><dd className="text-ink">{npr(b.depositAmount)}</dd></div>
+                    <div><dt className="text-taupe">Balance</dt><dd className="text-ink">{npr(b.balanceAmount)}</dd></div>
+                  </dl>
+                  <div className="mt-3"><BalancePill booking={b} /></div>
+                </li>
+              ))}
+            </ul>
+
+            {pages > 1 && (
+              <nav aria-label="Payments pages" className="flex items-center justify-between gap-3 border-t border-line px-6 py-4">
+                <button type="button" className={btnOutline} disabled={current === 1} onClick={() => setPage(current - 1)}>
+                  <ChevronLeft aria-hidden="true" className="size-4" /> Previous
+                </button>
+                <span className="font-body text-caption text-taupe">
+                  Page {current} of {pages}
+                </span>
+                <button type="button" className={btnOutline} disabled={current === pages} onClick={() => setPage(current + 1)}>
+                  Next <ChevronRight aria-hidden="true" className="size-4" />
+                </button>
+              </nav>
+            )}
+          </>
+        )}
+      </Panel>
+
+      <p className="mt-4 font-body text-caption text-taupe">
+        If a booking is cancelled, Venure pays any eSewa refund back to the customer by hand. Cancelled events are not counted above.
+      </p>
+    </>
   );
 }

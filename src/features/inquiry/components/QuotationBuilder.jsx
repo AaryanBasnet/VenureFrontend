@@ -2,20 +2,35 @@ import { useMemo, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { apiError, useCreateQuotation } from "../hooks/useInquiries";
 import { SHIFT_OPTIONS } from "../inquiryOptions";
-import { priceFormatter } from "../../venues/venueFormat";
+import { btnPrimary, npr } from "../../../components/owner/ownerStyles";
 
-const field = "w-full rounded-card-sm border border-border-strong bg-white px-3 py-2 font-body text-small text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink";
-const lab = "mb-1 block font-body text-eyebrow uppercase text-taupe";
-const npr = (n) => `NPR ${priceFormatter.format(Math.round(n))}`;
+const field =
+  "w-full rounded-card-sm border border-border-strong bg-paper-white px-3 py-2.5 font-body text-small text-ink placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink";
+const lab = "mb-1.5 block font-body text-eyebrow uppercase text-taupe";
+const seg = (on) =>
+  `rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+    on ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"
+  }`;
 
-// Starting rows: the food package the customer asked for (if the message names one) and venue hire.
+const blankItem = (patch = {}) => ({ label: "", unitPrice: "", quantity: 1, perGuest: false, ...patch });
+
+// Starting rows: venue hire, and the food package the customer asked for (if the message names one).
 function initialItems(inquiry, venue) {
   const named = venue?.packages?.find((p) => inquiry.message?.includes(`Menu preference: ${p.name}`));
   return [
-    { label: "Venue hire", unitPrice: "", quantity: 1, perGuest: false },
-    ...(named ? [{ label: `${named.name} menu`, unitPrice: String(named.pricePerPlate), quantity: 1, perGuest: true }] : []),
+    blankItem({ label: "Venue hire" }),
+    ...(named ? [blankItem({ label: `${named.name} menu`, unitPrice: String(named.pricePerPlate), perGuest: true })] : []),
   ];
 }
+
+const QUICK_ADD = [
+  { text: "Food per plate", item: { label: "Food", perGuest: true } },
+  { text: "Decoration", item: { label: "Decoration" } },
+  { text: "Sound and lights", item: { label: "Sound and lights" } },
+];
+
+// Same maths as the server: quantity x unit price, times the guest count when charged per guest.
+const lineAmount = (i, guests) => (Number(i.unitPrice) || 0) * (Number(i.quantity) || 1) * (i.perGuest ? Number(guests) || 0 : 1);
 
 // The owner's reply to an inquiry. Totals here are a preview; the server recomputes every amount.
 export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
@@ -30,12 +45,15 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
 
-  const total = useMemo(
-    () => items.reduce((sum, i) => sum + (Number(i.unitPrice) || 0) * (Number(i.quantity) || 1) * (i.perGuest ? Number(guests) || 0 : 1), 0),
-    [items, guests]
-  );
+  const total = useMemo(() => items.reduce((sum, i) => sum + lineAmount(i, guests), 0), [items, guests]);
   const deposit = depositType === "percentage" ? Math.round(total * (Number(depositValue) / 100)) : Number(depositValue) || 0;
   const setItem = (i, patch) => setItems((list) => list.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+
+  const chooseDepositType = (type) => {
+    if (type === depositType) return;
+    setDepositType(type);
+    setDepositValue(type === "percentage" ? 20 : "");
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -69,91 +87,136 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
   };
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-6 rounded-card-lg border border-line bg-white p-6">
-      <div>
+    <form onSubmit={submit} noValidate className="rounded-card-lg border border-line bg-white">
+      <div className="border-b border-line px-6 py-4">
         <h2 className="font-display text-h4 font-light text-ink">{inquiry.currentQuotation ? "Send a new quotation" : "Reply with a quotation"}</h2>
-        <p className="mt-1 font-body text-caption text-taupe">The customer has 7 days to accept. A new quotation replaces the one before it.</p>
+        <p className="mt-0.5 font-body text-caption text-taupe">The customer has 7 days to accept. A new quotation replaces the one before it.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <label htmlFor="q-space" className={lab}>Space</label>
-          <select id="q-space" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} className={field}>
-            <option value="">Choose a space</option>
-            {spaces.map((s) => <option key={s._id} value={s._id}>{s.name} (up to {s.capacity})</option>)}
-          </select>
+      <div className="space-y-8 p-6">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label htmlFor="q-space" className={lab}>Space</label>
+            <select id="q-space" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} className={field}>
+              <option value="">Choose a space</option>
+              {spaces.map((s) => <option key={s._id} value={s._id}>{s.name} (up to {s.capacity})</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="q-shift" className={lab}>Shift</label>
+            <select id="q-shift" value={shift} onChange={(e) => setShift(e.target.value)} className={field}>
+              {SHIFT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="q-guests" className={lab}>Guests</label>
+            <input id="q-guests" type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} className={field} />
+          </div>
         </div>
-        <div>
-          <label htmlFor="q-shift" className={lab}>Shift</label>
-          <select id="q-shift" value={shift} onChange={(e) => setShift(e.target.value)} className={field}>
-            {SHIFT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="q-guests" className={lab}>Guests</label>
-          <input id="q-guests" type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} className={field} />
-        </div>
-      </div>
 
-      <fieldset>
-        <legend className={lab}>Line items</legend>
-        <div className="space-y-3">
-          {items.map((it, i) => (
-            <div key={i} className="grid grid-cols-[1fr_110px_70px_auto_auto] items-end gap-2">
-              <div>
-                <label className="sr-only" htmlFor={`li-label-${i}`}>Item {i + 1} name</label>
-                <input id={`li-label-${i}`} placeholder="e.g. Gold package menu" value={it.label} onChange={(e) => setItem(i, { label: e.target.value })} className={field} />
-              </div>
-              <div>
-                <label className="sr-only" htmlFor={`li-price-${i}`}>Item {i + 1} price in NPR</label>
-                <input id={`li-price-${i}`} type="number" min="0" placeholder="NPR" value={it.unitPrice} onChange={(e) => setItem(i, { unitPrice: e.target.value })} className={field} />
-              </div>
-              <div>
-                <label className="sr-only" htmlFor={`li-qty-${i}`}>Item {i + 1} quantity</label>
-                <input id={`li-qty-${i}`} type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} className={field} />
-              </div>
-              <label className="flex items-center gap-1.5 pb-2 font-body text-caption text-ink">
-                <input type="checkbox" checked={it.perGuest} onChange={(e) => setItem(i, { perGuest: e.target.checked })} className="accent-ink" /> per plate
-              </label>
-              <button type="button" aria-label={`Remove item ${i + 1}`} onClick={() => setItems((l) => l.filter((_, idx) => idx !== i))} className="mb-1 rounded-full p-2 text-taupe hover:bg-sand hover:text-ink">
-                <Trash2 aria-hidden="true" className="size-4" />
+        <fieldset>
+          <legend className="font-display text-h5 font-light text-ink">What you are charging</legend>
+          <p className="mt-0.5 font-body text-caption text-taupe">Tick "Per guest" for food and other items priced per plate. The amount is then multiplied by the guest count above.</p>
+
+          <ul className="mt-4 space-y-3">
+            {items.map((it, i) => (
+              <li key={i} className="rounded-card-md border border-line bg-cream p-4">
+                <div className="grid gap-3 sm:grid-cols-[1fr_150px_90px]">
+                  <div>
+                    <label htmlFor={`li-label-${i}`} className={lab}>Item {i + 1}</label>
+                    <input id={`li-label-${i}`} placeholder="e.g. Gold package menu" value={it.label} onChange={(e) => setItem(i, { label: e.target.value })} className={field} />
+                  </div>
+                  <div>
+                    <label htmlFor={`li-price-${i}`} className={lab}>Price (NPR)</label>
+                    <input id={`li-price-${i}`} type="number" inputMode="numeric" min="0" placeholder="0" value={it.unitPrice} onChange={(e) => setItem(i, { unitPrice: e.target.value })} className={field} />
+                  </div>
+                  <div>
+                    <label htmlFor={`li-qty-${i}`} className={lab}>Quantity</label>
+                    <input id={`li-qty-${i}`} type="number" inputMode="numeric" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} className={field} />
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <label htmlFor={`li-guest-${i}`} className="flex items-center gap-2 font-body text-small text-ink">
+                    <input id={`li-guest-${i}`} type="checkbox" checked={it.perGuest} onChange={(e) => setItem(i, { perGuest: e.target.checked })} className="size-4 accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" />
+                    Per guest <span className="text-taupe">(per plate)</span>
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <p className="font-body text-small text-ink">
+                      {it.perGuest && <span className="mr-2 text-caption text-taupe">x {Number(guests) || 0} guests</span>}
+                      <span className="font-medium">{npr(lineAmount(it, guests))}</span>
+                    </p>
+                    <button
+                      type="button"
+                      aria-label={`Remove item ${i + 1}`}
+                      onClick={() => setItems((l) => l.filter((_, idx) => idx !== i))}
+                      className="rounded-full p-2 text-taupe hover:bg-sand hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+                    >
+                      <Trash2 aria-hidden="true" className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => setItems((l) => [...l, blankItem()])} className="inline-flex items-center gap-1.5 rounded-full border border-border-strong px-4 py-2 font-body text-small text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+              <Plus aria-hidden="true" className="size-4" /> Add a line item
+            </button>
+            {QUICK_ADD.map((q) => (
+              <button key={q.text} type="button" onClick={() => setItems((l) => [...l, blankItem(q.item)])} className="rounded-full px-3 py-2 font-body text-small text-gold-800 underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink">
+                + {q.text}
               </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend className="font-display text-h5 font-light text-ink">Deposit</legend>
+          <p className="mt-0.5 font-body text-caption text-taupe">What the customer pays online to confirm the date. You collect the balance directly.</p>
+          <div className="mt-4 grid gap-6 lg:grid-cols-2">
+            <div>
+              <div role="group" aria-label="Deposit type" className="flex flex-wrap gap-2">
+                <button type="button" aria-pressed={depositType === "percentage"} onClick={() => chooseDepositType("percentage")} className={seg(depositType === "percentage")}>Percentage of total</button>
+                <button type="button" aria-pressed={depositType === "fixed"} onClick={() => chooseDepositType("fixed")} className={seg(depositType === "fixed")}>Fixed amount</button>
+              </div>
+              <div className="mt-4 max-w-[220px]">
+                <label htmlFor="q-dval" className={lab}>{depositType === "percentage" ? "Deposit % (10 to 50)" : "Deposit (NPR)"}</label>
+                <input id="q-dval" type="number" inputMode="numeric" min="0" value={depositValue} onChange={(e) => setDepositValue(e.target.value)} className={field} />
+              </div>
+              {depositType === "percentage" && (
+                <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Common deposit percentages">
+                  {[10, 20, 30, 40, 50].map((p) => (
+                    <button key={p} type="button" aria-pressed={Number(depositValue) === p} onClick={() => setDepositValue(p)} className={seg(Number(depositValue) === p)}>{p}%</button>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-        <button type="button" onClick={() => setItems((l) => [...l, { label: "", unitPrice: "", quantity: 1, perGuest: false }])} className="mt-3 inline-flex items-center gap-1.5 font-body text-small text-gold-800 hover:text-ink">
-          <Plus aria-hidden="true" className="size-4" /> Add a line item
-        </button>
-      </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_1fr_1.3fr]">
+            <div aria-live="polite" className="self-start rounded-card-md bg-sand p-5">
+              <dl className="space-y-2 font-body text-small">
+                <div className="flex items-baseline justify-between gap-4"><dt className="text-taupe">Total</dt><dd className="font-display text-h4 font-light leading-none text-ink">{npr(total)}</dd></div>
+                <div className="flex justify-between gap-4 border-t border-line pt-2"><dt className="text-taupe">Deposit now</dt><dd className="font-medium text-gold-800">{npr(deposit)}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-taupe">Balance later</dt><dd className="text-ink">{npr(Math.max(total - deposit, 0))}</dd></div>
+              </dl>
+            </div>
+          </div>
+        </fieldset>
+
         <div>
-          <label htmlFor="q-dtype" className={lab}>Deposit type</label>
-          <select id="q-dtype" value={depositType} onChange={(e) => { setDepositType(e.target.value); setDepositValue(e.target.value === "percentage" ? 20 : ""); }} className={field}>
-            <option value="percentage">Percentage of total</option>
-            <option value="fixed">Fixed amount (NPR)</option>
-          </select>
+          <label htmlFor="q-notes" className={lab}>Notes for the customer (optional)</label>
+          <textarea id="q-notes" rows={3} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What is included, timings, cancellation terms" className={field} />
         </div>
-        <div>
-          <label htmlFor="q-dval" className={lab}>{depositType === "percentage" ? "Deposit % (10 to 50)" : "Deposit (NPR)"}</label>
-          <input id="q-dval" type="number" min="0" value={depositValue} onChange={(e) => setDepositValue(e.target.value)} className={field} />
-        </div>
-        <div className="whitespace-nowrap rounded-card-sm bg-sand p-3 font-body text-small text-ink">
-          <p>Total <b>{npr(total)}</b></p>
-          <p className="text-gold-800">Deposit now {npr(deposit)}</p>
-          <p className="text-taupe">Balance later {npr(Math.max(total - deposit, 0))}</p>
+
+        {error && <p role="alert" className="rounded-card-md border border-red-300 bg-red-50 p-3 font-body text-small text-red-700">{error}</p>}
+
+        <div className="flex flex-wrap items-center gap-4">
+          <button type="submit" disabled={create.isPending} className={`${btnPrimary} px-8 py-3`}>
+            {create.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />} Send quotation
+          </button>
+          <p className="font-body text-caption text-taupe">Total {npr(total)}, deposit {npr(deposit)}</p>
         </div>
       </div>
-
-      <div>
-        <label htmlFor="q-notes" className={lab}>Notes for the customer (optional)</label>
-        <textarea id="q-notes" rows={3} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What is included, timings, cancellation terms" className={field} />
-      </div>
-
-      <p role="alert" className="min-h-5 font-body text-small text-red-700">{error}</p>
-      <button type="submit" disabled={create.isPending} className="inline-flex items-center gap-2 rounded-full bg-ink px-8 py-3 font-body text-button uppercase text-gold-50 hover:bg-gold-800 disabled:opacity-60">
-        {create.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />} Send quotation
-      </button>
     </form>
   );
 }
