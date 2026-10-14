@@ -185,8 +185,8 @@ const OwnerVenuePage = () => {
       try {
         await deleteVenue(venueId);
         await refetch();
-      } catch {
-        toast.error("We could not delete this venue. Please try again.");
+      } catch (e) {
+        toast.error(e?.response?.data?.message || "We could not delete this venue. Please try again.");
       } finally {
         setDeletingVenueId(null);
       }

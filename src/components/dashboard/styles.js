@@ -1,7 +1,7 @@
 import { serverDay } from "../../features/inquiry/inquiryOptions";
 // Formatting helpers and button classes shared by the owner pages.
 
-export const npr = (n) => `NPR ${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
+export const npr = (n) => `NPR ${Math.round(Number(n) || 0).toLocaleString("en-IN")}`;
 
 const dateFmt = { day: "numeric", month: "short", year: "numeric" };
 // Dates belong to Nepal: show the Kathmandu calendar day whatever time zone the device is in.

@@ -7,6 +7,7 @@ import {
   useCancelInquiry,
   useInquiry,
   useQuotation,
+  useExpiredQuotation,
   useRejectQuotation,
   useRequireLogin,
 } from "../../features/inquiry/hooks/useInquiries";
@@ -40,6 +41,7 @@ export default function InquiryDetailPage() {
   const quotationId = inquiry?.currentQuotation?._id ?? inquiry?.currentQuotation;
   const { data: quotation, isPending: quotationLoading, isError: quotationFailed } = useQuotation(quotationId);
 
+  const expiredOn = useExpiredQuotation(quotation);
   const accept = useAcceptQuotation();
   const reject = useRejectQuotation();
   const cancel = useCancelInquiry();
@@ -114,6 +116,15 @@ export default function InquiryDetailPage() {
         <div className="min-w-0 space-y-6">
           <p role="status" className={notice ? "rounded-card-sm bg-sand px-4 py-3 font-body text-small text-ink" : "sr-only"}>{notice}</p>
 
+          {expiredOn && !["booked", "accepted"].includes(status) && (
+            <div role="status" className={note}>
+              <h2 className="font-display text-h4 font-light text-ink">This quotation expired</h2>
+              <p className="mt-2 font-body text-small text-ink">
+                The venue's quotation was valid until {formatDate(serverDay(expiredOn))}. Nothing was charged. The venue can send you a new one, or you can send a request for another date.
+              </p>
+            </div>
+          )}
+
           {status === "booked" && (
             <div className="rounded-card-lg border border-success/40 bg-white p-6">
               <CheckCircle2 aria-hidden="true" className="size-8 text-success" />
@@ -138,7 +149,7 @@ export default function InquiryDetailPage() {
             </div>
           )}
 
-          {quotation && status === "quoted" && (
+          {quotation && quotation.status !== "expired" && status === "quoted" && (
             <>
               <QuotationSummary quotation={quotation} />
               <div className={note}>

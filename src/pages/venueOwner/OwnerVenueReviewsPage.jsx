@@ -153,7 +153,8 @@ export default function OwnerVenueReviewsPage() {
                             <time dateTime={r.createdAt} className="font-body text-caption text-taupe">{shortDate(r.createdAt)}</time>
                           </div>
                           <div className="mt-1"><Stars rating={r.rating} /></div>
-                          {r.comment && <p className="mt-2 break-words font-body text-small text-ink">{r.comment}</p>}
+                          {r.title && <p className="mt-2 break-words font-display text-h5 font-light text-ink">{r.title}</p>}
+                          {r.comment && <p className="mt-1 break-words font-body text-small text-ink">{r.comment}</p>}
                         </div>
                       </li>
                     ))}

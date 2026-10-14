@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useGoToLogin } from "../../../auth/returnTo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../../../auth/AuthProvider";
@@ -35,6 +35,22 @@ export function useRequireLogin() {
 export const useMyInquiries = (enabled = true) => useQuery({ queryKey: ["inquiries", "my"], queryFn: getMyInquiriesApi, enabled });
 export const useInquiry = (id, enabled = true) => useQuery({ queryKey: ["inquiry", id], queryFn: () => getInquiryApi(id), enabled: !!id && enabled });
 export const useQuotation = (id) => useQuery({ queryKey: ["quotation", id], queryFn: () => getQuotationApi(id), enabled: !!id });
+
+// The server marks a quotation expired the first time anyone opens it after its valid date, and puts the request back
+// to "new". Remember the date so the page can say so, and refresh the request so its status catches up.
+export function useExpiredQuotation(quotation) {
+  const qc = useQueryClient();
+  const seen = quotation?.status === "expired" ? quotation.validUntil : null;
+  const [expiredOn, setExpiredOn] = useState(null);
+  if (seen && seen !== expiredOn) setExpiredOn(seen);
+  useEffect(() => {
+    if (!seen) return;
+    qc.invalidateQueries({ queryKey: ["inquiry"] });
+    qc.invalidateQueries({ queryKey: ["inquiries"] });
+    qc.invalidateQueries({ queryKey: ["owner-inquiries"] });
+  }, [seen, qc]);
+  return expiredOn;
+}
 
 // Every mutation refreshes the lists and the open inquiry so statuses never look stale.
 function useRefreshing(mutationFn) {

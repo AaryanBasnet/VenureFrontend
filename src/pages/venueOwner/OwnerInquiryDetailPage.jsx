@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import {
   apiError,
   useDeclineInquiry,
+  useExpiredQuotation,
   useInquiry,
   useQuotation,
   useWithdrawQuotation,
@@ -51,6 +52,7 @@ export default function OwnerInquiryDetailPage() {
   const quotationId = inquiry?.currentQuotation?._id ?? inquiry?.currentQuotation;
   const { data: quotation } = useQuotation(quotationId);
 
+  const expiredOn = useExpiredQuotation(quotation);
   const decline = useDeclineInquiry();
   const withdraw = useWithdrawQuotation();
   const [error, setError] = useState("");
@@ -125,6 +127,9 @@ export default function OwnerInquiryDetailPage() {
         <div className="min-w-0 space-y-6">
           {sentNotice && <Notice tone="success" icon={CheckCircle2}>Quotation sent. The customer has been notified.</Notice>}
 
+          {expiredOn && ["pending", "quoted"].includes(inquiry.status) && (
+            <Notice>Your quotation expired on {formatDate(serverDay(expiredOn))}, so the customer could no longer accept it. Send a new quotation below if you can still host this date.</Notice>
+          )}
           {quotation && ["sent", "accepted"].includes(quotation.status) && <QuotationSummary quotation={quotation} />}
           {status === "accepted" && <Notice>The customer accepted this quotation. Their date is confirmed once the deposit is paid.</Notice>}
           {status === "booked" && <Notice tone="success" icon={CheckCircle2}>Booked and the deposit is paid. Manage it under <Link to="/owner/bookings" className="underline underline-offset-4">Bookings</Link>.</Notice>}

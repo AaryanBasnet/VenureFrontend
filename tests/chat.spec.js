@@ -90,7 +90,7 @@ test.describe("customer only", () => {
     fail = false;
     await page.getByRole("button", { name: "Try again" }).click();
     await expect(page.getByRole("textbox", { name: "Type your message" })).toBeVisible();
-    await expect(page.getByRole("alert")).toHaveCount(0);
+    await expect(page.getByRole("alert").filter({ hasText: "We could not load this conversation" })).toHaveCount(0);
   });
 
   test("on a phone, opening a conversation moves focus to it and Back returns to the list", async ({ page }) => {

@@ -30,7 +30,8 @@ export async function openVenue(page, name) {
 }
 
 // Known, harmless noise: a signed-out visitor's session check answers 401, and the browser logs it.
-const IGNORED_CONSOLE = [/401 \(Unauthorized\)/, /Failed to load resource.*(401|404)/, /favicon/i, /downloadable font/i, /ResizeObserver/];
+// Google's sign-in button also logs a report-only security-policy note about its own frame; that is not our code.
+const IGNORED_CONSOLE = [/401 \(Unauthorized\)/, /Failed to load resource.*(401|404)/, /favicon/i, /downloadable font/i, /ResizeObserver/, /Framing 'https:\/\/accounts\.google\.com\/'/];
 
 // Collects JavaScript errors and console errors for a page. Call `errors()` at the end of a test and expect it to be empty.
 export function watchErrors(page) {
@@ -61,4 +62,27 @@ export async function signedInContext(browser, baseURL, account, options = {}) {
   const page = await context.newPage();
   await login(page, account);
   return { context, page };
+}
+
+// ---- API helpers for the write-path specs (setup and clean-up only; the behaviour under test goes through the UI) ----
+export const API_URL = process.env.E2E_API_URL || "http://localhost:5052/api";
+
+// Signs in through the API and returns a request context that carries the session cookies.
+export async function apiAs(playwright, account) {
+  const ctx = await playwright.request.newContext({ baseURL: API_URL.replace(/\/?$/, "/") });
+  const res = await ctx.post("auth/login", { data: { email: account.email, password: account.password } });
+  if (!res.ok()) throw new Error(`API sign-in failed (${res.status()})`);
+  return ctx;
+}
+
+export const unique = (label) => `E2E ${label} ${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+
+// Soft-deletes every venue of the signed-in owner whose name starts with the prefix.
+export async function deleteOwnerVenues(ctx, prefix) {
+  const res = await ctx.get("venues/owner/me?limit=50");
+  if (!res.ok()) return;
+  const body = await res.json();
+  for (const v of body.data?.venues ?? []) {
+    if (v.venueName.startsWith(prefix)) await ctx.delete(`venues/${v._id}`);
+  }
 }
