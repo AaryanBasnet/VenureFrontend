@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, Users } from "lucide-react";
+import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { apiError, useRequireLogin } from "../../features/inquiry/hooks/useInquiries";
 import { useCancelBookingNow, useMyBookingList } from "../../features/bookings/hooks/useBookings";
 import BookingStatusBadge from "../../features/bookings/components/BookingStatusBadge";
@@ -36,7 +37,7 @@ function BookingCard({ booking }) {
             <Link to={`/venue/${booking.venue?._id}`} className="hover:text-gold-800">{booking.venue?.venueName ?? "Venue"}</Link>
           </h2>
           <p className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 font-body text-small text-taupe">
-            <span className="inline-flex items-center gap-1.5"><CalendarDays aria-hidden="true" className="size-4" />{fullDate(booking.startTime)} · {booking.shift ? shiftLabel(booking.shift) : ""}</span>
+            <span className="inline-flex items-center gap-1.5"><CalendarDays aria-hidden="true" className="size-4" />{fullDate(booking.startTime)} ({bsLabel(booking.startTime)}) · {booking.shift ? shiftLabel(booking.shift) : ""}</span>
             <span className="inline-flex items-center gap-1.5"><Users aria-hidden="true" className="size-4" />{booking.numberOfGuests} guests</span>
             <span>{booking.space?.name}</span>
             <span>{booking.eventType}</span>

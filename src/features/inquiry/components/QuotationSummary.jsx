@@ -1,5 +1,6 @@
 import { priceFormatter } from "../../venues/venueFormat";
 import { shiftLabel } from "../inquiryOptions";
+import { bsLabel } from "../bsCalendar";
 
 const npr = (n) => `NPR ${priceFormatter.format(Math.round(n))}`;
 
@@ -20,6 +21,7 @@ export default function QuotationSummary({ quotation }) {
       </div>
       <p className="mt-1 font-body text-small text-taupe">
         {new Date(quotation.eventDate).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+        {" ("}{bsLabel(quotation.eventDate)}{")"}
         {" · "}
         {shiftLabel(quotation.shift)} · {quotation.space?.name ?? "Space"} · {quotation.numberOfGuests} guests
       </p>

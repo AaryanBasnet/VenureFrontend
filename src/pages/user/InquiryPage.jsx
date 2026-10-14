@@ -7,6 +7,7 @@ import { useVenueDetails } from "../../hooks/user/useVenueDetails";
 import { useVenueSpaces } from "../../features/venues/hooks/useVenueSpaces";
 import { priceFormatter } from "../../features/venues/venueFormat";
 import DatePicker from "../../features/inquiry/components/DatePicker";
+import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { useAvailability } from "../../features/inquiry/hooks/useAvailability";
 import { isDateUnavailable } from "../../features/inquiry/availability";
 import { inquiryErrorMessage, useCreateInquiry } from "../../features/inquiry/hooks/useCreateInquiry";
@@ -138,7 +139,7 @@ export default function InquiryPage() {
       <p className="font-body text-eyebrow uppercase text-gold-800">{sent ? "Request sent" : "Draft request"}</p>
       <h2 className="mt-1 font-display text-h4 font-light text-ink">{venue.venueName}</h2>
       <dl className="mt-4">
-        <Row term="Date">{date ? formatDate(date) : "Not chosen yet"}</Row>
+        <Row term="Date">{date ? <>{formatDate(date)}<span className="block text-caption text-taupe">{bsLabel(date)}</span></> : "Not chosen yet"}</Row>
         <Row term="Shift">{shift ? `${shiftLabel(shift)} (${hoursFor(SHIFT_OPTIONS.find((s) => s.value === shift))})` : "Flexible"}</Row>
         <Row term="Hall or space">{space ? space.name : "Venue to recommend"}</Row>
         <Row term="Guests">{guestCount || "—"}</Row>

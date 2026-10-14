@@ -13,6 +13,7 @@ import {
 import StatusBadge from "../../features/inquiry/components/StatusBadge";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
 import DepositPayment from "../../features/inquiry/components/DepositPayment";
+import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { effectiveStatus, formatDate, shiftLabel } from "../../features/inquiry/inquiryOptions";
 
 const btn = "inline-flex items-center gap-2 rounded-full px-7 py-3 font-body text-button uppercase disabled:opacity-60";
@@ -144,7 +145,7 @@ export default function InquiryDetailPage() {
         <aside aria-label="Your request" className="self-start rounded-card-lg border border-line bg-cream p-6">
           <p className="font-body text-eyebrow uppercase text-gold-800">Your request</p>
           <dl className="mt-3">
-            <Row term="Date">{formatDate(new Date(inquiry.preferredDate))}</Row>
+            <Row term="Date">{formatDate(new Date(inquiry.preferredDate))}<span className="block text-caption text-taupe">{bsLabel(inquiry.preferredDate)}</span></Row>
             <Row term="Shift">{inquiry.preferredShift ? shiftLabel(inquiry.preferredShift) : "Flexible"}</Row>
             <Row term="Space">{inquiry.space?.name ?? "Venue to recommend"}</Row>
             <Row term="Guests">{inquiry.numberOfGuests}</Row>
