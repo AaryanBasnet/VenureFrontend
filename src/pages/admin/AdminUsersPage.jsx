@@ -1,183 +1,104 @@
-import React, { useState } from "react";
-import { FiPlus, FiAlertTriangle } from "react-icons/fi";
-import SearchInput from "../../components/common/SearchInput";
+import { useContext, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { SearchX, Users } from "lucide-react";
+import { AuthContext } from "../../auth/AuthProvider";
 import { useAdminUser } from "../../hooks/admin/useAdminUser";
-import UserTable from "../../components/admin/UserTable";
 import { useDeleteUser } from "../../hooks/admin/useDeleteUser";
 import { useDebounce } from "../../hooks/useDebounce";
+import UserTable, { Pager, SearchField } from "../../components/admin/UserTable";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton } from "../../components/dashboard/ui";
 
-const AdminUsersPage = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [openActionMenu, setOpenActionMenu] = useState(null);
-  const [userToDelete, setUserToDelete] = useState(null);
-    const debouncedSearch = useDebounce(searchQuery, 500); // 500ms delay
-  const { mutate: deleteUser } = useDeleteUser();
+const LIMIT = 10;
+const ROLES = [
+  { value: "", label: "Everyone" },
+  { value: "Customer", label: "Customers" },
+  { value: "VenueOwner", label: "Venue owners" },
+  { value: "Admin", label: "Admins" },
+];
 
-  const [page, setPage] = useState(1);
-  const limit = 5;
+export default function AdminUsersPage() {
+  const { user: me } = useContext(AuthContext);
+  const [params, setParams] = useSearchParams();
+  const role = ROLES.some((r) => r.value === params.get("role")) ? params.get("role") : "";
+  const urlSearch = params.get("q") ?? "";
+  const page = Math.max(parseInt(params.get("page")) || 1, 1);
 
-  const { data, isLoading, isError } = useAdminUser(
-    page,
-    limit,
-    debouncedSearch
-  );
-  const users = data?.data || [];
-  const totalUsers = data?.pagination?.total || 0;
-  const totalPages = Math.ceil(totalUsers / limit);
+  // Typing is instant; the URL (and the request) follow half a second later.
+  const [text, setText] = useState(urlSearch);
+  const search = useDebounce(text.trim(), 400);
 
-  
-  const handleDeleteClick = (user) => {
-    setUserToDelete(user);
-    setOpenActionMenu(null);
+  const update = (changes) => {
+    const next = new URLSearchParams(params);
+    Object.entries(changes).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
+    setParams(next, { replace: true });
   };
 
-  const handleBlockUser = () => {
-    setOpenActionMenu(null);
-  };
+  useEffect(() => {
+    if (search !== urlSearch) update({ q: search, page: "" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
-  const confirmDeleteUser = () => {
-    if (userToDelete?._id) {
-      deleteUser(userToDelete._id);
-      setUserToDelete(null);
-    }
-  };
+  const { data, isPending, isError, isFetching, refetch } = useAdminUser(page, LIMIT, urlSearch, role);
+  const { mutateAsync: deactivate } = useDeleteUser();
 
-  const handlePrev = () => {
-    if (page > 1) setPage(page - 1);
-  };
+  const users = data?.data ?? [];
+  const total = data?.pagination?.total ?? 0;
+  const totalPages = Math.max(Math.ceil(total / LIMIT), 1);
+  const filtered = Boolean(urlSearch || role);
 
-  const handleNext = () => {
-    if (page < totalPages) setPage(page + 1);
-  };
-
-
-
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center h-screen text-lg text-gray-700">
-        <svg
-          className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-        Loading users...
-      </div>
-    );
-  if (isError)
-    return (
-      <div className="p-6 text-center text-red-600 font-semibold text-lg">
-        <FiAlertTriangle className="inline-block mr-2 text-red-600" size={20} />
-        Error fetching users. Please try again later.
-      </div>
-    );
+  const clear = () => { setText(""); setParams({}, { replace: true }); };
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen font-poppins">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-extrabold text-gray-900 leading-tight">
-          User Management
-        </h1>
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <SearchInput
-            value={searchQuery}
-            onChange={(e) => {
-              setPage(1);
-              setSearchQuery(e.target.value);
-            }}
-            placeholder="Search by name or email"
-            className="flex-grow sm:flex-grow-0 sm:min-w-[250px]"
-          />
-        </div>
-      </div>
-
-      <UserTable
-        users={users}
-        openActionMenu={openActionMenu}
-        setOpenActionMenu={setOpenActionMenu}
-        handleBlockUser={handleBlockUser}
-        handleDeleteClick={handleDeleteClick}
+    <>
+      <PageHeader
+        eyebrow="People"
+        title="Users"
+        description="Everyone with a Venure account. Deactivating someone signs them out and stops them logging in again."
       />
 
-      {/* Pagination Controls */}
-      <div className="mt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-        <span className="text-gray-700 text-sm sm:text-base">
-          Showing{" "}
-          <span className="font-semibold">{(page - 1) * limit + 1}</span> to{" "}
-          <span className="font-semibold">
-            {Math.min(page * limit, totalUsers)}
-          </span>{" "}
-          of <span className="font-semibold">{totalUsers}</span> users
-        </span>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handlePrev}
-            disabled={page === 1}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-1"
-          >
-            Previous
-          </button>
-          <span className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-semibold text-sm">
-            {page}
-          </span>
-          <button
-            onClick={handleNext}
-            disabled={page === totalPages}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-1"
-          >
-            Next
-          </button>
+      <div className="mb-6 flex flex-wrap items-end gap-x-6 gap-y-4">
+        <SearchField label="Search people" value={text} onChange={setText} placeholder="Name or email" />
+        <div role="group" aria-label="Filter by role" className="flex flex-wrap gap-2">
+          {ROLES.map((r) => (
+            <button
+              key={r.value}
+              type="button"
+              aria-pressed={role === r.value}
+              onClick={() => update({ role: r.value, page: "" })}
+              className={`rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                role === r.value ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {userToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 text-center animate-scaleIn">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-5">
-              <FiAlertTriangle className="h-8 w-8 text-red-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
-              Confirm Deletion
-            </h3>
-            <p className="mt-2 text-md text-gray-600 leading-relaxed">
-              Are you sure you want to delete{" "}
-              <strong className="text-red-700">{userToDelete.name}</strong>?
-              This action is permanent and cannot be undone.
-            </p>
-            <div className="mt-8 flex justify-center space-x-4">
-              <button
-                className="flex-1 px-5 py-2.5 text-lg font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-100 transition-colors duration-200"
-                onClick={() => setUserToDelete(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 px-5 py-2.5 text-lg font-medium text-white bg-red-600 border border-transparent rounded-lg shadow-md hover:bg-red-700 transition-colors duration-200"
-                onClick={confirmDeleteUser}
-              >
-                Yes, Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <Panel bodyClassName={`p-0 ${isFetching && !isPending ? "opacity-70" : ""}`}>
+        {isPending ? (
+          <RowsSkeleton rows={5} />
+        ) : isError ? (
+          <ErrorState onRetry={refetch}>People could not be loaded right now.</ErrorState>
+        ) : users.length === 0 ? (
+          filtered ? (
+            <EmptyState
+              icon={SearchX}
+              title={urlSearch ? `No one matches "${urlSearch}"` : "No one in this group"}
+              action={<button type="button" onClick={clear} className="font-body text-button uppercase text-gold-800 underline underline-offset-4">Clear filters</button>}
+            >
+              Check the spelling, or try a different name, email or group.
+            </EmptyState>
+          ) : (
+            <EmptyState icon={Users} title="No accounts yet">People appear here as they register.</EmptyState>
+          )
+        ) : (
+          <>
+            <UserTable users={users} currentUserId={me?._id} onDeactivate={deactivate} />
+            <Pager page={page} totalPages={totalPages} total={total} limit={LIMIT} noun="people" onPage={(p) => update({ page: p > 1 ? String(p) : "" })} />
+          </>
+        )}
+      </Panel>
+    </>
   );
-};
-
-export default AdminUsersPage;
+}

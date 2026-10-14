@@ -3,6 +3,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { apiError, useCreateQuotation } from "../hooks/useInquiries";
 import { SHIFT_OPTIONS } from "../inquiryOptions";
 import { btnPrimary, npr } from "../../../components/dashboard/styles";
+import Select from "../../../components/ui/Select";
 
 const field =
   "w-full rounded-card-sm border border-border-strong bg-paper-white px-3 py-2.5 font-body text-small text-ink placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink";
@@ -97,16 +98,16 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor="q-space" className={lab}>Space</label>
-            <select id="q-space" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} className={field}>
+            <Select id="q-space" value={spaceId} onChange={(e) => setSpaceId(e.target.value)} className={field}>
               <option value="">Choose a space</option>
               {spaces.map((s) => <option key={s._id} value={s._id}>{s.name} (up to {s.capacity})</option>)}
-            </select>
+            </Select>
           </div>
           <div>
             <label htmlFor="q-shift" className={lab}>Shift</label>
-            <select id="q-shift" value={shift} onChange={(e) => setShift(e.target.value)} className={field}>
+            <Select id="q-shift" value={shift} onChange={(e) => setShift(e.target.value)} className={field}>
               {SHIFT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
+            </Select>
           </div>
           <div>
             <label htmlFor="q-guests" className={lab}>Guests</label>

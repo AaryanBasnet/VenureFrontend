@@ -1,146 +1,109 @@
-import React, { useState } from "react";
-import { FiPlus, FiAlertTriangle } from "react-icons/fi";
-import SearchInput from "../../components/common/SearchInput";
-import AddOwnerModal from "../../components/modal/AddOwnerModal";
+import { useContext, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Info, SearchX, UserCog } from "lucide-react";
+import { AuthContext } from "../../auth/AuthProvider";
 import { useAdminUser } from "../../hooks/admin/useAdminUser";
 import { useDeleteUser } from "../../hooks/admin/useDeleteUser";
+import { useOwnerVenueCounts } from "../../hooks/admin/useOwnerVenueCounts";
+import { useDebounce } from "../../hooks/useDebounce";
 import OwnerTable from "../../components/admin/ownerTable";
+import { Pager, SearchField } from "../../components/admin/UserTable";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton } from "../../components/dashboard/ui";
 
-const AdminVenueOwnerPage = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [openActionMenu, setOpenActionMenu] = useState(null);
-  const [ownerToDelete, setOwnerToDelete] = useState(null);
-  const [page, setPage] = useState(1);
-  const limit = 5;
+const LIMIT = 10;
 
-  const { data, isLoading, isError, refetch } = useAdminUser(page, limit, searchQuery, "VenueOwner");
-  const { mutate: deleteUser } = useDeleteUser();
+// Admins cannot create owner accounts: the server only has the public sign-up, which would
+// log the admin in as the new person. Owners join themselves, so this page lists them instead.
+function HowOwnersJoin() {
+  return (
+    <aside className="mb-6 flex gap-3 rounded-card-lg border border-line bg-white p-5">
+      <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-gold-800" strokeWidth={1.5} />
+      <div className="font-body text-small text-taupe">
+        <p className="text-ink">How venue owners join</p>
+        <p className="mt-1">
+          Owners create their own account: they register on the Venure sign-up page and choose "Venue owner". They appear here straight away and can list venues for your review.
+          Admins cannot create owner accounts for them.
+        </p>
+      </div>
+    </aside>
+  );
+}
 
-  const owners = data?.data || [];
-  const totalPages = Math.ceil((data?.pagination?.total || 1) / limit);
+export default function AdminVenueOwnerPage() {
+  const { user: me } = useContext(AuthContext);
+  const [params, setParams] = useSearchParams();
+  const urlSearch = params.get("q") ?? "";
+  const page = Math.max(parseInt(params.get("page")) || 1, 1);
 
-  const handleDeleteClick = (owner) => {
-    setOwnerToDelete(owner);
-    setOpenActionMenu(null);
+  const [text, setText] = useState(urlSearch);
+  const search = useDebounce(text.trim(), 400);
+
+  const update = (changes) => {
+    const next = new URLSearchParams(params);
+    Object.entries(changes).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
+    setParams(next, { replace: true });
   };
 
-  const confirmDelete = () => {
-    if (!ownerToDelete) return;
-    deleteUser(ownerToDelete._id, {
-      onSuccess: () => {
-        setOwnerToDelete(null);
-        refetch();
-      },
-    });
-  };
+  useEffect(() => {
+    if (search !== urlSearch) update({ q: search, page: "" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
-  const handlePrev = () => {
-    if (page > 1) setPage(page - 1);
-  };
+  const { data, isPending, isError, isFetching, refetch } = useAdminUser(page, LIMIT, urlSearch, "VenueOwner");
+  const { data: venueData } = useOwnerVenueCounts();
+  const { mutateAsync: deactivate } = useDeleteUser();
 
-  const handleNext = () => {
-    if (page < totalPages) setPage(page + 1);
-  };
+  const owners = data?.data ?? [];
+  const total = data?.pagination?.total ?? 0;
+  const totalPages = Math.max(Math.ceil(total / LIMIT), 1);
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen font-poppins">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold text-gray-800">Venue Owners</h1>
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-          <SearchInput
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search by name or email"
-          />
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            <FiPlus /> Add Owner
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <OwnerTable
-            owners={owners}
-            isLoading={isLoading}
-            isError={isError}
-            openActionMenu={openActionMenu}
-            setOpenActionMenu={setOpenActionMenu}
-            handleDeleteClick={handleDeleteClick}
-            handleUpdateStatus={() => {}}
-          />
-        </div>
-      </div>
-
-      {/* Pagination */}
-      <div className="mt-6 flex justify-between items-center">
-        <span className="text-sm text-gray-600">
-          Page {page} of {totalPages}
-        </span>
-        <div className="flex space-x-2">
-          <button
-            onClick={handlePrev}
-            disabled={page === 1}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            onClick={handleNext}
-            disabled={page === totalPages}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-
-      <AddOwnerModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onOwnerAdded={() => {
-          setIsAddModalOpen(false);
-          refetch();
-        }}
+    <>
+      <PageHeader
+        eyebrow="People"
+        title="Venue owners"
+        description="The people who list venues on Venure, with how many venues each has."
       />
+      <HowOwnersJoin />
 
-      {/* Delete Confirmation Modal */}
-      {ownerToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-              <FiAlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mt-4">Delete Owner</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Are you sure you want to delete <strong>{ownerToDelete.name}</strong>?
-            </p>
-            <div className="mt-6 flex justify-center space-x-4">
-              <button
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                onClick={() => setOwnerToDelete(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
-                onClick={confirmDelete}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <div className="mb-6">
+        <SearchField label="Search owners" value={text} onChange={setText} placeholder="Name or email" />
+      </div>
+
+      <Panel bodyClassName={`p-0 ${isFetching && !isPending ? "opacity-70" : ""}`}>
+        {isPending ? (
+          <RowsSkeleton rows={4} />
+        ) : isError ? (
+          <ErrorState onRetry={refetch}>Venue owners could not be loaded right now.</ErrorState>
+        ) : owners.length === 0 ? (
+          urlSearch ? (
+            <EmptyState
+              icon={SearchX}
+              title={`No owner matches "${urlSearch}"`}
+              action={<button type="button" onClick={() => { setText(""); setParams({}, { replace: true }); }} className="font-body text-button uppercase text-gold-800 underline underline-offset-4">Clear search</button>}
+            >
+              Check the spelling, or try a name or email.
+            </EmptyState>
+          ) : (
+            <EmptyState icon={UserCog} title="No venue owners yet">
+              Owners appear here once someone registers and chooses "Venue owner" on the sign-up page.
+            </EmptyState>
+          )
+        ) : (
+          <>
+            <OwnerTable
+              users={owners}
+              currentUserId={me?._id}
+              venueCounts={venueData?.counts ?? null}
+              onDeactivate={deactivate}
+            />
+            <Pager page={page} totalPages={totalPages} total={total} limit={LIMIT} noun="owners" onPage={(p) => update({ page: p > 1 ? String(p) : "" })} />
+            {venueData && !venueData.complete && (
+              <p className="border-t border-line px-6 py-3 font-body text-caption text-taupe">Venue counts cover the 50 most recent venues only.</p>
+            )}
+          </>
+        )}
+      </Panel>
+    </>
   );
-};
-
-export default AdminVenueOwnerPage;
+}

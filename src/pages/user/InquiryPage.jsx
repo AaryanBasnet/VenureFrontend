@@ -12,6 +12,7 @@ import { useAvailability } from "../../features/inquiry/hooks/useAvailability";
 import { isDateUnavailable } from "../../features/inquiry/availability";
 import { inquiryErrorMessage, useCreateInquiry } from "../../features/inquiry/hooks/useCreateInquiry";
 import { EVENT_TYPES, SHIFT_OPTIONS, formatDate, shiftLabel, toInquiryDate } from "../../features/inquiry/inquiryOptions";
+import Select from "../../components/ui/Select";
 
 const field =
   "w-full rounded-card-sm border border-border-strong bg-white px-4 py-3 font-body text-body text-ink placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
@@ -250,10 +251,10 @@ export default function InquiryPage() {
             <>
               <div>
                 <label htmlFor="eventType" className={label}>Event type</label>
-                <select id="eventType" value={eventType} onChange={(e) => setEventType(e.target.value)} className={field}>
+                <Select id="eventType" value={eventType} onChange={(e) => setEventType(e.target.value)} className={field}>
                   <option value="">Select event type</option>
                   {EVENT_TYPES.map((t) => <option key={t}>{t}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>

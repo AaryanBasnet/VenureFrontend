@@ -6,7 +6,7 @@ export const useGetCustomerCount = () => {
     queryKey: ["Customer_Count"],
     queryFn: async () => {
       const res = await getCustomerCountService();
-      return res.totalCustomers; // returns just the number
+      return res.data; // envelope is { success, data: <number> }
     },
     keepPreviousData: true,
   });

@@ -7,6 +7,7 @@ import { inputClass, labelClass } from "../../components/ui/formStyles";
 import VenueCard, { VenueCardSkeleton } from "../../features/venues/components/VenueCard";
 import { useVenues } from "../../features/venues/hooks/useVenues";
 import { useFavorites, useToggleFavorite } from "../../features/favorites/hooks/useFavorites";
+import Select from "../../components/ui/Select";
 import { venueTypes } from "../../features/landing/content/landingContent";
 import { images } from "../../assets/landing/images";
 
@@ -78,7 +79,7 @@ export default function VenuesPage() {
 
   return (
     <>
-      <PageHero image={images.heritageCourtyards} eyebrow="Venues" title="Find a place" accent="worth gathering in" id="venues-title">
+      <PageHero image={images.heritageCourtyards} eyebrow="Venues" title="Find a place" accent="worth gathering in" id="venues-title" compact>
         Heritage courtyards, garden estates and mountain retreats across Nepal. Filter by guests, place and what you need.
       </PageHero>
 
@@ -94,10 +95,10 @@ export default function VenuesPage() {
             </div>
             <div>
               <label htmlFor="v-city" className={labelClass}>Where</label>
-              <select id="v-city" value={city} onChange={(e) => update({ city: e.target.value })} className={inputClass}>
+              <Select id="v-city" value={city} onChange={(e) => update({ city: e.target.value })}>
                 <option value="">Anywhere in Nepal</option>
                 {CITIES.map((c) => <option key={c}>{c}</option>)}
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="v-guests" className={labelClass}>Guests</label>
@@ -105,10 +106,10 @@ export default function VenuesPage() {
             </div>
             <div>
               <label htmlFor="v-sort" className={labelClass}>Sort by</label>
-              <select id="v-sort" value={sort} onChange={(e) => update({ sort: e.target.value === "newest" ? "" : e.target.value })} className={inputClass}>
+              <Select id="v-sort" value={sort} onChange={(e) => update({ sort: e.target.value === "newest" ? "" : e.target.value })}>
                 <option value="newest">Newest</option>
                 <option value="rating">Top rated</option>
-              </select>
+              </Select>
             </div>
           </div>
 

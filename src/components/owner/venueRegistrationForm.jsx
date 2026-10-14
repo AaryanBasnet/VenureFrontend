@@ -10,6 +10,7 @@ import { errorClass, inputClass, labelClass } from "../ui/formStyles";
 import { btnPrimary } from "../dashboard/styles";
 import { DrinkOptionsEditor, PackagesEditor } from "./MenuEditors";
 import { drinksFromVenue, drinksToPayload, menuError, packagesFromVenue, packagesToPayload } from "./menuEditorUtils";
+import Select from "../ui/Select";
 
 const amenitiesOptions = ["WiFi", "Parking", "AC", "Music", "Catering", "Stage"];
 
@@ -172,7 +173,7 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
           {required && <span aria-hidden="true"> *</span>}
         </label>
         {as === "select" ? (
-          <select className={inputClass} {...props}>{children}</select>
+          <Select className={inputClass} {...props}>{children}</Select>
         ) : as === "textarea" ? (
           <textarea className={`${inputClass} resize-none`} {...props} />
         ) : (

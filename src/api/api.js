@@ -71,11 +71,11 @@ api.interceptors.response.use(
       if (!is401 && original._suppressToast !== true) {
         const status = error.response?.status;
         if (!error.response) {
-          toast.error("Connection error. Please check your internet.");
+          toast.error("Connection error. Please check your internet.", { toastId: "net-error" });
         } else if (status === 429) {
-          toast.error(getErrorMessage(error));
+          toast.error(getErrorMessage(error), { toastId: "rate-limit" }); // one toast, however many requests failed
         } else if (status >= 500) {
-          toast.error(getErrorMessage(error));
+          toast.error(getErrorMessage(error), { toastId: "server-error" });
         }
         // 4xx domain errors (400, 403, 404, 409, 422) are left to individual
         // hooks — they carry specific business meaning the hook knows best.

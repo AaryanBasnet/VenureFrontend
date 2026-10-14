@@ -6,7 +6,7 @@ export const useGetApprovedVenuesCount = () => {
     queryKey: ["Count_Venues"],
     queryFn: async () => {
       const res = await getApprovedVenuesCountService();
-      return res.totalApproved;
+      return res.data?.count ?? 0; // envelope is { success, data: { count } }
     },
     keepPreviousData: true,
   });

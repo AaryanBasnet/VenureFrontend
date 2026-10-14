@@ -1,39 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { LogOut, UserCircle2 } from "lucide-react";
 import { accountLinksFor } from "../../layouts/accountLinks";
 import { assetUrl } from "../../utils/assetUrl";
+import { useMenu } from "../../hooks/useMenu";
 
 // Account menu in the site header: avatar button that opens a short list of the account's pages.
 const ProfileDropdown = ({ user, logout, avatarUrl }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const { open, close, toggle, rootRef, buttonRef, onKeyDown, panelId } = useMenu();
   const links = accountLinksFor(user);
   const photo = assetUrl(avatarUrl);
 
-  useEffect(() => {
-    if (!open) return undefined;
-    const onPointer = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={rootRef} onKeyDown={onKeyDown}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        ref={buttonRef}
+        onClick={toggle}
         aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
         aria-haspopup="true"
         aria-label="Account menu"
         className="flex size-10 items-center justify-center overflow-hidden rounded-full border border-gold-200/70 bg-gold-50 text-gold-800 transition-colors hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
@@ -44,6 +30,7 @@ const ProfileDropdown = ({ user, logout, avatarUrl }) => {
       <AnimatePresence>
         {open && (
           <motion.div
+            id={panelId}
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
@@ -59,7 +46,8 @@ const ProfileDropdown = ({ user, logout, avatarUrl }) => {
                 <li key={to}>
                   <Link
                     to={to}
-                    onClick={() => setOpen(false)}
+                    data-menu-item
+                    onClick={() => close()}
                     className="flex items-center gap-3 px-5 py-2.5 font-body text-small text-ink hover:bg-sand focus-visible:bg-sand focus-visible:outline-none"
                   >
                     <Icon aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} />
@@ -70,8 +58,9 @@ const ProfileDropdown = ({ user, logout, avatarUrl }) => {
             </ul>
             <button
               type="button"
+              data-menu-item
               onClick={() => {
-                setOpen(false);
+                close();
                 logout();
               }}
               className="flex w-full items-center gap-3 border-t border-line px-5 py-3 font-body text-small text-taupe hover:bg-sand hover:text-ink focus-visible:bg-sand focus-visible:outline-none"

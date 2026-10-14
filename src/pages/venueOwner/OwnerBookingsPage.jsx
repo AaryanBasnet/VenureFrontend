@@ -9,6 +9,7 @@ import { toWhatsAppNumber } from "../../features/venues/venueFormat";
 import { EmptyState, ErrorState, PageHeader, RowsSkeleton, StatusPill } from "../../components/dashboard/ui";
 import { btnDanger, btnOutline, btnPrimary, npr } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
+import Select from "../../components/ui/Select";
 
 const TABS = [
   { id: "upcoming", label: "Upcoming", match: (s) => s === "confirmed" || s === "pending_deposit", empty: "When a customer pays a deposit, the booking appears here." },
@@ -116,9 +117,9 @@ function BookingCard({ booking }) {
         >
           <div>
             <label htmlFor={`${uid}-method`} className={labelClass}>Paid by</label>
-            <select id={`${uid}-method`} value={method} onChange={(e) => setMethod(e.target.value)} className={`${inputClass} py-2`}>
+            <Select id={`${uid}-method`} value={method} onChange={(e) => setMethod(e.target.value)} className={`${inputClass} py-2`}>
               {METHODS.map((m) => <option key={m}>{m}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="min-w-[200px] flex-1">
             <label htmlFor={`${uid}-note`} className={labelClass}>Note (optional)</label>
