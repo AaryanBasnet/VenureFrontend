@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MessageCircle, Search } from "lucide-react";
+import { Loader2, MessageCircle, Search } from "lucide-react";
 
 const initials = (name = "") =>
   name.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0].toUpperCase()).join("") || "V";
@@ -15,7 +15,7 @@ const timeLabel = (timestamp) => {
 };
 
 // Conversation list. Shared by the customer and owner chat pages.
-export default function ChatList({ chats = [], activeChat, onSelect, currentUserId }) {
+export default function ChatList({ chats = [], activeChat, onSelect, currentUserId, loading = false, error = false, onRetry }) {
   const [query, setQuery] = useState("");
 
   const rows = useMemo(
@@ -28,13 +28,40 @@ export default function ChatList({ chats = [], activeChat, onSelect, currentUser
   );
   const shown = rows.filter((r) => r.name.toLowerCase().includes(query.trim().toLowerCase()));
 
+  if (loading && rows.length === 0) {
+    return (
+      <div role="status" className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+        <Loader2 aria-hidden="true" className="size-6 animate-spin text-gold-800" />
+        <p className="font-body text-small text-taupe">Loading your conversations</p>
+      </div>
+    );
+  }
+
+  if (error && rows.length === 0) {
+    return (
+      <div role="alert" className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <p className="font-display text-h5 font-normal text-ink">We could not load your conversations</p>
+        <p className="mt-1 font-body text-small text-taupe">Please check your connection and try again.</p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-4 inline-flex min-h-11 items-center rounded-full border border-gold-800 bg-gold-800 px-6 font-body text-button uppercase text-white transition-colors hover:border-gold hover:bg-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          >
+            Try again
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (rows.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <span className="flex size-14 items-center justify-center rounded-full bg-gold-100 text-gold-800">
           <MessageCircle aria-hidden="true" className="size-6" strokeWidth={1.5} />
         </span>
-        <h3 className="mt-4 font-display text-h5 font-normal text-ink">No conversations yet</h3>
+        <p className="mt-4 font-display text-h5 font-normal text-ink">No conversations yet</p>
         <p className="mt-1 font-body text-small text-taupe">Message a venue from its page and the conversation will appear here.</p>
       </div>
     );
@@ -52,7 +79,7 @@ export default function ChatList({ chats = [], activeChat, onSelect, currentUser
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search conversations"
-            className="w-full rounded-full border border-border bg-paper-white py-2.5 pl-10 pr-4 font-body text-small text-charcoal placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+            className="w-full rounded-full border border-border bg-paper-white py-2.5 pl-10 pr-4 font-body text-small text-charcoal placeholder:text-taupe focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
           />
         </div>
       </div>
@@ -80,6 +107,7 @@ export default function ChatList({ chats = [], activeChat, onSelect, currentUser
                     <span className="truncate font-body text-body font-medium text-ink">{name}</span>
                     {(chat.lastMessage?.timestamp || chat.updatedAt) && <span className="shrink-0 font-body text-caption text-taupe">{timeLabel(chat.lastMessage?.timestamp || chat.updatedAt)}</span>}
                   </span>
+                  {chat.venueId?.venueName && <span className="block truncate font-body text-caption text-gold-800">{chat.venueId.venueName}</span>}
                   <span className="mt-0.5 flex items-center justify-between gap-2">
                     <span className="truncate font-body text-small text-taupe">{chat.lastMessage?.text || "Open conversation"}</span>
                     {unread > 0 && (

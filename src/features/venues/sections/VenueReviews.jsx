@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import SectionHeading from "../../../components/ui/SectionHeading";
@@ -21,6 +22,20 @@ function Stars({ value, className = "size-4" }) {
   );
 }
 
+const REVIEWS_SHOWN = 6;
+
+function Avatar({ src, name }) {
+  const [failed, setFailed] = useState(false);
+  if (src && !failed) {
+    return <img src={src} alt="" className="size-10 shrink-0 rounded-full object-cover" loading="lazy" onError={() => setFailed(true)} />;
+  }
+  return (
+    <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gold-100 font-display text-h5 text-gold-800">
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 function ReviewCard({ review }) {
   const name = review.user?.name || "Guest";
   const src = avatarSrc(review.user?.avatar);
@@ -31,23 +46,17 @@ function ReviewCard({ review }) {
   return (
     <li className="flex flex-col gap-3 rounded-card-lg border border-line bg-white p-6">
       <div className="flex items-center gap-3">
-        {src ? (
-          <img src={src} alt="" className="size-10 rounded-full object-cover" loading="lazy" />
-        ) : (
-          <span aria-hidden="true" className="flex size-10 items-center justify-center rounded-full bg-gold-100 font-display text-h5 text-gold-800">
-            {name.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <div>
-          <p className="font-body text-body text-ink">{name}</p>
+        <Avatar src={src} name={name} />
+        <div className="min-w-0">
+          <p className="truncate font-body text-body text-ink">{name}</p>
           {date && <p className="font-body text-caption text-taupe">{date}</p>}
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto shrink-0">
           <Stars value={review.rating} />
         </div>
       </div>
-      {review.title && <h3 className="font-display text-h5 font-normal text-ink">{review.title}</h3>}
-      <p className="font-body text-small text-ink/85 [overflow-wrap:anywhere]">{review.comment}</p>
+      {review.title && <h3 className="font-display text-h5 font-normal text-ink [overflow-wrap:anywhere]">{review.title}</h3>}
+      {review.comment && <p className="whitespace-pre-line font-body text-small text-ink/85 [overflow-wrap:anywhere]">{review.comment}</p>}
     </li>
   );
 }
@@ -55,7 +64,8 @@ function ReviewCard({ review }) {
 // Reviews are read-only here: the backend only accepts a review for a completed booking,
 // so guests write theirs from "My bookings", not from the venue page.
 export default function VenueReviews({ venue }) {
-  const { reviews, isLoading, error } = useReviews(venue._id);
+  const { reviews, isLoading, error, refetch } = useReviews(venue._id);
+  const [showAll, setShowAll] = useState(false);
   const total = venue.totalReviews ?? reviews.length;
   const average = venue.averageRating ?? 0;
   const counts = [5, 4, 3, 2, 1].map((n) => ({ n, count: reviews.filter((r) => Math.round(r.rating) === n).length }));
@@ -69,7 +79,10 @@ export default function VenueReviews({ venue }) {
         {isLoading ? (
           <div role="status" aria-label="Loading reviews" className="mt-10 h-40 animate-pulse rounded-card-lg bg-gold-100" />
         ) : error ? (
-          <p className="mt-10 font-body text-body text-taupe">Reviews could not be loaded right now.</p>
+          <div role="alert" className="mt-10 flex flex-wrap items-center gap-4 font-body text-body text-taupe">
+            <p>Reviews could not be loaded right now.</p>
+            <button type="button" onClick={() => refetch()} className="min-h-11 text-gold-800 underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">Try again</button>
+          </div>
         ) : reviews.length === 0 ? (
           <div className="mt-10 max-w-xl rounded-card-lg border border-dashed border-line bg-cream p-8">
             <p className="font-display text-h4 font-light text-ink">No reviews yet</p>
@@ -96,15 +109,27 @@ export default function VenueReviews({ venue }) {
                   </li>
                 ))}
               </ul>
-              <Link to="/my-bookings" className="mt-2 w-fit font-body text-small text-gold-800 underline underline-offset-4">
-                Had an event here? Review it from My bookings
+              <Link to="/my-bookings" className="mt-2 w-fit font-body text-small text-gold-800 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+                Held an event here? Write your review from My bookings.
               </Link>
             </div>
-            <ul className="grid gap-4 md:grid-cols-2">
-              {reviews.map((r) => (
-                <ReviewCard key={r._id} review={r} />
-              ))}
-            </ul>
+            <div>
+              <ul className="grid items-start gap-4 md:grid-cols-2">
+                {(showAll ? reviews : reviews.slice(0, REVIEWS_SHOWN)).map((r) => (
+                  <ReviewCard key={r._id} review={r} />
+                ))}
+              </ul>
+              {reviews.length > REVIEWS_SHOWN && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll((v) => !v)}
+                  aria-expanded={showAll}
+                  className="mt-6 min-h-11 rounded-full border border-ink px-6 py-3 font-body text-button uppercase text-ink transition-colors hover:bg-ink hover:text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  {showAll ? "Show fewer reviews" : `Show all ${reviews.length} reviews`}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

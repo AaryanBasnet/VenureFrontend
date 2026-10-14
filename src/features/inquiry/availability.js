@@ -9,9 +9,10 @@ const FALLBACK_HOURS = {
 };
 const SHIFT_KEYS = Object.keys(FALLBACK_HOURS);
 
+// Shift hours are Kathmandu clock times (UTC+5:45), whatever time zone the visitor's device uses.
 const at = (date, hhmm) => {
   const [h, m] = hhmm.split(":").map(Number);
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m);
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), h, m) - (5 * 60 + 45) * 60 * 1000);
 };
 
 const hoursFor = (space, shift) => {

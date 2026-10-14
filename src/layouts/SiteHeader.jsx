@@ -8,13 +8,13 @@ import NotificationBell from "../components/common/NotificationBell";
 import { accountLinksFor } from "./accountLinks";
 import { AuthContext } from "../auth/AuthProvider";
 
-// Anchors point at landing-page sections until dedicated pages exist
+// "Seasons" and "Stories" are sections of the landing page (ids in features/landing/sections); the rest are pages.
 const NAV_ITEMS = [
-  { label: "Spaces", to: "/venues" },
-  { label: "Experiences", to: "/#experiences" },
-  { label: "Planning", to: "/#venue-types" },
-  { label: "Stories", to: "/#stories" },
-  { label: "Enquire", to: "/contact" },
+  { label: "Venues", to: "/venues" },
+  { label: "Seasons", to: "/#experiences", section: true },
+  { label: "Stories", to: "/#stories", section: true },
+  { label: "About", to: "/about" },
+  { label: "Contact", to: "/contact" },
 ];
 
 // Distance scrolled before the transparent header gets its solid background
@@ -23,6 +23,29 @@ const SOLID_AFTER_PX = 80;
 const navLinkClass =
   "font-body text-label uppercase text-white/85 transition-colors hover:text-white " +
   "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white";
+
+// Page links show where you are (underline + aria-current); section links never look "current"
+const desktopLinkClass = ({ isActive }) =>
+  `${navLinkClass} border-b py-2 ${isActive ? "border-gold text-white" : "border-transparent"}`;
+const mobileLinkClass = ({ isActive }) =>
+  `font-display border-b border-white/10 py-4 text-h2 font-light focus-visible:outline-2 focus-visible:outline-white ${isActive ? "text-gold-200" : "text-gold-50"}`;
+
+function NavItem({ item, className, ...props }) {
+  // NavLink would mark every section link current while on "/", so sections use a plain Link
+  if (item.section) {
+    const plain = typeof className === "function" ? className({ isActive: false }) : className;
+    return (
+      <Link to={item.to} className={plain} {...props}>
+        {item.label}
+      </Link>
+    );
+  }
+  return (
+    <NavLink to={item.to} className={className} {...props}>
+      {item.label}
+    </NavLink>
+  );
+}
 
 function useScrolledPast(threshold) {
   const [scrolled, setScrolled] = useState(false);
@@ -54,6 +77,14 @@ export default function SiteHeader({ overlay = false }) {
     setMenuOpen(false);
   }, [location.pathname, location.hash]);
 
+  // The mobile menu has no meaning on a wide screen: close it (and release the scroll lock) when the window grows
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e) => e.matches && setMenuOpen(false);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
   // Mobile menu: lock page scroll and close on Escape
   useEffect(() => {
     if (!menuOpen) return;
@@ -75,7 +106,7 @@ export default function SiteHeader({ overlay = false }) {
   return (
     <header
       className={`${overlay ? "fixed" : "sticky"} inset-x-0 top-0 z-50 transition-colors duration-500 ${
-        solid ? "bg-ink/85 backdrop-blur-lg" : "bg-transparent"
+        solid ? "bg-ink/95 backdrop-blur-lg" : "bg-transparent"
       }`}
     >
       <div className="container-site flex h-header items-center justify-between gap-6">
@@ -87,12 +118,10 @@ export default function SiteHeader({ overlay = false }) {
         </Link>
 
         <nav aria-label="Main" className="hidden lg:block">
-          <ul className="flex items-center gap-9">
+          <ul className="flex items-center gap-7 xl:gap-9">
             {NAV_ITEMS.map((item) => (
               <li key={item.label}>
-                <NavLink to={item.to} className={navLinkClass}>
-                  {item.label}
-                </NavLink>
+                <NavItem item={item} className={desktopLinkClass} />
               </li>
             ))}
           </ul>
@@ -134,15 +163,9 @@ export default function SiteHeader({ overlay = false }) {
         hidden={!menuOpen}
         className="h-[calc(100dvh-var(--spacing-header))] overflow-y-auto border-t border-white/10 bg-ink lg:hidden"
       >
-        <nav aria-label="Main" className="container-site flex flex-col gap-1 py-8">
+        <nav aria-label="Main menu" className="container-site flex flex-col gap-1 py-8">
           {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.label}
-              to={item.to}
-              className="font-display border-b border-white/10 py-4 text-h2 font-light text-gold-50 focus-visible:outline-2 focus-visible:outline-white"
-            >
-              {item.label}
-            </NavLink>
+            <NavItem key={item.label} item={item} className={mobileLinkClass} />
           ))}
           {user && (
             <ul aria-label="Your account" className="mt-6 flex flex-col">

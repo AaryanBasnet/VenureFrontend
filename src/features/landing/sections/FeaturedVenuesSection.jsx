@@ -1,4 +1,4 @@
-import SectionHeading from "../../../components/ui/SectionHeading";
+import SectionHeading, { Eyebrow } from "../../../components/ui/SectionHeading";
 import ArrowPillLink from "../../../components/ui/ArrowPillLink";
 import { featuredIntro, featuredFallbackImages } from "../content/landingContent";
 import FeaturedVenueCard from "../components/FeaturedVenueCard";
@@ -15,14 +15,15 @@ const CARD_STYLES = [
 export default function FeaturedVenuesSection() {
   const { venues, isPending, isError } = useFeaturedVenues();
 
-  if (!isPending && !isError && venues.length === 0) return null;
+  // Nothing to show (or the list could not load): leave the section out rather than show a heading over empty space
+  if (isError || (!isPending && venues.length === 0)) return null;
 
   return (
     <section id="finest-spaces" aria-labelledby="featured-title" className="bg-cream py-16 lg:py-[74px]">
       <div className="container-site flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <SectionHeading id="featured-title" title={featuredIntro.title} accent={featuredIntro.accent} />
         <div className="flex flex-col gap-4 lg:max-w-sm">
-          <span className="font-body text-eyebrow uppercase text-ink">{featuredIntro.eyebrow}</span>
+          <Eyebrow as="span">{featuredIntro.eyebrow}</Eyebrow>
           <p className="font-body text-body text-gold-800">{featuredIntro.description}</p>
         </div>
         <ArrowPillLink to="/venues" className="self-start lg:self-auto">
@@ -32,6 +33,10 @@ export default function FeaturedVenuesSection() {
 
       <div className="container-site">
         <ul className="mt-10 flex flex-col gap-5 lg:mt-12 lg:flex-row lg:items-end">
+          {isPending &&
+            CARD_STYLES.map((style, index) => (
+              <li key={index} aria-hidden="true" className={`aspect-[4/3] animate-pulse rounded-card-xl bg-sand ${style.height} ${style.flex}`} />
+            ))}
           {venues.slice(0, 3).map((venue, index) => (
             <FeaturedVenueCard
               key={venue._id}

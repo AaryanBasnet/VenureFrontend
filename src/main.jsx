@@ -8,6 +8,7 @@ import AppRouter from "./routers/AppRouter.jsx";
 import AuthContextProvider from "./auth/AuthProvider.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
+import { MotionConfig } from "framer-motion";
 import ErrorBoundary from "./components/common/ErrorBoundary.jsx";
 
 const queryClient = new QueryClient({
@@ -28,6 +29,7 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary>
+      <MotionConfig reducedMotion="user">
       <QueryClientProvider client={queryClient}>
         <AuthContextProvider>
           <AppRouter />
@@ -44,6 +46,7 @@ createRoot(document.getElementById("root")).render(
           />
         </AuthContextProvider>
       </QueryClientProvider>
+      </MotionConfig>
     </ErrorBoundary>
   </StrictMode>
 );

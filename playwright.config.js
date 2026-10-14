@@ -4,8 +4,6 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   timeout: 60 * 1000,
-  // Written for the old owner and admin screens. Parked until those areas are redesigned, then rewrite them.
-  testIgnore: ["**/owner.spec.js", "**/admin.spec.js"],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:5173",
     headless: true,

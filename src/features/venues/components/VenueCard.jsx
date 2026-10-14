@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Heart, MapPin, Star, Users } from "lucide-react";
-import ResponsiveImage from "../../../components/ui/ResponsiveImage";
-import { images } from "../../../assets/landing/images";
+import VenueImage from "./VenueImage";
 import { cloudinaryTransform, CARD_TRANSFORM } from "../../../utils/cloudinary";
 import { categoryLabel, cheapestPlatePrice, locationLine, priceFormatter } from "../venueFormat";
 
@@ -19,25 +18,21 @@ export function VenueCardSkeleton() {
 }
 
 // Venue card for the listing and favorites pages. The whole card links to the venue; the heart sits above that link.
-export default function VenueCard({ venue, isFavorite = false, onToggleFavorite, favoriteDisabled = false }) {
+export default function VenueCard({ venue, isFavorite = false, onToggleFavorite, favoriteBusy = false }) {
   const photo = venue.venueImages?.[0]?.url;
   const category = categoryLabel(venue.category);
   const from = cheapestPlatePrice(venue);
   const hasRating = venue.totalReviews > 0;
 
   return (
-    <li className="group relative flex flex-col overflow-hidden rounded-card-xl border border-line bg-white transition-shadow duration-300 hover:shadow-xl focus-within:shadow-xl">
+    <li className="group relative flex flex-col overflow-hidden rounded-card-xl border border-line bg-white outline-ink transition-shadow duration-300 hover:shadow-xl has-[a:focus-visible]:shadow-xl has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2">
       <div className="relative aspect-[4/3] overflow-hidden bg-sand">
-        {photo ? (
-          <img
-            src={cloudinaryTransform(photo, CARD_TRANSFORM)}
-            alt=""
-            loading="lazy"
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
-          />
-        ) : (
-          <ResponsiveImage image={images.heritageCourtyards} alt="" sizes="400px" className="size-full object-cover opacity-70" />
-        )}
+        <VenueImage
+          src={photo ? cloudinaryTransform(photo, CARD_TRANSFORM) : null}
+          loading="lazy"
+          iconClassName="size-10"
+          className="size-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
+        />
         {category && (
           <span className="absolute left-4 top-4 rounded-full bg-ink/75 px-3 py-1 font-body text-eyebrow uppercase text-gold-50 backdrop-blur">
             {category}
@@ -46,33 +41,35 @@ export default function VenueCard({ venue, isFavorite = false, onToggleFavorite,
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-display text-h4 font-light text-ink">
-          <Link
-            to={`/venue/${venue._id}`}
-            className="after:absolute after:inset-0 after:z-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-          >
+        <h2 className="font-display text-h4 font-light text-ink [overflow-wrap:anywhere]">
+          <Link to={`/venue/${venue._id}`} className="line-clamp-2 after:absolute after:inset-0 after:z-0 focus-visible:outline-none">
             {venue.venueName}
           </Link>
-        </h3>
+        </h2>
         <p className="mt-2 flex items-center gap-1.5 font-body text-small text-taupe">
           <MapPin aria-hidden="true" className="size-4 shrink-0 text-gold-800" strokeWidth={1.5} />
-          <span className="truncate">{locationLine(venue.location)}</span>
+          <span className="truncate">{locationLine(venue.location) || "Nepal"}</span>
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-body text-small text-ink">
           {venue.maxCapacity > 0 ? (
             <span className="inline-flex items-center gap-1.5">
               <Users aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} />
-              Up to {venue.maxCapacity} guests
+              Up to {venue.maxCapacity} {venue.maxCapacity === 1 ? "guest" : "guests"}
               {venue.spaceCount > 1 && <span className="text-taupe">· {venue.spaceCount} spaces</span>}
             </span>
-          ) : (
+          ) : venue.maxCapacity === 0 ? (
             <span className="text-taupe">Spaces coming soon</span>
-          )}
+          ) : null}
           {hasRating && (
             <span className="inline-flex items-center gap-1">
               <Star aria-hidden="true" className="size-4 fill-gold text-gold" />
-              {venue.averageRating.toFixed(1)} <span className="text-taupe">({venue.totalReviews})</span>
+              <span className="sr-only">Rated </span>
+              {venue.averageRating.toFixed(1)}
+              <span className="text-taupe">
+                <span aria-hidden="true">({venue.totalReviews})</span>
+                <span className="sr-only"> out of 5 from {venue.totalReviews} {venue.totalReviews === 1 ? "review" : "reviews"}</span>
+              </span>
             </span>
           )}
         </div>
@@ -83,7 +80,7 @@ export default function VenueCard({ venue, isFavorite = false, onToggleFavorite,
               From <span className="font-display text-h5 font-normal text-ink">NPR {priceFormatter.format(from)}</span> per plate
             </>
           ) : (
-            "Request a quotation"
+            "Price on request"
           )}
         </p>
       </div>
@@ -92,10 +89,10 @@ export default function VenueCard({ venue, isFavorite = false, onToggleFavorite,
         <button
           type="button"
           onClick={() => onToggleFavorite(venue._id)}
-          disabled={favoriteDisabled}
+          disabled={favoriteBusy}
           aria-pressed={isFavorite}
           aria-label={isFavorite ? `Remove ${venue.venueName} from favorites` : `Save ${venue.venueName} to favorites`}
-          className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-cream/90 text-ink shadow transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-60"
+          className="absolute right-3 top-3 z-10 flex size-11 items-center justify-center rounded-full bg-cream/90 text-ink shadow transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-60"
         >
           <Heart aria-hidden="true" className={`size-5 ${isFavorite ? "fill-gold-800 text-gold-800" : ""}`} strokeWidth={1.5} />
         </button>

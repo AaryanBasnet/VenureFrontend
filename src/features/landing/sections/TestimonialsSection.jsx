@@ -20,13 +20,14 @@ const shorten = (text, max = 240) => (text.length > max ? `${text.slice(0, max).
 export default function TestimonialsSection() {
   const { data: reviews = [] } = useFeaturedReviews();
   if (reviews.length === 0) return null;
+  const shown = reviews.slice(0, 3);
 
   return (
     <section id="testimonials" aria-labelledby="testimonials-title" className="bg-sand py-16 lg:py-[74px]">
       <div className="container-site">
         <SectionHeading id="testimonials-title" eyebrow={testimonialsIntro.eyebrow} title={testimonialsIntro.title} accent={testimonialsIntro.accent} />
-        <ul className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
-          {reviews.slice(0, 3).map((r) => (
+        <ul className={`mt-10 grid grid-cols-1 gap-5 lg:mt-12 ${shown.length === 1 ? "max-w-xl" : shown.length === 2 ? "sm:grid-cols-2 lg:max-w-4xl" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+          {shown.map((r) => (
             <li key={r._id} className="flex flex-col rounded-card-lg border border-line bg-cream p-7">
               <span role="img" aria-label={`${r.rating} out of 5 stars`} className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map((n) => (

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../../auth/AuthProvider";
@@ -27,4 +27,32 @@ export function useToggleFavorite() {
     },
     onError: () => toast.error("We could not update your favorites. Please try again."),
   });
+}
+
+// A signed-out visitor who taps a heart is sent to sign in; the venue is remembered for this tab
+// and saved as soon as they come back as a customer.
+const PENDING_KEY = "venure:pending-favorite";
+
+export const rememberPendingFavorite = (venueId) => {
+  try {
+    sessionStorage.setItem(PENDING_KEY, venueId);
+  } catch {
+    /* storage can be blocked; the visitor just taps the heart again */
+  }
+};
+
+export function usePendingFavorite({ enabled, isSuccess, ids }, toggle) {
+  useEffect(() => {
+    if (!enabled || !isSuccess) return;
+    let venueId = null;
+    try {
+      venueId = sessionStorage.getItem(PENDING_KEY);
+      sessionStorage.removeItem(PENDING_KEY);
+    } catch {
+      return;
+    }
+    if (venueId && !ids.has(venueId)) toggle.mutate(venueId);
+    // Runs once per sign-in, when the saved list first arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, isSuccess]);
 }

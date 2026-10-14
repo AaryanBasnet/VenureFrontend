@@ -12,11 +12,11 @@ export default function SeasonCard({ season }) {
   // `sizes` describes the rendered image width, not the card width: these are
   // landscape photos cover-fitted into tall cards, so they scale to the card height.
   return (
-    <li className="group relative isolate aspect-[294/642] overflow-hidden rounded-card-sm bg-stone/20">
+    <li className="group relative isolate aspect-[3/4] overflow-hidden sm:aspect-[294/642] rounded-card-sm bg-stone/20">
       <ResponsiveImage
         image={images[season.image]}
         alt=""
-        sizes="(min-width: 1440px) 1000px, (min-width: 1024px) 75vw, 155vw"
+        sizes="(min-width: 1440px) 1000px, (min-width: 1024px) 75vw, (min-width: 640px) 155vw, 190vw"
         className="absolute inset-0 -z-20 size-full object-cover opacity-85 transition-[opacity,transform] duration-700 ease-out lg:opacity-100 lg:group-hover:scale-105 lg:group-hover:opacity-85 motion-reduce:transition-none motion-reduce:lg:group-hover:scale-100"
       />
 
@@ -33,7 +33,7 @@ export default function SeasonCard({ season }) {
 
       {/* Resting label — lg-only, fades out on hover */}
       <div className="absolute inset-x-0 bottom-0 hidden flex-col p-4 transition-opacity duration-300 lg:flex lg:group-hover:opacity-0">
-        <span className="font-body text-eyebrow uppercase text-gold-200">Venure</span>
+        <span className="font-body text-eyebrow uppercase text-gold-200">Season</span>
         <span className="font-display pt-1 text-h5 font-light text-white">{season.name}</span>
       </div>
 

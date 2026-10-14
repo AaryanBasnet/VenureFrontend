@@ -1,5 +1,4 @@
 import SectionHeading from "../../../components/ui/SectionHeading";
-import ArrowPillLink from "../../../components/ui/ArrowPillLink";
 import { storiesIntro, stories } from "../content/landingContent";
 import StoryCard from "../components/StoryCard";
 
@@ -9,17 +8,13 @@ const [feature, ...compact] = stories;
 export default function VenueStoriesSection() {
   return (
     <section id="stories" aria-labelledby="stories-title" className="bg-cream py-16 lg:py-[74px]">
-      <div className="container-site flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+      <div className="container-site">
         <SectionHeading
           id="stories-title"
           eyebrow={storiesIntro.eyebrow}
           title={storiesIntro.title}
           accent={storiesIntro.accent}
         />
-        {/* No dedicated stories page yet — anchors within the section like the header's nav does for other unbuilt pages */}
-        <ArrowPillLink href="#stories" className="self-start lg:self-auto">
-          Read all stories
-        </ArrowPillLink>
       </div>
 
       <div className="container-site mt-10 grid grid-cols-1 gap-6 lg:mt-12 lg:grid-cols-[1.29fr_1fr] lg:gap-[49px]">

@@ -1,24 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import PageHero from "../../components/ui/PageHero";
 import Button from "../../components/ui/Button";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
 import VenueCard, { VenueCardSkeleton } from "../../features/venues/components/VenueCard";
 import { useVenues } from "../../features/venues/hooks/useVenues";
-import { useFavorites, useToggleFavorite } from "../../features/favorites/hooks/useFavorites";
+import { rememberPendingFavorite, useFavorites, usePendingFavorite, useToggleFavorite } from "../../features/favorites/hooks/useFavorites";
+import { useGoToLogin } from "../../auth/returnTo";
 import Select from "../../components/ui/Select";
 import { venueTypes } from "../../features/landing/content/landingContent";
 import { images } from "../../assets/landing/images";
 
 const PAGE_SIZE = 9;
 const CITIES = ["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara", "Nagarkot", "Dhulikhel", "Chitwan"];
-const AMENITIES = ["Wifi", "Parking", "Air Conditioning", "Catering", "Sound System", "Garden", "Projector"];
+const AMENITIES = ["Wifi", "Parking", "Air Conditioning", "Catering", "Sound System", "Garden", "Projector", "Lake View"];
 
 const chip = (active) =>
-  `rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+  `min-h-11 rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
     active ? "border-ink bg-ink text-gold-50" : "border-border-strong bg-paper-white text-ink hover:border-ink"
   }`;
+
+const pageBtn =
+  "flex size-11 items-center justify-center rounded-full border border-border-strong text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border-strong";
 
 // Venue discovery. Every filter lives in the URL, so a search can be shared, bookmarked and used with the back button.
 export default function VenuesPage() {
@@ -26,28 +30,43 @@ export default function VenuesPage() {
   const q = params.get("q") ?? "";
   const city = params.get("city") ?? "";
   const category = params.get("category") ?? "";
-  const guests = params.get("guests") ?? "";
+  const guestsParam = params.get("guests") ?? "";
+  const guests = /^[1-9]\d{0,5}$/.test(guestsParam) ? guestsParam : "";
   const sort = params.get("sort") ?? "newest";
   const amenities = (params.get("amenities") ?? "").split(",").filter(Boolean);
   const page = Math.max(parseInt(params.get("page")) || 1, 1);
 
   const [search, setSearch] = useState(q);
+  const [guestsText, setGuestsText] = useState(guests);
   const [showMore, setShowMore] = useState(amenities.length > 0);
+  const resultsRef = useRef(null);
 
-  const update = (patch) => {
+  // `replace` keeps typing from filling the history; discrete choices (city, type, sort, page) can be stepped back through.
+  const update = (patch, { replace = false } = {}) => {
     const next = new URLSearchParams(params);
     Object.entries(patch).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)));
     if (!("page" in patch)) next.delete("page");
-    setParams(next, { replace: true });
+    setParams(next, { replace });
   };
 
-  // Typing in the search box updates the URL after a short pause.
+  // The URL is the source of truth: when it changes from outside (back button, a shared link, "clear"), the boxes follow.
+  useEffect(() => setSearch(q), [q]);
+  useEffect(() => setGuestsText(guests), [guests]);
+
+  // Typing in the search or guests box updates the URL after a short pause. Guests must be a whole number of 1 or more.
   useEffect(() => {
-    if (search === q) return undefined;
-    const t = setTimeout(() => update({ q: search.trim() }), 400);
+    if (search.trim() === q) return undefined;
+    const t = setTimeout(() => update({ q: search.trim() }, { replace: true }), 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
+  useEffect(() => {
+    const clean = guestsText.replace(/\D/g, "").replace(/^0+/, "");
+    if (clean === guests) return undefined;
+    const t = setTimeout(() => update({ guests: clean }, { replace: true }), 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestsText]);
 
   const filters = useMemo(
     () => ({
@@ -63,10 +82,31 @@ export default function VenuesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [q, city, category, guests, params.get("amenities"), sort, page]
   );
-  const { venues, totalPages, isPending, isFetching, isError } = useVenues(filters);
+  const { venues, total, totalPages, isPending, isFetching, isError, refetch } = useVenues(filters);
 
-  const { ids: favoriteIds, enabled: canSave } = useFavorites();
+  const favorites = useFavorites();
+  const { ids: favoriteIds, enabled: canSave } = favorites;
   const toggle = useToggleFavorite();
+  const goToLogin = useGoToLogin();
+  usePendingFavorite(favorites, toggle);
+  // Signed out: the heart takes the visitor to sign in, then brings them back and saves the venue.
+  const onToggleFavorite = canSave
+    ? toggle.mutate
+    : (venueId) => {
+        rememberPendingFavorite(venueId);
+        goToLogin();
+      };
+
+  // A page number past the end (an old link, a shorter list) goes back to the first page.
+  useEffect(() => {
+    if (!isPending && !isFetching && !isError && page > 1 && venues.length === 0 && total > 0) update({ page: "" }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPending, isFetching, isError, page, venues.length, total]);
+
+  const changePage = (n) => {
+    update({ page: n > 1 ? String(n) : "" });
+    resultsRef.current?.scrollIntoView({ block: "start" });
+  };
 
   const active = [q, city, category, guests, amenities.length ? "x" : "", sort !== "newest" ? "x" : ""].filter(Boolean).length;
   const clear = () => {
@@ -85,24 +125,24 @@ export default function VenuesPage() {
 
       <section aria-label="Filters" className="border-b border-line bg-cream py-8">
         <div className="container-site space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
-            <div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+            <div className="col-span-2 md:col-span-1 lg:col-span-1">
               <label htmlFor="v-search" className={labelClass}>Search by name</label>
               <div className="relative">
                 <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-taupe-light" />
-                <input id="v-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="e.g. Garden Hall" className={`${inputClass} pl-11`} />
+                <input id="v-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="e.g. Garden Hall" autoComplete="off" className={`${inputClass} pl-11`} />
               </div>
             </div>
-            <div>
+            <div className="col-span-2 md:col-span-1">
               <label htmlFor="v-city" className={labelClass}>Where</label>
               <Select id="v-city" value={city} onChange={(e) => update({ city: e.target.value })}>
                 <option value="">Anywhere in Nepal</option>
-                {CITIES.map((c) => <option key={c}>{c}</option>)}
+                {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </Select>
             </div>
             <div>
               <label htmlFor="v-guests" className={labelClass}>Guests</label>
-              <input id="v-guests" type="number" min="1" inputMode="numeric" value={guests} onChange={(e) => update({ guests: e.target.value })} placeholder="How many?" className={inputClass} />
+              <input id="v-guests" type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={guestsText} onChange={(e) => setGuestsText(e.target.value.replace(/\D/g, ""))} placeholder="How many?" autoComplete="off" className={inputClass} />
             </div>
             <div>
               <label htmlFor="v-sort" className={labelClass}>Sort by</label>
@@ -126,7 +166,7 @@ export default function VenuesPage() {
           </fieldset>
 
           <div>
-            <button type="button" onClick={() => setShowMore((s) => !s)} aria-expanded={showMore} className="inline-flex items-center gap-2 font-body text-small text-gold-800 hover:text-ink">
+            <button type="button" onClick={() => setShowMore((s) => !s)} aria-expanded={showMore} className="inline-flex min-h-11 items-center gap-2 font-body text-small text-gold-800 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
               <SlidersHorizontal aria-hidden="true" className="size-4" strokeWidth={1.5} /> {showMore ? "Fewer filters" : "More filters"}
               {amenities.length > 0 && <span className="rounded-full bg-gold-100 px-2 py-0.5 text-caption">{amenities.length}</span>}
             </button>
@@ -144,55 +184,58 @@ export default function VenuesPage() {
         </div>
       </section>
 
-      <section aria-label="Results" className="bg-cream py-12 lg:py-16">
+      <section ref={resultsRef} aria-label="Results" className="scroll-mt-[calc(var(--spacing-header)+16px)] bg-cream py-12 lg:py-16">
         <div className="container-site">
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-3" aria-live="polite">
-            <p className="font-body text-small text-taupe">
-              {isPending ? "Loading venues" : isError ? "Venues could not be loaded" : `${venues.length} ${venues.length === 1 ? "venue" : "venues"} on this page${totalPages > 1 ? ` (page ${page} of ${totalPages})` : ""}`}
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+            <p aria-live="polite" className="font-body text-small text-taupe">
+              {isPending
+                ? "Loading venues"
+                : isError
+                  ? "Venues could not be loaded"
+                  : total === 0
+                    ? "No venues found"
+                    : totalPages > 1
+                      ? `Showing ${(page - 1) * PAGE_SIZE + 1} to ${(page - 1) * PAGE_SIZE + venues.length} of ${total} venues`
+                      : `${total} ${total === 1 ? "venue" : "venues"}`}
             </p>
-            {active > 0 && <button type="button" onClick={clear} className="font-body text-small text-gold-800 underline underline-offset-4 hover:text-ink">Clear all filters</button>}
+            {active > 0 && <button type="button" onClick={clear} className="min-h-11 font-body text-small text-gold-800 underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">Clear all filters</button>}
           </div>
 
           {isPending ? (
             <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 6 }, (_, i) => <VenueCardSkeleton key={i} />)}</ul>
           ) : isError ? (
-            <div className="rounded-card-xl border border-dashed border-line bg-white p-10 text-center">
+            <div role="alert" className="rounded-card-xl border border-dashed border-line bg-white p-10 text-center">
               <p className="font-display text-h4 font-light text-ink">We could not load the venues</p>
               <p className="mt-2 font-body text-small text-taupe">Please check your connection and try again.</p>
-              <Button type="button" className="mt-6" onClick={() => window.location.reload()}>Reload</Button>
+              <Button type="button" className="mt-6" onClick={() => refetch()}>Try again</Button>
             </div>
           ) : venues.length === 0 ? (
             <div className="rounded-card-xl border border-dashed border-line bg-white p-10 text-center">
               <p className="font-display text-h4 font-light text-ink">No venues match those filters</p>
-              <p className="mt-2 font-body text-small text-taupe">Try fewer filters, a different city, or a smaller guest count.</p>
+              <p className="mt-2 font-body text-small text-taupe">{guests ? `No venue has a space for ${guests} ${guests === "1" ? "guest" : "guests"} with these filters. ` : ""}Try fewer filters, a different city, or a smaller guest count.</p>
               {active > 0 && <Button type="button" variant="outline-dark" className="mt-6" onClick={clear}>Clear filters</Button>}
             </div>
           ) : (
             <ul className={`grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? "opacity-70 transition-opacity" : ""}`}>
               {venues.map((v) => (
-                <VenueCard key={v._id} venue={v} isFavorite={favoriteIds.has(v._id)} onToggleFavorite={canSave ? toggle.mutate : undefined} favoriteDisabled={toggle.isPending} />
+                <VenueCard key={v._id} venue={v} isFavorite={favoriteIds.has(v._id)} onToggleFavorite={onToggleFavorite} favoriteBusy={toggle.isPending && toggle.variables === v._id} />
               ))}
             </ul>
           )}
 
           {totalPages > 1 && (
-            <nav aria-label="Pages" className="mt-12 flex items-center justify-center gap-2">
-              <button type="button" disabled={page <= 1} onClick={() => update({ page: String(page - 1) })} aria-label="Previous page" className="flex size-11 items-center justify-center rounded-full border border-border-strong text-ink hover:border-ink disabled:opacity-40"><ChevronLeft aria-hidden="true" className="size-5" /></button>
+            <nav aria-label="Pages" className="mt-12 flex flex-wrap items-center justify-center gap-2">
+              <button type="button" disabled={page <= 1} onClick={() => changePage(page - 1)} aria-label="Previous page" className={pageBtn}><ChevronLeft aria-hidden="true" className="size-5" /></button>
               {pageNumbers.map((n, i) => (
                 <span key={n} className="flex items-center gap-2">
                   {i > 0 && n - pageNumbers[i - 1] > 1 && <span aria-hidden="true" className="text-taupe">…</span>}
-                  <button type="button" aria-current={n === page ? "page" : undefined} onClick={() => update({ page: String(n) })} className={`flex size-11 items-center justify-center rounded-full border font-body text-small ${n === page ? "border-ink bg-ink text-gold-50" : "border-border-strong text-ink hover:border-ink"}`}>{n}</button>
+                  <button type="button" aria-current={n === page ? "page" : undefined} aria-label={`Page ${n}`} onClick={() => changePage(n)} className={`${pageBtn} font-body text-small ${n === page ? "!border-ink bg-ink text-gold-50" : ""}`}>{n}</button>
                 </span>
               ))}
-              <button type="button" disabled={page >= totalPages} onClick={() => update({ page: String(page + 1) })} aria-label="Next page" className="flex size-11 items-center justify-center rounded-full border border-border-strong text-ink hover:border-ink disabled:opacity-40"><ChevronRight aria-hidden="true" className="size-5" /></button>
+              <button type="button" disabled={page >= totalPages} onClick={() => changePage(page + 1)} aria-label="Next page" className={pageBtn}><ChevronRight aria-hidden="true" className="size-5" /></button>
             </nav>
           )}
 
-          {!canSave && venues.length > 0 && (
-            <p className="mt-10 text-center font-body text-small text-taupe">
-              Want to save venues for later? <Link to="/login" className="text-gold-800 underline underline-offset-4">Sign in</Link> to use favorites.
-            </p>
-          )}
         </div>
       </section>
     </>

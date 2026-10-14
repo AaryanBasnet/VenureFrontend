@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Mail, LockKeyhole } from "lucide-react";
@@ -5,10 +6,12 @@ import { Link } from "react-router-dom";
 import { useLoginUser } from "../../hooks/useLoginUser";
 import AuthInput from "../ui/AuthInput";
 import AuthSubmitButton from "./AuthSubmitButton";
+import { useFocusFirstError } from "./useFocusFirstError";
 
+// The password is only checked for being present: the server decides whether it is right.
 const validationSchema = Yup.object({
-  email: Yup.string().email("Invalid email").required("Email required"),
-  password: Yup.string().min(8, "Min 8 characters required").required("Password required"),
+  email: Yup.string().trim().email("Enter a valid email address.").required("Enter your email address."),
+  password: Yup.string().required("Enter your password."),
 });
 
 // Figma 255:5371 "Login form"
@@ -16,18 +19,16 @@ export default function LoginForm({ onForgotPassword }) {
   const { mutate, isPending } = useLoginUser();
 
   const formik = useFormik({
-    initialValues: { email: "", password: "", remember: true },
+    initialValues: { email: "", password: "" },
     validationSchema,
-    onSubmit: ({ email, password }) => mutate({ email, password }),
+    onSubmit: ({ email, password }) => mutate({ email: email.trim(), password }),
   });
 
+  const formRef = useRef(null);
+  useFocusFirstError(formRef, formik);
+
   return (
-    <form
-      className="flex w-full flex-col gap-4"
-      onSubmit={formik.handleSubmit}
-      aria-label="Login form"
-      noValidate
-    >
+    <form ref={formRef} className="flex w-full flex-col gap-4" onSubmit={formik.handleSubmit} aria-label="Sign in" noValidate>
       <AuthInput
         icon={Mail}
         label="Email address"
@@ -53,36 +54,24 @@ export default function LoginForm({ onForgotPassword }) {
         error={formik.touched.password && formik.errors.password}
       />
 
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2.5 font-body text-[12px] text-taupe">
-          <input
-            type="checkbox"
-            name="remember"
-            checked={formik.values.remember}
-            onChange={formik.handleChange}
-            className="size-[18px] rounded accent-ink"
-          />
-          Remember me
-        </label>
+      <div className="-mt-1 flex justify-end">
         <button
           type="button"
           onClick={onForgotPassword}
-          className="cursor-pointer font-body text-[12px] font-medium text-gold-700 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-700"
+          className="inline-flex min-h-11 cursor-pointer items-center font-body text-small font-medium text-gold-900 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-900"
         >
-          Forgot password?
+          Forgot your password?
         </button>
       </div>
 
-      <div className="pt-2">
-        <AuthSubmitButton pending={isPending} pendingLabel="Signing in…">
-          Sign in to Venure
-        </AuthSubmitButton>
-      </div>
+      <AuthSubmitButton pending={isPending} pendingLabel="Signing in…">
+        Sign in
+      </AuthSubmitButton>
 
-      <p className="text-center font-body text-caption text-taupe">
-        Prefer a private consultation?{" "}
-        <Link to="/contact" className="font-semibold text-gold-900 hover:underline">
-          Speak with our concierge
+      <p className="text-center font-body text-small text-taupe">
+        Planning an event and want to talk first?{" "}
+        <Link to="/contact" className="font-medium text-gold-900 underline-offset-4 hover:underline">
+          Contact us
         </Link>
       </p>
     </form>
