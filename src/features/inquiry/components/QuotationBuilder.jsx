@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { apiError, useCreateQuotation } from "../hooks/useInquiries";
 import { SHIFT_OPTIONS } from "../inquiryOptions";
-import { btnPrimary, npr } from "../../../components/owner/ownerStyles";
+import { btnPrimary, npr } from "../../../components/dashboard/styles";
 
 const field =
   "w-full rounded-card-sm border border-border-strong bg-paper-white px-3 py-2.5 font-body text-small text-ink placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink";

@@ -6,8 +6,8 @@ import { useCancelBookingNow, useCompleteBooking, useOwnerBookingList, useSettle
 import { shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { toWhatsAppNumber } from "../../features/venues/venueFormat";
-import { EmptyState, ErrorState, PageHeader, RowsSkeleton, StatusPill } from "../../components/owner/ui";
-import { btnDanger, btnOutline, btnPrimary, npr } from "../../components/owner/ownerStyles";
+import { EmptyState, ErrorState, PageHeader, RowsSkeleton, StatusPill } from "../../components/dashboard/ui";
+import { btnDanger, btnOutline, btnPrimary, npr } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
 
 const TABS = [

@@ -7,7 +7,7 @@ import { useUpdateVenue } from "../../hooks/owner/useUpdateVenue";
 import { assetUrl } from "../../utils/assetUrl";
 import { venueTypes } from "../../features/landing/content/landingContent";
 import { errorClass, inputClass, labelClass } from "../ui/formStyles";
-import { btnPrimary } from "./ownerStyles";
+import { btnPrimary } from "../dashboard/styles";
 import { DrinkOptionsEditor, PackagesEditor } from "./MenuEditors";
 import { drinksFromVenue, drinksToPayload, menuError, packagesFromVenue, packagesToPayload } from "./menuEditorUtils";
 

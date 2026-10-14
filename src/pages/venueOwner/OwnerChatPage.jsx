@@ -4,7 +4,7 @@ import ChatList from "../../components/ChatList";
 import ChatBox from "../../components/ChatBox";
 import { AuthContext } from "../../auth/AuthProvider";
 import { useChat } from "../../hooks/useChat";
-import { PageHeader, EmptyState } from "../../components/owner/ui";
+import { PageHeader, EmptyState } from "../../components/dashboard/ui";
 
 export default function OwnerChatPage() {
   const { user } = useContext(AuthContext);

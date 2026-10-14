@@ -4,8 +4,8 @@ import { ArrowRight, Inbox } from "lucide-react";
 import { useOwnerInquiries } from "../../features/inquiry/hooks/useInquiries";
 import { effectiveStatus, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
-import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, StatusPill } from "../../components/owner/ui";
-import { shortDate } from "../../components/owner/ownerStyles";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, StatusPill } from "../../components/dashboard/ui";
+import { shortDate } from "../../components/dashboard/styles";
 
 const TABS = [
   { id: "needs", label: "Needs a reply", match: (s) => s === "pending", empty: "No requests waiting. New requests from customers show up here." },

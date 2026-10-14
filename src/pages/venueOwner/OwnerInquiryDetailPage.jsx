@@ -16,8 +16,8 @@ import QuotationBuilder from "../../features/inquiry/components/QuotationBuilder
 import { effectiveStatus, formatDate, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { toWhatsAppNumber } from "../../features/venues/venueFormat";
-import { ErrorState, PageHeader, Panel, StatusPill } from "../../components/owner/ui";
-import { btnDanger, btnOutline, btnPrimary } from "../../components/owner/ownerStyles";
+import { ErrorState, PageHeader, Panel, StatusPill } from "../../components/dashboard/ui";
+import { btnDanger, btnOutline, btnPrimary } from "../../components/dashboard/styles";
 
 const chip =
   "inline-flex items-center gap-1.5 rounded-full border border-ink px-4 py-2 font-body text-small text-ink transition-colors hover:bg-ink hover:text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";

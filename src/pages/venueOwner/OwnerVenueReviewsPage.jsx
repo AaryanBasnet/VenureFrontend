@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { MessageCircle, Star, ThumbsUp } from "lucide-react";
-import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat } from "../../components/owner/ui";
-import { shortDate } from "../../components/owner/ownerStyles";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat } from "../../components/dashboard/ui";
+import { shortDate } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
 import { useOwnerVenueReviews } from "../../hooks/owner/useOwnerVenueReviews";
 

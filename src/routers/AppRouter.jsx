@@ -42,9 +42,7 @@ const AdminVenuePage = lazy(() => import("../pages/admin/AdminVenuePage"));
 const AdminVenueOwnerPage = lazy(() =>
   import("../pages/admin/AddVenueOwnerPage")
 );
-const AdminTestimonialPage = lazy(() =>
-  import("../pages/admin/AdminTestimonialPage")
-);
+const AdminReviewsPage = lazy(() => import("../pages/admin/AdminReviewsPage"));
 const AdminContactPage = lazy(() => import("../pages/admin/AdminContactPage"));
 
 // Owner Pages
@@ -115,10 +113,8 @@ export default function AppRouter() {
               <Route path="/admin/venue" element={<AdminVenuePage />} />
               <Route path="/admin/contact" element={<AdminContactPage />} />
               <Route path="/admin/owner" element={<AdminVenueOwnerPage />} />
-              <Route
-                path="/admin/testimonial"
-                element={<AdminTestimonialPage />}
-              />
+              <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+              <Route path="/admin/testimonial" element={<Navigate to="/admin/reviews" replace />} />
             </Route>
           </Route>
 

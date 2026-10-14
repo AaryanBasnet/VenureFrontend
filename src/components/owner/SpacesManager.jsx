@@ -5,8 +5,8 @@ import { createSpace, deactivateSpace, getSpaces, updateSpace } from "../../api/
 import { apiError } from "../../features/inquiry/hooks/useInquiries";
 import { SHIFT_OPTIONS } from "../../features/inquiry/inquiryOptions";
 import { inputClass, labelClass } from "../ui/formStyles";
-import { btnDanger, btnOutline, btnPrimary } from "./ownerStyles";
-import { EmptyState, ErrorState, RowsSkeleton } from "./ui";
+import { btnDanger, btnOutline, btnPrimary } from "../dashboard/styles";
+import { EmptyState, ErrorState, RowsSkeleton } from "../dashboard/ui";
 
 const linkBtn =
   "font-body text-small text-ink underline underline-offset-4 hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50";
