@@ -71,7 +71,7 @@ export default function VenueHero({ venue, maxCapacity, spaceCount, fromPlate, o
               onClick={onCheckDate}
               className="rounded-full border border-gold-50/70 px-7 py-3 font-body text-button uppercase transition-colors hover:bg-gold-50 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              Check a date →
+              Request a date →
             </button>
           </div>
         </div>

@@ -1,5 +1,7 @@
 import { useContext, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useGoToLogin } from "../../auth/returnTo";
+import { usePageTitle } from "../../utils/usePageTitle";
 import { MessageCircle, Phone } from "lucide-react";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../auth/AuthProvider";
@@ -33,11 +35,13 @@ function PageMessage({ title, children }) {
 const VenueDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const goToLogin = useGoToLogin();
   const { isAuthenticated, user } = useContext(AuthContext);
 
   const { data: venue, isPending, isError } = useVenueDetails(id);
   const { data: spaces = [], isPending: spacesPending } = useVenueSpaces(venue?._id);
   const { startChatWith } = useChat(user, venue?._id || null);
+  usePageTitle(venue?.venueName);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [selectedDrink, setSelectedDrink] = useState(null);
 
@@ -71,10 +75,10 @@ const VenueDetails = () => {
   const phoneDigits = (venue.contactPhone ?? "").replace(/[^\d+]/g, "");
   const whatsappNumber = toWhatsAppNumber(venue.contactPhone);
 
-  // "Check a date" starts the inquiry wizard; a chosen space, package and drink come along as preferences.
+  // "Request a date" starts the inquiry wizard; a chosen space, package and drink come along as preferences.
   const handleCheckDate = (space) => {
     if (!isAuthenticated) {
-      navigate("/login");
+      goToLogin();
       return;
     }
     navigate(`/venue/${venue._id}/inquire`, {
@@ -84,7 +88,7 @@ const VenueDetails = () => {
 
   const handleChatWithOwner = async () => {
     if (!isAuthenticated) {
-      navigate("/login");
+      goToLogin();
       return;
     }
     const ownerId = venue.owner?._id || venue.owner;
@@ -165,7 +169,7 @@ const VenueDetails = () => {
           onClick={() => handleCheckDate()}
           className="w-full rounded-full bg-ink py-3 font-body text-button uppercase text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
-          Check a date
+          Request a date
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { afterLoginPath } from "../../auth/returnTo";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
 
@@ -42,16 +43,15 @@ export default function ProtectedRoute({
   redirectTo = "/unauthorized",
 }) {
   const { user, isAuthenticated, isInitializing } = useAuthStore();
+  const location = useLocation();
 
   // Block render until the /auth/me cookie-check resolves on mount
   if (isInitializing) return <AuthSpinner />;
 
   // Guest-only paths: bounce authenticated users to their home dashboard
   if (guestOnly && isAuthenticated) {
-    if (user?.role === "Admin") return <Navigate to="/admin/dashboard" replace />;
-    if (user?.role === "VenueOwner")
-      return <Navigate to="/owner/dashboard" replace />;
-    return <Navigate to="/" replace />;
+    // Dashboard for owners and admins; customers go back to the page they were heading to
+    return <Navigate to={afterLoginPath(user, location.state?.from)} replace />;
   }
 
   // Protected paths: unauthenticated users go to login

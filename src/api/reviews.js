@@ -18,5 +18,6 @@ export const deleteReview = async (venueId, reviewId) => {
 };
 
 export const getOwnerVenueReviews = async () => {
-  return await instance.get("/owner/reviews");
+  // Backend route: GET /api/owner, a flat list of reviews across the owner's venues.
+  return await instance.get("/owner");
 };

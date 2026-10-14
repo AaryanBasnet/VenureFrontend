@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { priceFormatter, SECTIONS } from "../venueFormat";
 
 
-// Sticky bar under the site header (lg+): jump links to the page sections and the one primary action, so "Check a date" is never far from where the user is.
+// Sticky bar under the site header (lg+): jump links to the page sections and the one primary action, so "Request a date" is never far from where the user is.
 export default function VenueSectionNav({ venueName, fromPlate, onCheckDate, available }) {
   const [active, setActive] = useState(SECTIONS[0].id);
 
@@ -53,7 +53,7 @@ export default function VenueSectionNav({ venueName, fromPlate, onCheckDate, ava
             onClick={onCheckDate}
             className="rounded-full bg-ink px-6 py-2.5 font-body text-button uppercase text-gold-50 transition-colors hover:bg-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            Check a date
+            Request a date
           </button>
         </div>
       </div>

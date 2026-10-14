@@ -1,3 +1,4 @@
+import { assetUrl } from "../../utils/assetUrl";
 import React, { useState } from "react";
 import {
   FiMapPin,
@@ -16,10 +17,9 @@ import { useGetVenues } from "../../hooks/admin/useGetVenues";
 import { useChangeVenueStatus } from "../../hooks/admin/useChangeVenueStatus";
 import { toast } from "react-toastify";
 
-const backendBaseUrl = "http://localhost:5050/";
 
 const getImageUrl = (path) =>
-  path ? backendBaseUrl + path.replace(/^\/+/, "") : "";
+  path ? assetUrl(path) : "";
 
 const amenityIcons = {
   WiFi: <FaWifi />,

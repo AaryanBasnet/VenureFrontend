@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import { AuthContext } from "../../auth/AuthProvider";
 import useAddVenue from "../../hooks/owner/useAddVenue";
 import { useUpdateVenue } from "../../hooks/owner/useUpdateVenue";
+import { assetUrl } from "../../utils/assetUrl";
 import { venueTypes } from "../../features/landing/content/landingContent";
 import { DrinkOptionsEditor, PackagesEditor } from "./MenuEditors";
 import { drinksFromVenue, drinksToPayload, menuError, packagesFromVenue, packagesToPayload } from "./menuEditorUtils";
@@ -36,9 +37,7 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
         ? initialData.venueImages
             .map((img) => {
               if (img && typeof img.url === "string") {
-                return img.url.startsWith("http")
-                  ? img.url
-                  : `http://localhost:5050/${img.url.replace(/^\/+/, "")}`;
+                return assetUrl(img.url);
               }
               return null;
             })

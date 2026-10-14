@@ -50,7 +50,7 @@ function SpaceCard({ space, featured, onCheckDate }) {
             onClick={() => onCheckDate(space)}
             className="rounded-full border border-ink px-5 py-2 font-body text-button uppercase text-ink transition-colors hover:bg-ink hover:text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            Check this space
+            Request this space
           </button>
         </div>
       </div>

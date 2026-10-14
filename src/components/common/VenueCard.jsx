@@ -84,7 +84,7 @@ const VenueCard = ({ venue, onEdit, onDelete, onManageSpaces, isDeleting }) => {
                 .join(", ")}
             </div>
             <div className="text-purple-600 font-semibold text-lg mb-1">
-              {cheapest > 0 ? `From Nrs. ${cheapest.toLocaleString("en-IN")} per plate` : "No packages yet"}
+              {cheapest > 0 ? `From NPR ${cheapest.toLocaleString("en-IN")} per plate` : "No packages yet"}
             </div>
             {onManageSpaces && (
               <button

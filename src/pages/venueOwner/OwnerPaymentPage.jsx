@@ -11,7 +11,7 @@ import {
 import {
   TrendingUp,
   Users,
-  DollarSign,
+  Banknote,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -84,7 +84,7 @@ export default function OwnerPaymentPage() {
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
           <p className="font-medium text-gray-900">{`${label}`}</p>
           <p className="text-indigo-600 font-semibold">
-            {`Rs. ${payload[0].value.toLocaleString()}`}
+            {`NPR ${payload[0].value.toLocaleString()}`}
           </p>
         </div>
       );
@@ -133,14 +133,14 @@ export default function OwnerPaymentPage() {
                   Total Earnings
                 </p>
                 <h2 className="text-3xl font-bold mt-1">
-                  Rs. {totalEarnings.toLocaleString()}
+                  NPR {totalEarnings.toLocaleString()}
                 </h2>
                 <p className="text-emerald-100 text-xs mt-2">
                   this month
                 </p>
               </div>
               <div className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
-                <DollarSign className="w-6 h-6 text-green-500" />
+                <Banknote className="w-6 h-6 text-green-500" />
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function OwnerPaymentPage() {
                   Avg Monthly
                 </p>
                 <h2 className="text-3xl font-bold mt-1">
-                  Rs. {avgEarnings.toLocaleString()}
+                  NPR {avgEarnings.toLocaleString()}
                 </h2>
                 <p className="text-violet-100 text-xs mt-2">
                   Consistent growth
@@ -226,7 +226,7 @@ export default function OwnerPaymentPage() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "#6b7280", fontSize: 12 }}
-                  tickFormatter={(value) => `Rs. ${value / 1000}k`}
+                  tickFormatter={(value) => `NPR ${value / 1000}k`}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar
@@ -328,7 +328,7 @@ export default function OwnerPaymentPage() {
                         </td>
                         <td className="p-6">
                           <p className="font-bold text-gray-900">
-                            Rs. {booking.totalPrice?.toLocaleString()}
+                            NPR {booking.totalPrice?.toLocaleString()}
                           </p>
                           <p className="text-xs text-gray-500">Total amount</p>
                         </td>

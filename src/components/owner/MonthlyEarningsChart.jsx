@@ -20,7 +20,7 @@ const MonthlyEarningsChart = ({ data, isLoading, error }) => {
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
           <p className="font-medium text-gray-900">{label}</p>
           <p className="text-indigo-600 font-semibold">
-            Rs. {payload[0].value.toLocaleString()}
+            NPR {payload[0].value.toLocaleString()}
           </p>
         </div>
       );

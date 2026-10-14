@@ -143,13 +143,13 @@ const OwnerSidebar = ({ sidebarOpen, setSidebarOpen }) => {
             <div className="grid grid-cols-2 gap-2 mt-2">
               <div className="bg-gray-50 rounded-lg p-2 text-center border border-gray-200">
                 <div className="text-lg font-bold text-gray-900">
-                  {activeVenueCountData?.data?.count || 0}
+                  {activeVenueCountData || 0}
                 </div>
                 <div className="text-xs text-gray-600">Active Venues</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-2 text-center border border-gray-200">
                 <div className="text-lg font-bold text-blue-600">
-                  Rs.{currentMonthEarnings}
+                  NPR {currentMonthEarnings}
                 </div>
                 <div className="text-xs text-gray-600">This Month</div>
               </div>

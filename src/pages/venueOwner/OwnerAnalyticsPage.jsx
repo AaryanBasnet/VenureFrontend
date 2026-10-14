@@ -14,7 +14,7 @@ import {
   Calendar,
   TrendingUp,
   Users,
-  DollarSign,
+  Banknote,
   MapPin,
   BarChart3,
   Activity,
@@ -159,7 +159,7 @@ const OwnerAnalyticsPage = () => {
                 <span className="font-medium">{entry.name}:</span>
                 <span className="ml-1 font-bold">
                   {entry.name === "totalEarnings"
-                    ? `Rs. ${entry.value.toLocaleString()}`
+                    ? `NPR ${entry.value.toLocaleString()}`
                     : entry.value}
                 </span>
               </p>
@@ -196,9 +196,9 @@ const OwnerAnalyticsPage = () => {
             color="blue"
           />
           <StatCard
-            icon={DollarSign}
+            icon={Banknote}
             title="Total Revenue (This Year)"
-            value={`Rs. ${totalEarnings.toLocaleString()}`}
+            value={`NPR ${totalEarnings.toLocaleString()}`}
             color="green"
           />
           <StatCard
@@ -272,7 +272,7 @@ const OwnerAnalyticsPage = () => {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "#6b7280", fontSize: 12 }}
-                tickFormatter={(value) => `Rs. ${value / 1000}k`}
+                tickFormatter={(value) => `NPR ${value / 1000}k`}
               />
               <Tooltip content={<CustomTooltip />} />
               <Area
@@ -402,7 +402,7 @@ const OwnerAnalyticsPage = () => {
                     <td className="p-6">
                       <div>
                         <p className="font-bold text-gray-900">
-                          Rs. {booking.totalPrice.toLocaleString()}
+                          NPR {booking.totalPrice.toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-500">Total amount</p>
                       </div>

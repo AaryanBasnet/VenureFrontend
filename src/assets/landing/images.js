@@ -105,24 +105,6 @@ import i101 from "./featured/heritage-lodge-1000.avif";
 import i102 from "./featured/heritage-lodge-1000.webp";
 import i103 from "./featured/heritage-lodge-1570.avif";
 import i104 from "./featured/heritage-lodge-1570.webp";
-import i105 from "./testimonials/priya-aditya-640.avif";
-import i106 from "./testimonials/priya-aditya-640.webp";
-import i107 from "./testimonials/priya-aditya-1000.avif";
-import i108 from "./testimonials/priya-aditya-1000.webp";
-import i109 from "./testimonials/priya-aditya-1448.avif";
-import i110 from "./testimonials/priya-aditya-1448.webp";
-import i111 from "./testimonials/anita-640.avif";
-import i112 from "./testimonials/anita-640.webp";
-import i113 from "./testimonials/anita-1000.avif";
-import i114 from "./testimonials/anita-1000.webp";
-import i115 from "./testimonials/anita-1448.avif";
-import i116 from "./testimonials/anita-1448.webp";
-import i117 from "./testimonials/rohan-sunita-640.avif";
-import i118 from "./testimonials/rohan-sunita-640.webp";
-import i119 from "./testimonials/rohan-sunita-1000.avif";
-import i120 from "./testimonials/rohan-sunita-1000.webp";
-import i121 from "./testimonials/rohan-sunita-1448.avif";
-import i122 from "./testimonials/rohan-sunita-1448.webp";
 import i123 from "./auth/login-story-480.avif";
 import i124 from "./auth/login-story-480.webp";
 import i125 from "./auth/login-story-800.avif";
@@ -328,33 +310,6 @@ export const images = {
     srcSet: `${i100} 640w, ${i102} 1000w, ${i104} 1570w`,
     sources: [
       { type: "image/avif", srcSet: `${i99} 640w, ${i101} 1000w, ${i103} 1570w` },
-    ],
-  },
-  testimonialPriyaAditya: {
-    width: 1448,
-    height: 1086,
-    src: `${i110}`,
-    srcSet: `${i106} 640w, ${i108} 1000w, ${i110} 1448w`,
-    sources: [
-      { type: "image/avif", srcSet: `${i105} 640w, ${i107} 1000w, ${i109} 1448w` },
-    ],
-  },
-  testimonialAnita: {
-    width: 1448,
-    height: 1086,
-    src: `${i116}`,
-    srcSet: `${i112} 640w, ${i114} 1000w, ${i116} 1448w`,
-    sources: [
-      { type: "image/avif", srcSet: `${i111} 640w, ${i113} 1000w, ${i115} 1448w` },
-    ],
-  },
-  testimonialRohanSunita: {
-    width: 1448,
-    height: 1086,
-    src: `${i122}`,
-    srcSet: `${i118} 640w, ${i120} 1000w, ${i122} 1448w`,
-    sources: [
-      { type: "image/avif", srcSet: `${i117} 640w, ${i119} 1000w, ${i121} 1448w` },
     ],
   },
   authLoginStory: {

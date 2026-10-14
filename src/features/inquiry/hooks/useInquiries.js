@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useGoToLogin } from "../../../auth/returnTo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../../../auth/AuthProvider";
 import {
@@ -24,10 +24,10 @@ export const apiError = (error) =>
 // Waits for the session check, then sends logged-out visitors to the login page.
 export function useRequireLogin() {
   const { isAuthenticated, loading } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const goToLogin = useGoToLogin();
   useEffect(() => {
-    if (!loading && !isAuthenticated) navigate("/login", { replace: true });
-  }, [loading, isAuthenticated, navigate]);
+    if (!loading && !isAuthenticated) goToLogin({ replace: true });
+  }, [loading, isAuthenticated, goToLogin]);
   return { ready: !loading && isAuthenticated };
 }
 

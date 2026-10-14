@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import Logo from "../components/ui/Logo";
 import Button from "../components/ui/Button";
 import ProfileDropdown from "../components/common/ProfileDropdown";
+import NotificationBell from "../components/common/NotificationBell";
 import { accountLinksFor } from "./accountLinks";
 import { AuthContext } from "../auth/AuthProvider";
 
@@ -97,7 +98,9 @@ export default function SiteHeader({ overlay = false }) {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4">
+          {/* One bell for every screen size, so each notification raises a single toast */}
+          {user && <NotificationBell userId={user._id} />}
           <div className="hidden items-center gap-5 lg:flex">
             {user ? (
               <ProfileDropdown user={user} logout={logout} avatarUrl={user.avatar || null} />

@@ -27,7 +27,7 @@ export default function MyInquiriesPage() {
       ) : inquiries.length === 0 ? (
         <div className="mt-10 max-w-xl rounded-card-lg border border-dashed border-line bg-cream p-8">
           <p className="font-display text-h4 font-light text-ink">No requests yet</p>
-          <p className="mt-2 font-body text-small text-taupe">Find a venue you like and choose “Check a date”.</p>
+          <p className="mt-2 font-body text-small text-taupe">Find a venue you like and choose “Request a date”.</p>
           <Link to="/venues" className="mt-5 inline-block rounded-full bg-ink px-6 py-3 font-body text-button uppercase text-gold-50 hover:bg-gold-800">Browse venues</Link>
         </div>
       ) : (

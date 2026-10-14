@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import Logo from "./Logo";
 import Button from "./Button";
+import { usePageTitle } from "../../utils/usePageTitle";
 
 // Full-page message (404, access denied). It renders outside the site layout, so it carries its own logo link.
 export default function StatusPage({ code, title, children, actions }) {
+  usePageTitle(code === "404" ? "Page not found" : "Access denied");
   return (
     <main id="main-content" className="flex min-h-screen flex-col bg-cream">
       <header className="container-site flex h-[var(--spacing-header)] items-center">

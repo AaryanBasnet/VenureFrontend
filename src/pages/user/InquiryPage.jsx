@@ -1,11 +1,14 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { useGoToLogin } from "../../auth/returnTo";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { AuthContext } from "../../auth/AuthProvider";
 import { useVenueDetails } from "../../hooks/user/useVenueDetails";
 import { useVenueSpaces } from "../../features/venues/hooks/useVenueSpaces";
 import { priceFormatter } from "../../features/venues/venueFormat";
 import DatePicker from "../../features/inquiry/components/DatePicker";
+import { useAvailability } from "../../features/inquiry/hooks/useAvailability";
+import { isDateUnavailable } from "../../features/inquiry/availability";
 import { inquiryErrorMessage, useCreateInquiry } from "../../features/inquiry/hooks/useCreateInquiry";
 import { EVENT_TYPES, SHIFT_OPTIONS, formatDate, shiftLabel, toInquiryDate } from "../../features/inquiry/inquiryOptions";
 
@@ -26,7 +29,7 @@ function Row({ term, children }) {
 // The venue replies with a quotation; nothing is charged here.
 export default function InquiryPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const goToLogin = useGoToLogin();
   const { state } = useLocation();
   const { isAuthenticated, loading: authLoading, user } = useContext(AuthContext);
   const headingRef = useRef(null);
@@ -34,6 +37,9 @@ export default function InquiryPage() {
   const { data: venue, isPending, isError } = useVenueDetails(id);
   const { data: spaces = [] } = useVenueSpaces(venue?._id);
   const create = useCreateInquiry();
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date());
+  const { data: booked = [] } = useAvailability(venue?._id, visibleMonth);
+  const onMonthChange = useCallback((m) => setVisibleMonth(m), []);
 
   const [step, setStep] = useState(1);
   const [date, setDate] = useState(null);
@@ -50,8 +56,8 @@ export default function InquiryPage() {
 
   // Wait for the session check (/auth/me) before deciding the visitor is logged out.
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) navigate("/login", { replace: true });
-  }, [authLoading, isAuthenticated, navigate]);
+    if (!authLoading && !isAuthenticated) goToLogin({ replace: true });
+  }, [authLoading, isAuthenticated, goToLogin]);
 
   useEffect(() => {
     if (user?._id) {
@@ -87,6 +93,9 @@ export default function InquiryPage() {
 
   const next = () => {
     if (!date) return setError("Choose a date for your event.");
+    if (isDateUnavailable(date, { booked, spaces, spaceId, shift })) {
+      return setError("That date is already booked for your choice of hall and shift. Please pick another date, hall or shift.");
+    }
     if (guestCount < 1) return setError("Enter how many guests you expect.");
     if (space && guestCount > space.capacity) return setError(`${space.name} holds up to ${space.capacity} guests. Choose another space or fewer guests.`);
     setError("");
@@ -184,7 +193,13 @@ export default function InquiryPage() {
 
           {step === 1 ? (
             <>
-              <DatePicker value={date} onChange={setDate} />
+              <DatePicker
+                value={date}
+                onChange={setDate}
+                onMonthChange={onMonthChange}
+                isUnavailable={(d) => isDateUnavailable(d, { booked, spaces, spaceId, shift })}
+              />
+              <p className="-mt-4 font-body text-caption text-taupe">Struck-through days are already booked for the hall and shift you chose.</p>
 
               <fieldset>
                 <legend className={label}>Shift</legend>

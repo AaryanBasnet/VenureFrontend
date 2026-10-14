@@ -6,6 +6,7 @@ import VenueRegisterForm from "../../components/owner/venueRegistrationForm";
 import SpacesManager from "../../components/owner/SpacesManager";
 import { useVenuesByOwner } from "../../hooks/owner/useVenuesByOwner";
 import { deleteVenue } from "../../api/owner/venueApi";
+import { toast } from "react-toastify";
 import { sanitizeVenue } from "../../utils/sanitizeVenue";
 
 const OwnerVenuePage = () => {
@@ -54,7 +55,7 @@ const OwnerVenuePage = () => {
         await deleteVenue(venueId);
         await refetch();
       } catch {
-        alert("Failed to delete venue. Please try again.");
+        toast.error("We could not delete this venue. Please try again.");
       } finally {
         setDeletingVenueId(null);
       }

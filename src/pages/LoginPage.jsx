@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import LoginForm from "../components/auth/LoginForm";
 import GoogleSignInButton from "../components/auth/GoogleSignInButton";
 import ForgotPasswordForm from "../components/auth/ForgotPasswordForm";
@@ -12,6 +12,7 @@ import { images } from "../assets/landing/images";
 // Figma 255:5358 "Venure login" — full split-panel page (not just the isolated
 // "Login panel" component, which is only the right-hand form half).
 export default function LoginPage() {
+  const location = useLocation();
   const [step, setStep] = useState("login"); // 'login' | 'forgot' | 'verify' | 'reset'
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -104,6 +105,7 @@ export default function LoginPage() {
               <span className="font-body text-caption text-taupe">Don&rsquo;t have an account?</span>
               <Link
                 to="/register"
+                state={location.state}
                 className="rounded-full border border-border-strong px-4 py-2.5 font-body text-[12px] font-medium text-charcoal hover:border-charcoal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-charcoal"
               >
                 Register

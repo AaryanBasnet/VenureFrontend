@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-// Month calendar (AD). Past dates and today are not selectable: the venue needs time to reply.
+// Month calendar (AD). Past dates and today are not selectable (the venue needs time to reply),
+// and days the venue is already booked for are struck through.
 // A BS (Bikram Sambat) toggle is planned and needs a date-conversion library.
-export default function DatePicker({ value, onChange }) {
+export default function DatePicker({ value, onChange, onMonthChange, isUnavailable }) {
   const today = startOfDay(new Date());
   const [month, setMonth] = useState(() => new Date((value ?? today).getFullYear(), (value ?? today).getMonth(), 1));
+
+  useEffect(() => {
+    onMonthChange?.(month);
+  }, [month, onMonthChange]);
 
   const first = month.getDay();
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
@@ -46,7 +51,8 @@ export default function DatePicker({ value, onChange }) {
         ))}
         {Array.from({ length: days }, (_, i) => {
           const date = new Date(month.getFullYear(), month.getMonth(), i + 1);
-          const disabled = date <= today;
+          const taken = !!isUnavailable?.(date);
+          const disabled = date <= today || taken;
           const selected = value && startOfDay(value).getTime() === date.getTime();
           return (
             <button
@@ -54,13 +60,13 @@ export default function DatePicker({ value, onChange }) {
               type="button"
               disabled={disabled}
               aria-pressed={!!selected}
-              aria-label={date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              aria-label={`${date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}${taken ? " (not available)" : ""}`}
               onClick={() => onChange(date)}
               className={`h-11 rounded-card-sm font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink ${
                 selected
                   ? "bg-ink text-gold-50"
                   : disabled
-                    ? "cursor-not-allowed text-stone"
+                    ? `cursor-not-allowed text-stone ${taken ? "line-through" : ""}`
                     : "text-ink hover:bg-gold-100"
               }`}
             >

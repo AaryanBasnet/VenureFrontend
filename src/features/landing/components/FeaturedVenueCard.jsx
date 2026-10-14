@@ -52,7 +52,7 @@ export default function FeaturedVenueCard({ venue, fallbackImage, imageSizes, cl
               <span />
             )}
             <Link
-              to={`/venue/${venue._id}?enquire=true`}
+              to={`/venue/${venue._id}/inquire`}
               className="relative z-10 rounded-full bg-gold px-4 py-2 font-body text-button uppercase text-white transition-colors hover:bg-gold-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               Enquire →

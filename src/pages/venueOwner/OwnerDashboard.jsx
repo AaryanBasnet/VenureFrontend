@@ -12,7 +12,7 @@ import {
   Calendar,
   CheckCircle,
   Clock,
-  DollarSign,
+  Banknote,
   TrendingUp,
   Users,
   XCircle,
@@ -67,6 +67,7 @@ export default function OwnerDashboard() {
   const getStatusColor = (status) => {
     switch (status) {
       case "confirmed":
+      case "completed":
       case "approved":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "cancelled":
@@ -76,7 +77,7 @@ export default function OwnerDashboard() {
     }
   };
   const BookingRow = ({ booking }) => {
-    const date = new Date(booking.bookingDate).toLocaleDateString("en-IN", {
+    const date = new Date(booking.startTime).toLocaleDateString("en-GB", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -109,7 +110,7 @@ export default function OwnerDashboard() {
 
         <div className="text-right">
           <p className="font-bold text-gray-900 mb-2">
-            Rs. {booking.totalPrice?.toLocaleString() ?? 0}
+            NPR {booking.totalPrice?.toLocaleString() ?? 0}
           </p>
           <span
             className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium border ${getStatusColor(
@@ -117,7 +118,7 @@ export default function OwnerDashboard() {
             )}`}
           >
             {getStatusIcon(booking.status)}
-            {booking.status ?? "pending"}
+            {String(booking.status ?? "pending").replace("_", " ")}
           </span>
         </div>
       </div>
@@ -152,10 +153,10 @@ export default function OwnerDashboard() {
             value={
               isLoadingEarnings
                 ? "Loading..."
-                : `Rs. ${currentMonthEarnings.toLocaleString()}`
+                : `NPR ${currentMonthEarnings.toLocaleString()}`
             }
             subtitle="This month"
-            icon={DollarSign}
+            icon={Banknote}
             trend={12.5}
             color="green"
           />
@@ -174,7 +175,7 @@ export default function OwnerDashboard() {
             value={
               isLoadingActiveVenueCount
                 ? "Loading..."
-                : activeVenueCountData?.data?.count || 0
+                : activeVenueCountData || 0
             }
             subtitle="Currently listed"
             icon={Building2}
