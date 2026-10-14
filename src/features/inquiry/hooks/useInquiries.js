@@ -5,7 +5,7 @@ import { AuthContext } from "../../../auth/AuthProvider";
 import {
   acceptQuotationApi,
   cancelInquiryApi,
-  createBookingFromQuotationApi,
+  verifyEsewaPaymentApi,
   getInquiryApi,
   getMyInquiriesApi,
   getQuotationApi,
@@ -52,9 +52,9 @@ function useRefreshing(mutationFn) {
 }
 
 export const useCancelInquiry = () => useRefreshing(cancelInquiryApi);
-export const useAcceptQuotation = () => useRefreshing(({ id, provider }) => acceptQuotationApi(id, provider));
+export const useAcceptQuotation = () => useRefreshing(acceptQuotationApi);
 export const useRejectQuotation = () => useRefreshing(rejectQuotationApi);
-export const useBookFromQuotation = () => useRefreshing(createBookingFromQuotationApi);
+export const useVerifyEsewaPayment = () => useRefreshing(verifyEsewaPaymentApi);
 
 /* ── Venue owner ── */
 export const useOwnerInquiries = () => useQuery({ queryKey: ["owner-inquiries"], queryFn: getOwnerInquiriesApi });

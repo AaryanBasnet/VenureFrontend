@@ -14,6 +14,8 @@ const EXACT = {
   "/chat": "Messages",
   "/my-inquiries": "My inquiries",
   "/my-bookings": "My bookings",
+  "/payment/esewa/success": "Confirming payment",
+  "/payment/esewa/failure": "Payment not completed",
   "/unauthorized": "Access denied",
   "/owner/dashboard": "Owner dashboard",
   "/owner/venues": "My venues",

@@ -58,7 +58,7 @@ export default function InquiryDetailPage() {
   const startPayment = async () => {
     setError("");
     try {
-      const result = await accept.mutateAsync({ id: quotation._id, provider: "stripe" });
+      const result = await accept.mutateAsync(quotation._id);
       setPayment(result.payment);
     } catch (e) {
       setError(apiError(e));

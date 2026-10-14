@@ -20,6 +20,7 @@ import PasswordResetFlow from "../components/auth/PasswordResetFlow";
 const LoginPage = lazy(() => import("../pages/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/RegisterPage"));
 const LandingPage = lazy(() => import("../pages/user/LandingPage"));
+const EsewaReturnPage = lazy(() => import("../pages/user/EsewaReturnPage"));
 const AboutUs = lazy(() => import("../pages/user/AboutUs"));
 const ContactUs = lazy(() => import("../pages/user/ContactUs"));
 const VenuesPage = lazy(() => import("../pages/user/VenuesPage"));
@@ -92,6 +93,8 @@ export default function AppRouter() {
               <Route path="/my-bookings" element={<MyBookings />} />
               <Route path="/my-inquiries" element={<MyInquiriesPage />} />
               <Route path="/my-inquiries/:id" element={<InquiryDetailPage />} />
+              <Route path="/payment/esewa/success" element={<EsewaReturnPage outcome="success" />} />
+              <Route path="/payment/esewa/failure" element={<EsewaReturnPage outcome="failure" />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/chat" element={<ChatPage />} />
             </Route>

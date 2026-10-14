@@ -10,11 +10,11 @@ export const getInquiryApi = async (id) => (await instance.get(`/inquiries/${id}
 export const cancelInquiryApi = async (id) => (await instance.put(`/inquiries/${id}/cancel`)).data.data;
 
 export const getQuotationApi = async (id) => (await instance.get(`/quotations/${id}`)).data.data;
-// Accepting also starts the deposit payment: { quotation, payment: { provider, clientSecret, ... } }
-export const acceptQuotationApi = async (id, provider = "stripe") =>
-  (await instance.put(`/quotations/${id}/accept`, { provider })).data.data;
+// Accepting also starts the deposit payment: { quotation, payment: { formUrl, formData, ... } }
+// where formUrl/formData are what the browser posts to eSewa.
+export const acceptQuotationApi = async (id) => (await instance.put(`/quotations/${id}/accept`)).data.data;
 export const rejectQuotationApi = async (id) => (await instance.put(`/quotations/${id}/reject`)).data.data;
 
-// Finalises the booking once the deposit has been paid.
-export const createBookingFromQuotationApi = async ({ quotationId, paymentIntentId }) =>
-  (await instance.post("/bookings/from-quotation", { quotationId, paymentIntentId })).data.data;
+// eSewa sends the customer back with ?data=<base64>. The server checks it with eSewa
+// and creates the confirmed booking.
+export const verifyEsewaPaymentApi = async (data) => (await instance.post("/payment/esewa/verify", { data })).data.data;
