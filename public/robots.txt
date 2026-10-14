@@ -1,14 +1,16 @@
+# Venure: public pages are open to search engines; accounts, dashboards and payment pages are not.
 User-agent: *
 Allow: /
-Allow: /venues
-Allow: /venue/
-Allow: /about
-Allow: /contact
-
 Disallow: /admin/
 Disallow: /owner/
+Disallow: /login
+Disallow: /register
+Disallow: /profile
 Disallow: /favorites
 Disallow: /my-bookings
-Disallow: /profile
-Disallow: /checkout/
+Disallow: /my-inquiries
 Disallow: /chat
+Disallow: /payment/
+Disallow: /venue/*/inquire
+
+Sitemap: https://venure.aaryanbasnet.com.np/sitemap.xml
