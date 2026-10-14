@@ -1,4 +1,4 @@
-import { getFilteredVenuesApi, getVenueByIdApi } from "../../api/user/venue";
+import { getFilteredVenuesApi, getVenueByIdApi, getVenueSpacesApi } from "../../api/user/venue";
 
 export const getApprovedVenues = async (filters = {}) => {
   const response = await getFilteredVenuesApi(filters);
@@ -7,4 +7,9 @@ export const getApprovedVenues = async (filters = {}) => {
 export const getVenueById = async (id) => {
   const response = await getVenueByIdApi(id);
   return response.data.data;
+};
+
+export const getVenueSpaces = async (venueId) => {
+  const response = await getVenueSpacesApi(venueId);
+  return response.data.data ?? response.data;
 };

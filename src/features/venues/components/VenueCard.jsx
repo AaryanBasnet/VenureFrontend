@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Users, Heart, ArrowRight } from "lucide-react";
+import { cheapestPlatePrice } from "../venueFormat";
 
 // ── Skeleton loader ───────────────────────────────────────────────────────────
 // Exported so any list consumer can render N skeletons while isPending is true.
@@ -93,12 +94,14 @@ export default function VenueCard({
         )}
 
         {/* Price badge */}
-        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
-          <span className="text-sm font-semibold text-rose-600">
-            Rs.&nbsp;{venue.pricePerHour?.toLocaleString()}
-          </span>
-          <span className="text-xs text-gray-400 ml-1">/ hr</span>
-        </div>
+        {cheapestPlatePrice(venue) > 0 && (
+          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
+            <span className="text-sm font-semibold text-rose-600">
+              From Rs.&nbsp;{cheapestPlatePrice(venue).toLocaleString("en-IN")}
+            </span>
+            <span className="text-xs text-gray-400 ml-1">/ plate</span>
+          </div>
+        )}
       </div>
 
       {/* ── Body ── */}
