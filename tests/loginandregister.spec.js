@@ -1,41 +1,42 @@
-// tests/registerLogin.spec.js
-// 2 tests for user registration and login
+// A new customer registers (and is signed in straight away), signs out, and signs back in.
 import { test, expect } from "@playwright/test";
 
-let testEmail;
+test.describe.configure({ mode: "serial" });
+
+const email = `testuser${Date.now()}@example.com`;
 const password = "Test1234";
 
-test("User can register successfully", async ({ page }) => {
-  testEmail = `testuser${Date.now()}@example.com`;
-
+test("a visitor can register, sign out and sign back in", async ({ page }) => {
   await page.goto("/register");
-
-  await page.fill('input[name="name"]', "Test User 101");
-  await page.fill('input[name="email"]', testEmail);
+  await page.fill('input[name="name"]', "Test User");
+  await page.fill('input[name="email"]', email);
   await page.fill('input[name="phone"]', "9812345678");
   await page.fill('input[name="password"]', password);
+  await page.fill('input[name="confirmPassword"]', password);
+  await page.check('input[name="agreeToTerms"]');
+  await page.getByRole("button", { name: "Create my account" }).click();
 
-  await page.click('button:has-text("Register")');
+  // Registration signs you in: the account menu appears in the header
+  const menu = page.getByRole("button", { name: "Account menu" });
+  await expect(menu).toBeVisible();
 
-  // Optionally wait for redirect or confirmation message
-  await page.waitForURL("**/login");
-  await expect(page).toHaveURL(/\/login$/);
-});
-
-test("User can log in with registered credentials", async ({ page }) => {
-  // If testEmail wasn't set, throw an error
+  await menu.click();
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page.getByRole("link", { name: "Sign in" }).first()).toBeVisible();
 
   await page.goto("/login");
-
-  await page.fill('input[name="email"]', testEmail);
+  await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', password);
+  await page.getByRole("button", { name: /sign in/i }).first().click();
+  await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+});
 
-  await page.click('button:has-text("Sign in")');
+test("signing in sends you back to the page you were trying to reach", async ({ page }) => {
+  await page.goto("/my-bookings");
+  await expect(page).toHaveURL(/\/login/);
 
-  // Wait for redirect or dashboard page
-  await page.waitForURL("**/*");
-  await page.waitForTimeout(500); // adjust if needed
-
-  const token = await page.evaluate(() => localStorage.getItem("token"));
-  expect(token).not.toBeNull();
+  await page.fill('input[name="email"]', email);
+  await page.fill('input[name="password"]', password);
+  await page.getByRole("button", { name: /sign in/i }).first().click();
+  await expect(page).toHaveURL(/\/my-bookings$/);
 });
