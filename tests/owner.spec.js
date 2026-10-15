@@ -96,7 +96,8 @@ test.describe("quotation builder", () => {
     await page.getByRole("button", { name: "Add a line item" }).click();
     await page.fill("#li-label-1", "Plates");
     await page.fill("#li-price-1", "100");
-    await page.locator("#li-guest-1").check();
+    await page.locator('label[for="li-guest-1"]').click(); // the choice is a pill; the radio behind it is visually hidden
+    await expect(page.locator("#li-guest-1")).toBeChecked();
     await page.fill("#q-guests", "50");
     await expect.poll(() => amounts(page)).toEqual({ total: 105000, deposit: 30000, balance: 75000 });
 

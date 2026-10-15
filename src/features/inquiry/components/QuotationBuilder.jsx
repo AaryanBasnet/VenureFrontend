@@ -35,6 +35,19 @@ const QUICK_ADD = [
 // Same maths as the server: quantity x unit price, times the guest count when charged per guest.
 const lineAmount = (i, guests) => (Number(i.unitPrice) || 0) * (Number(i.quantity) || 1) * (i.perGuest ? Number(guests) || 0 : 1);
 
+// The sum in words, so the owner can see how the amount comes about.
+function lineExplanation(i, guests) {
+  const price = Number(i.unitPrice) || 0;
+  if (i.perGuest) return `${npr(price)} x ${plural(Number(guests) || 0, "guest")}`;
+  const qty = Number(i.quantity) || 1;
+  return qty > 1 ? `${npr(price)} x ${qty}` : "Charged once";
+}
+
+// "Per guest" / "Fixed price" choice: a real radio hidden behind a pill, so the keyboard works.
+const chargeChoice =
+  "cursor-pointer rounded-full border border-line bg-white px-4 py-2 font-body text-small text-ink transition-colors hover:border-ink " +
+  "has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-gold-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink";
+
 // The owner's reply to an inquiry. Totals here are a preview; the server recomputes every amount.
 export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
   const create = useCreateQuotation();
@@ -130,44 +143,61 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
 
         <fieldset>
           <legend className="font-display text-h5 font-light text-ink">What you are charging</legend>
-          <p className="mt-0.5 font-body text-caption text-taupe">Tick "Per guest" for food and other items priced per plate. The amount is then multiplied by the guest count above.</p>
+          <p className="mt-0.5 font-body text-caption text-taupe">Food is usually charged per guest. Hire and decoration are usually a fixed price.</p>
 
           <ul className="mt-4 space-y-3">
             {items.map((it, i) => (
               <li key={i} className="rounded-card-md border border-line bg-cream p-4">
-                <div className="grid gap-3 sm:grid-cols-[1fr_150px_90px]">
-                  <div>
+                <div className="flex items-end gap-3">
+                  <div className="min-w-0 flex-1">
                     <label htmlFor={`li-label-${i}`} className={lab}>Item {i + 1}</label>
-                    <input id={`li-label-${i}`} placeholder="e.g. Gold package menu" value={it.label} onChange={(e) => setItem(i, { label: e.target.value })} className={field} />
+                    <input id={`li-label-${i}`} placeholder="e.g. Dinner, Venue hire, Decoration" value={it.label} onChange={(e) => setItem(i, { label: e.target.value })} className={field} />
                   </div>
-                  <div>
-                    <label htmlFor={`li-price-${i}`} className={lab}>Price (NPR)</label>
+                  <p className="hidden shrink-0 pb-1 text-right font-body text-small text-ink sm:block">
+                    <span className="block text-caption text-taupe">{lineExplanation(it, guests)}</span>
+                    <span className="font-medium">{npr(lineAmount(it, guests))}</span>
+                  </p>
+                  <button
+                    type="button"
+                    aria-label={`Remove item ${i + 1}`}
+                    onClick={() => setItems((l) => l.filter((_, idx) => idx !== i))}
+                    className="mb-0.5 rounded-full p-2.5 text-taupe hover:bg-sand hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+                  >
+                    <Trash2 aria-hidden="true" className="size-4" />
+                  </button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-3">
+                  <fieldset>
+                    <legend className={lab}>Charged</legend>
+                    <div className="flex gap-2">
+                      <label htmlFor={`li-guest-${i}`} className={chargeChoice}>
+                        <input id={`li-guest-${i}`} type="radio" name={`li-charge-${i}`} checked={it.perGuest} onChange={() => setItem(i, { perGuest: true, quantity: 1 })} className="sr-only" />
+                        Per guest
+                      </label>
+                      <label htmlFor={`li-fixed-${i}`} className={chargeChoice}>
+                        <input id={`li-fixed-${i}`} type="radio" name={`li-charge-${i}`} checked={!it.perGuest} onChange={() => setItem(i, { perGuest: false })} className="sr-only" />
+                        Fixed price
+                      </label>
+                    </div>
+                  </fieldset>
+
+                  <div className="w-40">
+                    <label htmlFor={`li-price-${i}`} className={lab}>{it.perGuest ? "Price per plate (NPR)" : "Price (NPR)"}</label>
                     <input id={`li-price-${i}`} type="number" inputMode="numeric" min="0" placeholder="0" value={it.unitPrice} onChange={(e) => setItem(i, { unitPrice: e.target.value })} className={field} />
                   </div>
-                  <div>
-                    <label htmlFor={`li-qty-${i}`} className={lab}>Quantity</label>
-                    <input id={`li-qty-${i}`} type="number" inputMode="numeric" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} className={field} />
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <label htmlFor={`li-guest-${i}`} className="flex items-center gap-2 font-body text-small text-ink">
-                    <input id={`li-guest-${i}`} type="checkbox" checked={it.perGuest} onChange={(e) => setItem(i, { perGuest: e.target.checked })} className="size-4 accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink" />
-                    Per guest <span className="text-taupe">(per plate)</span>
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <p className="font-body text-small text-ink">
-                      {it.perGuest && <span className="mr-2 text-caption text-taupe">x {plural(Number(guests) || 0, "guest")}</span>}
-                      <span className="font-medium">{npr(lineAmount(it, guests))}</span>
-                    </p>
-                    <button
-                      type="button"
-                      aria-label={`Remove item ${i + 1}`}
-                      onClick={() => setItems((l) => l.filter((_, idx) => idx !== i))}
-                      className="rounded-full p-2 text-taupe hover:bg-sand hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
-                    >
-                      <Trash2 aria-hidden="true" className="size-4" />
-                    </button>
-                  </div>
+
+                  {!it.perGuest && (
+                    <div className="w-24">
+                      <label htmlFor={`li-qty-${i}`} className={lab}>How many</label>
+                      <input id={`li-qty-${i}`} type="number" inputMode="numeric" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} className={field} />
+                    </div>
+                  )}
+
+                  <p className="ml-auto pb-2.5 text-right font-body text-small text-ink sm:hidden">
+                    <span className="block text-caption text-taupe">{lineExplanation(it, guests)}</span>
+                    <span className="font-medium">{npr(lineAmount(it, guests))}</span>
+                  </p>
                 </div>
               </li>
             ))}
