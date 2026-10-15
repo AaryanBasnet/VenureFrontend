@@ -38,9 +38,9 @@ export default function DashboardSidebar({ role, homeTo, sections, badges = {}, 
         className={`fixed inset-y-0 left-0 z-50 flex w-[17rem] flex-col bg-ink text-gold-50 transition-transform duration-300 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex h-[var(--spacing-header)] shrink-0 items-center justify-between px-6">
-          <Link to={homeTo} aria-label={`Venure ${role.toLowerCase()} dashboard`} className="flex items-end gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
+          <Link to={homeTo} aria-label={`Venure ${role.toLowerCase()} dashboard`} className="flex items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
             <Logo className="w-14 text-gold-50" label="Venure" />
-            <span className="pb-1 font-body text-eyebrow uppercase text-gold">{role}</span>
+            <span className="rounded-md border border-gold/60 px-2 py-1 font-body text-eyebrow uppercase leading-none text-gold">{role}</span>
           </Link>
           <button type="button" onClick={onClose} aria-label="Close menu" className="rounded-full p-2 text-gold-50 hover:bg-white/10 lg:hidden">
             <X aria-hidden="true" className="size-5" />

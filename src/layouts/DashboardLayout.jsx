@@ -13,6 +13,11 @@ export default function DashboardLayout({ role, homeTo, sections, badges }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const { pathname } = useLocation();
+  // The name of the page you are on, taken from the navigation (a request or booking detail shows its section)
+  const pageName = sections
+    .flatMap((s) => s.items)
+    .filter((i) => pathname === i.to || pathname.startsWith(`${i.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0]?.label;
   const mainRef = useRef(null);
   const lastPath = useRef(pathname);
 
@@ -41,9 +46,7 @@ export default function DashboardLayout({ role, homeTo, sections, badges }) {
               <Logo className="w-12" label="Venure" />
             </Link>
           </div>
-          <p className="hidden font-body text-small text-taupe lg:block">
-            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          </p>
+          <p className="hidden font-display text-h5 font-light text-ink lg:block">{pageName}</p>
           {user && <NotificationBell userId={user._id} tone="dark" />}
         </header>
 
