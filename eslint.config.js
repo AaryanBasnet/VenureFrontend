@@ -36,7 +36,7 @@ export default [
   },
   {
     // Tooling and test files run in Node, not the browser
-    files: ['*.config.js', 'scripts/**', 'tests/**'],
+    files: ['*.config.js', '*.setup.js', 'scripts/**', 'tests/**'],
     languageOptions: { globals: { ...globals.node } },
   },
   {
