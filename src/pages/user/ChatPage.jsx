@@ -53,7 +53,7 @@ export default function ChatPage() {
 
   return (
     <div className="bg-cream">
-    <div className="container-site pb-16 pt-8">
+    <div className="container-site page-pad">
       <p className="font-body text-eyebrow uppercase text-gold-800">Messages</p>
       <h1 className="mt-2 font-display text-h2 font-light text-ink">Your conversations</h1>
 

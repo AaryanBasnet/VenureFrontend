@@ -152,7 +152,7 @@ export default function MyBookingsPage() {
   const current = TABS.find((t) => t.key === tab);
 
   return (
-    <div className="container-site pb-24 pt-[calc(var(--spacing-header)+2.5rem)]">
+    <div className="container-site page-pad">
       <p className="font-body text-eyebrow uppercase text-gold-800">My bookings</p>
       <h1 className="mt-2 font-display text-h2 font-light text-ink">Your confirmed events</h1>
       <p className="mt-2 max-w-xl font-body text-body text-taupe">

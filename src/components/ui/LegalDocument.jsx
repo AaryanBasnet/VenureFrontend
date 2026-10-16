@@ -15,7 +15,8 @@ export function LegalSection({ title, children }) {
 export default function LegalDocument({ title, intro, children }) {
   return (
     <div className="bg-cream">
-      <div className="container-site max-w-3xl pb-20 pt-28 sm:pt-32">
+      <div className="container-site page-pad">
+      <div className="measure-reading">
         <p className="font-body text-eyebrow uppercase text-gold-800">Venure</p>
         <h1 className="mt-2 font-display text-h2 font-light text-ink">{title}</h1>
         <p className="mt-2 font-body text-small text-taupe">Last updated {LEGAL_UPDATED}</p>
@@ -34,6 +35,7 @@ export default function LegalDocument({ title, intro, children }) {
           </Link>
           .
         </p>
+      </div>
       </div>
     </div>
   );

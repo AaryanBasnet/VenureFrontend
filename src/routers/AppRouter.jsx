@@ -3,7 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 // Layouts
 import MainLayout from "../layouts/MainLayout";
-import LoadingPage from "../components/LoadingPage";
+import RouteFallback from "../components/RouteFallback";
+import PrefetchManager from "./PrefetchManager";
+import { loaders } from "./routeModules";
 import TitleManager from "./TitleManager";
 import RouterBridge from "./RouterBridge";
 import AdminLayout from "../layouts/AdminLayout";
@@ -18,77 +20,77 @@ import UnAuthorized from "../pages/UnAuthorized";
 import PasswordResetFlow from "../components/auth/PasswordResetFlow";
 
 // Lazy loaded pages
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const RegisterPage = lazy(() => import("../pages/RegisterPage"));
-const LandingPage = lazy(() => import("../pages/user/LandingPage"));
-const EsewaReturnPage = lazy(() => import("../pages/user/EsewaReturnPage"));
-const AboutUs = lazy(() => import("../pages/user/AboutUs"));
-const TermsPage = lazy(() => import("../pages/user/TermsPage"));
-const PrivacyPage = lazy(() => import("../pages/user/PrivacyPage"));
-const ContactUs = lazy(() => import("../pages/user/ContactUs"));
-const VenuesPage = lazy(() => import("../pages/user/VenuesPage"));
-const FavoritesPage = lazy(() => import("../pages/user/FavoritesPage"));
-const MyBookings = lazy(() => import("../pages/user/MyBookingsPage"));
-const VenueDetails = lazy(() => import("../pages/user/VenueDetails"));
-const InquiryPage = lazy(() => import("../pages/user/InquiryPage"));
-const MyInquiriesPage = lazy(() => import("../pages/user/MyInquiriesPage"));
-const InquiryDetailPage = lazy(() => import("../pages/user/InquiryDetailPage"));
-const OwnerInquiriesPage = lazy(() => import("../pages/venueOwner/OwnerInquiriesPage"));
-const OwnerInquiryDetailPage = lazy(() => import("../pages/venueOwner/OwnerInquiryDetailPage"));
-const ChatPage = lazy(() => import("../pages/user/ChatPage"));
-const ProfilePage = lazy(() => import("../pages/user/ProfilePage"));
+const LoginPage = lazy(loaders.LoginPage);
+const RegisterPage = lazy(loaders.RegisterPage);
+const LandingPage = lazy(loaders.LandingPage);
+const EsewaReturnPage = lazy(loaders.EsewaReturnPage);
+const AboutUs = lazy(loaders.AboutUs);
+const TermsPage = lazy(loaders.TermsPage);
+const PrivacyPage = lazy(loaders.PrivacyPage);
+const ContactUs = lazy(loaders.ContactUs);
+const ListYourVenuePage = lazy(loaders.ListYourVenuePage);
+const VenuesPage = lazy(loaders.VenuesPage);
+const FavoritesPage = lazy(loaders.FavoritesPage);
+const MyBookings = lazy(loaders.MyBookings);
+const VenueDetails = lazy(loaders.VenueDetails);
+const InquiryPage = lazy(loaders.InquiryPage);
+const MyInquiriesPage = lazy(loaders.MyInquiriesPage);
+const InquiryDetailPage = lazy(loaders.InquiryDetailPage);
+const OwnerInquiriesPage = lazy(loaders.OwnerInquiriesPage);
+const OwnerInquiryDetailPage = lazy(loaders.OwnerInquiryDetailPage);
+const ChatPage = lazy(loaders.ChatPage);
+const ProfilePage = lazy(loaders.ProfilePage);
 
 // Admin Pages
-const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
-const AdminUsersPage = lazy(() => import("../pages/admin/AdminUsersPage"));
-const AdminVenuePage = lazy(() => import("../pages/admin/AdminVenuePage"));
-const AdminVenueOwnerPage = lazy(() =>
-  import("../pages/admin/AddVenueOwnerPage")
-);
-const AdminReviewsPage = lazy(() => import("../pages/admin/AdminReviewsPage"));
-const AdminContactPage = lazy(() => import("../pages/admin/AdminContactPage"));
+const AdminDashboard = lazy(loaders.AdminDashboard);
+const AdminUsersPage = lazy(loaders.AdminUsersPage);
+const AdminVenuePage = lazy(loaders.AdminVenuePage);
+const AdminVenueOwnerPage = lazy(loaders.AdminVenueOwnerPage);
+const AdminReviewsPage = lazy(loaders.AdminReviewsPage);
+const AdminContactPage = lazy(loaders.AdminContactPage);
 
 // Owner Pages
-const OwnerDashboard = lazy(() => import("../pages/venueOwner/OwnerDashboard"));
-const OwnerAnalyticsPage = lazy(() =>
-  import("../pages/venueOwner/OwnerAnalyticsPage")
-);
-const OwnerVenueReviewsPage = lazy(() =>
-  import("../pages/venueOwner/OwnerVenueReviewsPage")
-);
-const OwnerBookingsPage = lazy(() =>
-  import("../pages/venueOwner/OwnerBookingsPage")
-);
-const OwnerVenuePage = lazy(() => import("../pages/venueOwner/OwnerVenuePage"));
-const OwnerChatPage = lazy(() => import("../pages/venueOwner/OwnerChatPage"));
-const OwnerPaymentPage = lazy(() =>
-  import("../pages/venueOwner/OwnerPaymentPage")
-);
+const OwnerDashboard = lazy(loaders.OwnerDashboard);
+const OwnerAnalyticsPage = lazy(loaders.OwnerAnalyticsPage);
+const OwnerVenueReviewsPage = lazy(loaders.OwnerVenueReviewsPage);
+const OwnerBookingsPage = lazy(loaders.OwnerBookingsPage);
+const OwnerVenuePage = lazy(loaders.OwnerVenuePage);
+const OwnerChatPage = lazy(loaders.OwnerChatPage);
+const OwnerPaymentPage = lazy(loaders.OwnerPaymentPage);
 
 // 404 Page
-const NotFound = lazy(() => import("../pages/NotFound"));
+const NotFound = lazy(loaders.NotFound);
+
+// Outer fallback: only for pages that have no layout of their own (sign-in, 404, ...) on a cold load. Layout pages
+// have a boundary inside the layout, so their header and footer never disappear.
+const PageFallback = () => (
+  <div className="min-h-dvh bg-cream">
+    <RouteFallback />
+  </div>
+);
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <TitleManager />
       <RouterBridge />
-      <Suspense fallback={<LoadingPage />}>
+      <PrefetchManager />
+      <Suspense fallback={<PageFallback />}>
         <Routes>
           {/* Public pages accessible by all (no guard) */}
           <Route element={<MainLayout />}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/contact" element={<ContactUs />} />
+            <Route path="/list-your-venue" element={<ListYourVenuePage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             {/* Testimonials were replaced by reviews of completed bookings */}
             <Route path="/testimonial" element={<Navigate to="/my-bookings" replace />} />
-          </Route>
 
-          {/* Routes restricted to guests and customers only */}
-          <Route element={<UserRoleRoute />}>
-            <Route element={<MainLayout />}>
+            {/* Routes restricted to guests and customers only. One MainLayout wraps both groups, so the header and
+                footer stay mounted when moving between a public page and a customer page. */}
+            <Route element={<UserRoleRoute />}>
               <Route path="/venues" element={<VenuesPage />} />
               <Route path="/venue/:id" element={<VenueDetails />} />
               <Route path="/venue/:id/inquire" element={<InquiryPage />} />

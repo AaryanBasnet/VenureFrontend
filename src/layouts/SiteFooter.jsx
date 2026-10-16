@@ -16,7 +16,7 @@ const EXPLORE_LINKS = [
 const COMPANY_LINKS = [
   { label: "About Venure", to: "/about" },
   { label: "Contact", to: "/contact" },
-  { label: "List your venue", to: "/contact?topic=partner" },
+  { label: "List your venue", to: "/list-your-venue" },
   { label: "Terms of use", to: "/terms" },
   { label: "Privacy", to: "/privacy" },
 ];

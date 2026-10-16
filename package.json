@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "dev:test": "vite --mode test",
-    "images:optimize": "node scripts/optimize-images.mjs"
+    "images:optimize": "node scripts/optimize-images.mjs",
+    "test:unit": "vitest run",
+    "test:unit:tz": "node scripts/test-unit-tz.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
@@ -54,6 +56,7 @@
     "globals": "^16.0.0",
     "playwright": "^1.54.1",
     "sharp": "^0.35.4",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^5.0.4"
   }
 }

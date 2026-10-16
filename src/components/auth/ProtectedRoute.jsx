@@ -43,7 +43,9 @@ export default function ProtectedRoute({
   guestOnly = false,
   redirectTo = "/unauthorized",
 }) {
-  const { user, isAuthenticated, isInitializing } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isInitializing = useAuthStore((s) => s.isInitializing);
   const location = useLocation();
 
   // Block render until the /auth/me cookie-check resolves on mount

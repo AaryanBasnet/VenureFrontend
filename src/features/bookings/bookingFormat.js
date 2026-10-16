@@ -1,6 +1,6 @@
 import { priceFormatter } from "../venues/venueFormat";
 
-export const npr = (n) => `NPR ${priceFormatter.format(Math.round(n || 0))}`;
+export const npr = (n) => `NPR ${priceFormatter.format(Math.round(Number(n) || 0))}`;
 
 export const BOOKING_LABELS = {
   pending_deposit: "Awaiting deposit",

@@ -39,7 +39,7 @@ export default function EsewaReturnPage({ outcome }) {
   const heading = "mt-6 font-display text-h2 font-light text-ink outline-none";
 
   return (
-    <div className="container-site flex min-h-[70vh] flex-col items-center justify-center pb-24 pt-[calc(var(--spacing-header)+2rem)] text-center">
+    <div className="container-site flex min-h-[55vh] flex-col items-center justify-center page-pad text-center">
       {pending && (
         <div role="status">
           <Loader2 aria-hidden="true" className="mx-auto size-10 animate-spin text-gold-800" />

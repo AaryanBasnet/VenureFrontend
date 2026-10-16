@@ -1,11 +1,11 @@
 import SectionHeading from "../../../components/ui/SectionHeading";
-import { storiesIntro, stories } from "../content/landingContent";
+import { useLanding } from "../hooks/useLanding";
 import StoryCard from "../components/StoryCard";
-
-const [feature, ...compact] = stories;
 
 // Figma 46:76 — large feature story beside two stacked compact stories.
 export default function VenueStoriesSection() {
+  const { storiesIntro, stories } = useLanding().content;
+  const [feature, ...compact] = stories;
   return (
     <section id="stories" aria-labelledby="stories-title" className="bg-cream py-16 lg:py-[74px]">
       <div className="container-site">

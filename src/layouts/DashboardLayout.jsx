@@ -1,10 +1,11 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { AuthContext } from "../auth/AuthProvider";
 import DashboardSidebar from "./DashboardSidebar";
 import NotificationBell from "../components/common/NotificationBell";
 import Logo from "../components/ui/Logo";
+import RouteFallback from "../components/RouteFallback";
 
 // Shell for the owner and admin areas: dark navigation rail on the left, cream workspace on the right.
 // Pages render inside <Outlet /> and must not add their own full-screen wrapper.
@@ -52,7 +53,9 @@ export default function DashboardLayout({ role, homeTo, sections, badges }) {
 
         <main id="dashboard-main" ref={mainRef} tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
           <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10">
-            <Outlet />
+            <Suspense fallback={<RouteFallback bare />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

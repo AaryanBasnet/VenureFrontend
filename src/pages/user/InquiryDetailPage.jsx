@@ -51,11 +51,11 @@ export default function InquiryDetailPage() {
   const [notice, setNotice] = useState("");
 
   if (!ready || isPending) {
-    return <div role="status" aria-label="Loading" className="container-site pt-[calc(var(--spacing-header)+3rem)]"><div className="h-64 animate-pulse rounded-card-lg bg-gold-100" /></div>;
+    return <div role="status" aria-label="Loading" className="container-site page-pad"><div className="h-64 animate-pulse rounded-card-lg bg-gold-100" /></div>;
   }
   if (isError || !inquiry) {
     return (
-      <div className="container-site flex min-h-[50vh] flex-col items-center justify-center gap-3 pt-[var(--spacing-header)] text-center">
+      <div className="container-site flex min-h-[50vh] flex-col items-center justify-center gap-3 page-pad text-center">
         <h1 className="font-display text-h2 font-light text-ink">We could not find this request</h1>
         <p className="font-body text-small text-taupe">It may have been removed, or the connection dropped.</p>
         <div className="flex flex-wrap items-center justify-center gap-4">
@@ -104,7 +104,7 @@ export default function InquiryDetailPage() {
   const day = serverDay(inquiry.preferredDate);
 
   return (
-    <div className="container-site pb-24 pt-[calc(var(--spacing-header)+2.5rem)]">
+    <div className="container-site page-pad">
       <Link to="/my-inquiries" className="inline-flex min-h-11 items-center font-body text-small text-taupe hover:text-ink">← My inquiries</Link>
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">

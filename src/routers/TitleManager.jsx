@@ -6,6 +6,7 @@ const EXACT = {
   "/venues": "Venues",
   "/about": "About",
   "/contact": "Contact",
+  "/list-your-venue": "List your venue",
   "/login": "Sign in",
   "/register": "Create an account",
   "/password-reset": "Reset your password",

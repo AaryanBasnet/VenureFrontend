@@ -1,9 +1,10 @@
 import SectionHeading from "../../../components/ui/SectionHeading";
-import { seasonsIntro, seasons } from "../content/landingContent";
+import { useLanding } from "../hooks/useLanding";
 import SeasonCard from "../components/SeasonCard";
 
 // Figma 46:119 — four tall seasonal photo cards.
 export default function SeasonsSection() {
+  const { seasonsIntro, seasons } = useLanding().content;
   return (
     <section id="experiences" aria-labelledby="seasons-title" className="bg-sand py-16 lg:py-[74px]">
       <div className="container-site">

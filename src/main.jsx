@@ -19,6 +19,7 @@ const queryClient = new QueryClient({
       retry: false,
       staleTime: 1000 * 60 * 5, // 5 min — prevents redundant background refetches
       refetchOnWindowFocus: false,
+      gcTime: 1000 * 60 * 15, // keep what was just seen for 15 min so going back to a page is instant
     },
     mutations: {
       retry: false,

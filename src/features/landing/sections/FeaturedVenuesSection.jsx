@@ -1,6 +1,7 @@
 import SectionHeading, { Eyebrow } from "../../../components/ui/SectionHeading";
 import ArrowPillLink from "../../../components/ui/ArrowPillLink";
-import { featuredIntro, featuredFallbackImages } from "../content/landingContent";
+import { featuredFallbackImages } from "../content/landingContent";
+import { useLanding } from "../hooks/useLanding";
 import FeaturedVenueCard from "../components/FeaturedVenueCard";
 import { useFeaturedVenues } from "../hooks/useFeaturedVenues";
 
@@ -13,6 +14,7 @@ const CARD_STYLES = [
 
 // Figma 46:167 — three admin-curated venues in a bottom-aligned masonry row.
 export default function FeaturedVenuesSection() {
+  const { featuredIntro } = useLanding().content;
   const { venues, isPending, isError } = useFeaturedVenues();
 
   // Nothing to show (or the list could not load): leave the section out rather than show a heading over empty space

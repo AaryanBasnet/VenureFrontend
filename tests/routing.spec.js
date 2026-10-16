@@ -88,6 +88,7 @@ test.describe("protected customer pages", () => {
     await login(page, creds.customer);
     await page.goto("/venues");
     await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    await page.waitForLoadState("networkidle"); // the header is on screen before the page's own requests: let them finish with the session still valid
     await context.clearCookies(); // the access and refresh tokens are gone
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.locator("[data-menu-item]").filter({ hasText: /inquiries/i }).first().click();
@@ -98,6 +99,7 @@ test.describe("protected customer pages", () => {
     await login(page, creds.customer);
     await page.goto("/venues");
     await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    await page.waitForLoadState("networkidle"); // the header is on screen before the page's own requests: let them finish with the session still valid
     await context.clearCookies();
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.locator("[data-menu-item]").filter({ hasText: /inquiries/i }).first().click();

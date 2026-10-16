@@ -217,11 +217,11 @@ export default function InquiryPage() {
   };
 
   if (isPending || authLoading) {
-    return <div role="status" aria-label="Loading" className="container-site min-h-[60vh] pt-[calc(var(--spacing-header)+3rem)]"><div className="h-64 animate-pulse rounded-card-lg bg-gold-100" /></div>;
+    return <div role="status" aria-label="Loading" className="container-site page-pad min-h-[60vh]"><div className="h-64 animate-pulse rounded-card-lg bg-gold-100" /></div>;
   }
   if (isError || !venue) {
     return (
-      <div className="container-site flex min-h-[60vh] flex-col items-center justify-center gap-3 pt-[var(--spacing-header)] text-center">
+      <div className="container-site page-pad flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
         <h1 className="font-display text-h2 font-light text-ink">We could not find this venue</h1>
         <Link to="/venues" className="font-body text-button uppercase text-gold-800 underline underline-offset-4">Browse venues</Link>
       </div>
@@ -254,9 +254,19 @@ export default function InquiryPage() {
     </aside>
   );
 
+  const barItems = [
+    ["Date", date ? formatDate(date) : "Not chosen yet"],
+    ["Shift", shift ? shiftLabel(shift) : "Flexible"],
+    ["Hall", space ? space.name : "Venue to recommend"],
+    ["Guests", guestCount || "Not set"],
+    ...(pkg ? [["Menu", pkg.name]] : []),
+    ...(drink ? [["Drinks", drink.name]] : []),
+    ...(step === 2 && eventType ? [["Event", eventType]] : []),
+  ];
+
   if (sent) {
     return (
-      <div className="container-site grid gap-10 pb-20 pt-[calc(var(--spacing-header)+2.5rem)] lg:grid-cols-[1fr_380px]">
+      <div className="container-site page-pad grid gap-8 lg:grid-cols-[1fr_380px] lg:gap-12">
         <div>
           <CheckCircle2 aria-hidden="true" className="size-10 text-success" />
           <h1 ref={headingRef} tabIndex={-1} className="mt-4 scroll-mt-28 font-display text-h2 font-light text-ink outline-none">
@@ -284,7 +294,7 @@ export default function InquiryPage() {
   const guestsShown = shown("guests");
 
   return (
-    <div className="container-site pb-24 pt-[calc(var(--spacing-header)+2.5rem)]">
+    <div className="container-site page-pad">
       <Link to={`/venue/${venue._id}`} className="inline-flex min-h-11 items-center font-body text-small text-taupe hover:text-ink">← Back to {venue.venueName}</Link>
       <ol aria-label="Progress" className="mt-2 flex gap-2">
         {STEPS.map((t, i) => {
@@ -304,14 +314,14 @@ export default function InquiryPage() {
       </ol>
       <p role="status" className="sr-only">Step {step} of {STEPS.length}: {STEPS[step - 1]}</p>
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_380px]">
-        <form onSubmit={step === 2 ? send : (e) => { e.preventDefault(); next(); }} noValidate className="space-y-8">
+      <div className="mt-6">
+        <form onSubmit={step === 2 ? send : (e) => { e.preventDefault(); next(); }} noValidate className="space-y-6 lg:space-y-8">
           <h1 ref={headingRef} tabIndex={-1} className="scroll-mt-28 font-display text-h2 font-light text-ink outline-none">
             {step === 1 ? "When is your event?" : "Tell the venue about it"}
           </h1>
 
           {step === 1 ? (
-            <>
+            <div className="grid gap-8 lg:grid-cols-[460px_minmax(0,1fr)] lg:items-start lg:gap-12">
               <div id="date-field">
                 <DatePicker
                   value={date}
@@ -331,9 +341,10 @@ export default function InquiryPage() {
                 {availabilityFailed && <p className="mt-2 font-body text-caption text-taupe">We could not check which days are booked. You can still send a request and the venue will confirm the date.</p>}
               </div>
 
+              <div className="space-y-8">
               <fieldset>
                 <legend className={label}>Shift</legend>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2">
                   {SHIFT_OPTIONS.map((opt) => {
                     const taken = !!date && shift !== opt.value && unavailableFor(date, opt.value);
                     return (
@@ -396,9 +407,11 @@ export default function InquiryPage() {
                   })}
                 </div>
               </fieldset>
-            </>
+              </div>
+            </div>
           ) : (
-            <>
+            <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+              <div className="space-y-6">
               <div>
                 <label htmlFor="eventType" className={label}>Event type</label>
                 <Select
@@ -415,7 +428,7 @@ export default function InquiryPage() {
                 </Select>
                 {shown("eventType") && <p id="eventType-error" role="alert" className={errorText}>{errors.eventType}</p>}
               </div>
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid gap-5">
                 <div>
                   <label htmlFor="name" className={label}>Full name</label>
                   <input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} onBlur={touch("name")} aria-invalid={!!shown("name")} aria-describedby={shown("name") ? "name-error" : undefined} className={field} />
@@ -427,31 +440,50 @@ export default function InquiryPage() {
                   {shown("phone") ? <p id="phone-error" role="alert" className={errorText}>{errors.phone}</p> : <p id="phone-hint" className="mt-1.5 font-body text-caption text-taupe">The venue calls or messages you on this number.</p>}
                 </div>
               </div>
+              </div>
+              <div className="space-y-6">
               <div>
                 <label htmlFor="notes" className={label}>Notes for the venue (optional)</label>
-                <textarea id="notes" rows={4} maxLength={600} value={notes} onChange={(e) => setNotes(e.target.value)} aria-describedby="notes-count" placeholder="Menu wishes, timings, decoration, anything the venue should know" className={field} />
+                <textarea id="notes" rows={8} maxLength={600} value={notes} onChange={(e) => setNotes(e.target.value)} aria-describedby="notes-count" placeholder="Menu wishes, timings, decoration, anything the venue should know" className={field} />
                 <p id="notes-count" className="mt-1.5 text-right font-body text-caption text-taupe">{notes.length} of 600 characters</p>
               </div>
               <label className="flex min-h-11 cursor-pointer items-start gap-3 font-body text-small text-ink">
                 <input type="checkbox" checked={siteVisit} onChange={(e) => setSiteVisit(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-ink" />
                 I would like to visit the venue before confirming.
               </label>
-            </>
+              </div>
+            </div>
           )}
 
           {serverError && <p role="alert" className="rounded-card-sm border border-red-700/30 bg-white px-4 py-3 font-body text-small text-red-700">{serverError}</p>}
 
-          <div className="flex items-center justify-between gap-3">
-            {step === 2 ? (
-              <button type="button" onClick={() => goToStep(1)} className="inline-flex min-h-11 items-center rounded-full border border-ink px-6 py-3 font-body text-button uppercase text-ink hover:bg-ink hover:text-gold-50">Back</button>
-            ) : <span />}
-            <button type="submit" disabled={create.isPending} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-8 py-3 font-body text-button uppercase text-gold-50 hover:bg-gold-800 disabled:opacity-60">
-              {create.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
-              {step === 1 ? "Continue" : create.isPending ? "Sending" : "Send request"}
-            </button>
+          <div className="sticky bottom-0 z-30 -mx-5 border-t border-line bg-cream/95 px-5 py-3 backdrop-blur md:-mx-10 md:px-10 lg:static lg:mx-0 lg:rounded-card-lg lg:border lg:p-5 lg:backdrop-blur-none">
+            <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+              <aside aria-label="Your request" className="min-w-0 flex-1">
+                <p className="font-body text-eyebrow uppercase text-gold-800">Draft request · {venue.venueName}</p>
+                <p className="mt-1 truncate font-body text-small text-ink lg:hidden">{barItems.slice(0, 4).map(([, v]) => v).join(" · ")}</p>
+                <dl className="mt-2 hidden flex-wrap gap-x-8 gap-y-2 lg:flex">
+                  {barItems.map(([k, v]) => (
+                    <div key={k}>
+                      <dt className="font-body text-caption text-taupe">{k}</dt>
+                      <dd className="font-body text-small text-ink">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-2 hidden font-body text-caption text-taupe lg:block">A request, not a booking. The venue replies with a quotation and nothing is charged until you accept it.</p>
+              </aside>
+              <div className="flex items-center gap-3">
+                {step === 2 && (
+                  <button type="button" onClick={() => goToStep(1)} className="inline-flex min-h-11 items-center rounded-full border border-ink px-6 py-3 font-body text-button uppercase text-ink hover:bg-ink hover:text-gold-50">Back</button>
+                )}
+                <button type="submit" disabled={create.isPending} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-8 py-3 font-body text-button uppercase text-gold-50 hover:bg-gold-800 disabled:opacity-60">
+                  {create.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
+                  {step === 1 ? "Continue" : create.isPending ? "Sending" : "Send request"}
+                </button>
+              </div>
+            </div>
           </div>
         </form>
-        {summary}
       </div>
     </div>
   );

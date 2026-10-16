@@ -2,10 +2,11 @@ import Logo from "../../../components/ui/Logo";
 import Button from "../../../components/ui/Button";
 import ResponsiveImage from "../../../components/ui/ResponsiveImage";
 import { images } from "../../../assets/landing/images";
-import { hero } from "../content/landingContent";
+import { useLanding } from "../hooks/useLanding";
 
 // Figma 46:3 — full-bleed courtyard photo, emblem, tagline, two CTAs
 export default function HeroSection() {
+  const { hero } = useLanding().content;
   return (
     <section
       aria-label="Introduction"

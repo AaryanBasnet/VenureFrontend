@@ -25,7 +25,7 @@ export default function MyInquiriesPage() {
   const visible = inquiries.filter((q) => active.match(effectiveStatus(q)));
 
   return (
-    <div className="container-site pb-24 pt-[calc(var(--spacing-header)+2.5rem)]">
+    <div className="container-site page-pad">
       <p className="font-body text-eyebrow uppercase text-gold-800">My inquiries</p>
       <h1 className="mt-2 font-display text-h2 font-light text-ink">Your requests to venues</h1>
       <p className="mt-2 max-w-xl font-body text-body text-taupe">

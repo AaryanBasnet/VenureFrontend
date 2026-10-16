@@ -2,7 +2,7 @@ import { Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import SectionHeading from "../../../components/ui/SectionHeading";
 import api from "../../../api/api";
-import { testimonialsIntro } from "../content/landingContent";
+import { useLanding } from "../hooks/useLanding";
 
 // Real guest reviews that an admin has featured. The backend only features reviews of completed
 // bookings, so nothing here is invented. With none featured the whole section stays out of the page.
@@ -18,6 +18,7 @@ const initials = (name = "") => name.split(" ").filter(Boolean).slice(0, 2).map(
 const shorten = (text, max = 240) => (text.length > max ? `${text.slice(0, max).trimEnd()}…` : text);
 
 export default function TestimonialsSection() {
+  const { testimonialsIntro } = useLanding().content;
   const { data: reviews = [] } = useFeaturedReviews();
   if (reviews.length === 0) return null;
   const shown = reviews.slice(0, 3);

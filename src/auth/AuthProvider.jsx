@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useCallback, useRef, useState } from "react";
+import React, { createContext, useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import api from "../api/api";
@@ -15,7 +15,11 @@ import { currentWindowPath, navigateOutsideRouter } from "./navigation";
 export const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
-  const { user, isAuthenticated, clearUser, isInitializing } = useAuthStore();
+  // Separate selectors: the provider re-renders only for the fields it uses, not on every store change
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isInitializing = useAuthStore((s) => s.isInitializing);
+  const clearUser = useAuthStore((s) => s.clearUser);
   const queryClient = useQueryClient();
   const loggingOutRef = useRef(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -88,19 +92,13 @@ const AuthContextProvider = ({ children }) => {
     }
   }, [clearUser, queryClient]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading: isInitializing,
-        isAuthenticated,
-        logout,
-        loggingOut,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  // A stable value: consumers re-render when the session really changes, not whenever this component does
+  const value = useMemo(
+    () => ({ user, loading: isInitializing, isAuthenticated, logout, loggingOut }),
+    [user, isInitializing, isAuthenticated, logout, loggingOut]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContextProvider;

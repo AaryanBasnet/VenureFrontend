@@ -1,17 +1,13 @@
 import React, { useContext } from "react";
 import { AuthContext } from "../auth/AuthProvider";
 import { Navigate, Outlet } from "react-router-dom";
-import LoadingPage from "../components/LoadingPage";
+import RouteFallback from "../components/RouteFallback";
 
 export default function UserRoleRoute() {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading)
-    return (
-      <>
-        <LoadingPage />
-      </>
-    );
+  // Inside MainLayout: the header and footer are already on screen while the session check finishes
+  if (loading) return <RouteFallback label="Checking your session" />;
 
   if (!user) return <Outlet />; // guest can access user pages
   if (user.role === "Customer") return <Outlet />;

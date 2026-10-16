@@ -14,7 +14,7 @@ export default function SeasonCard({ season }) {
   return (
     <li className="group relative isolate aspect-[3/4] overflow-hidden sm:aspect-[294/642] rounded-card-sm bg-stone/20">
       <ResponsiveImage
-        image={images[season.image]}
+        image={images[season.imageKey]}
         alt=""
         sizes="(min-width: 1440px) 1000px, (min-width: 1024px) 75vw, (min-width: 640px) 155vw, 190vw"
         className="absolute inset-0 -z-20 size-full object-cover opacity-85 transition-[opacity,transform] duration-700 ease-out lg:opacity-100 lg:group-hover:scale-105 lg:group-hover:opacity-85 motion-reduce:transition-none motion-reduce:lg:group-hover:scale-100"

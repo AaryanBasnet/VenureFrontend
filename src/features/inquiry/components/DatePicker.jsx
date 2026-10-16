@@ -1,7 +1,20 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import NepaliDate from "nepali-date-converter";
-import { BS_MONTHS, bsLabel } from "../bsCalendar";
+import { bsLabel } from "../bsCalendar";
+import {
+  adSpan,
+  dayNumber,
+  dayStatus,
+  focusTarget,
+  isInView,
+  lastBookableDay,
+  monthGrid,
+  monthNav,
+  monthView,
+  rovingDay,
+  startOfDay,
+  todayInKathmandu,
+} from "../calendarMath";
 
 const WEEKDAYS = [
   ["Sun", "Sunday"],
@@ -12,41 +25,7 @@ const WEEKDAYS = [
   ["Fri", "Friday"],
   ["Sat", "Saturday"],
 ];
-const DAY_MS = 24 * 60 * 60 * 1000;
-const MAX_MONTHS_AHEAD = 24;
-const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const longDate = (d) => d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-
-// What one visible month looks like in each calendar: where it starts (as a normal Date),
-// how many days it has, and what to print in the header.
-const viewOf = (anchor, mode) => {
-  if (mode === "AD") {
-    const start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-    return {
-      start,
-      days: new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate(),
-      title: start.toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-      prev: new Date(start.getFullYear(), start.getMonth() - 1, 1),
-      next: new Date(start.getFullYear(), start.getMonth() + 1, 1),
-    };
-  }
-  const bs = new NepaliDate(anchor);
-  const y = bs.getYear();
-  const m = bs.getMonth();
-  const start = startOfDay(new NepaliDate(y, m, 1).toJsDate());
-  const next = startOfDay((m === 11 ? new NepaliDate(y + 1, 0, 1) : new NepaliDate(y, m + 1, 1)).toJsDate());
-  const prev = startOfDay((m === 0 ? new NepaliDate(y - 1, 11, 1) : new NepaliDate(y, m - 1, 1)).toJsDate());
-  return { start, days: Math.round((next - start) / DAY_MS), title: `${BS_MONTHS[m]} ${y}`, prev, next };
-};
-
-// "Oct to Nov 2026": which English months a Nepali month covers.
-const adSpan = (start, days) => {
-  const end = addDays(start, days - 1);
-  const m = (d) => d.toLocaleDateString("en-GB", { month: "short" });
-  const same = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
-  return same ? `${m(start)} ${start.getFullYear()}` : `${m(start)} to ${m(end)} ${end.getFullYear()}`;
-};
 
 // Month calendar. Visitors can read it in AD or BS (Bikram Sambat). Today and past dates are not
 // selectable (the venue needs time to reply), and days the venue is already booked are struck through.
@@ -56,34 +35,24 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
   const uid = useId();
   const gridRef = useRef(null);
   const moveFocus = useRef(false);
-  const todayTime = startOfDay(new Date()).getTime();
+  // "Today" is the day it is in Kathmandu, the same day the server counts the day of notice from
+  const todayTime = todayInKathmandu().getTime();
   const today = useMemo(() => new Date(todayTime), [todayTime]);
-  const maxDate = useMemo(() => new Date(today.getFullYear(), today.getMonth() + MAX_MONTHS_AHEAD + 1, 0), [today]);
+  const maxDate = useMemo(() => lastBookableDay(today), [today]);
   const [mode, setMode] = useState("AD");
   const [anchor, setAnchor] = useState(() => value ?? today);
   const [focusTime, setFocusTime] = useState(null);
 
-  const view = useMemo(() => viewOf(anchor, mode), [anchor, mode]);
-  const thisMonth = useMemo(() => viewOf(today, mode).start.getTime(), [today, mode]);
+  const view = useMemo(() => monthView(anchor, mode), [anchor, mode]);
   const startTime = view.start.getTime();
 
   useEffect(() => {
     onMonthChange?.(new Date(startTime));
   }, [startTime, onMonthChange]);
 
-  const first = view.start.getDay();
-  const canGoBack = startTime > thisMonth;
-  const canGoForward = view.next.getTime() <= maxDate.getTime();
-
-  // Which day is the single tab stop: the one last moved to, else the chosen day, else the first open day.
-  const days = useMemo(() => Array.from({ length: view.days }, (_, i) => addDays(view.start, i)), [view]);
-  const rovingTime = useMemo(() => {
-    const inView = (t) => t != null && t >= startTime && t < startTime + view.days * DAY_MS + DAY_MS / 2;
-    if (inView(focusTime)) return focusTime;
-    if (value && inView(startOfDay(value).getTime())) return startOfDay(value).getTime();
-    const open = days.find((d) => d > today && d <= maxDate);
-    return (open ?? days[0]).getTime();
-  }, [focusTime, value, startTime, view.days, days, today, maxDate]);
+  const { canGoBack, canGoForward } = monthNav(view, { today, maxDate });
+  const { weeks } = monthGrid(view);
+  const rovingTime = rovingDay({ focus: focusTime == null ? null : new Date(focusTime), value, view, today, maxDate }).getTime();
 
   useEffect(() => {
     if (!moveFocus.current) return;
@@ -91,47 +60,30 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
     gridRef.current?.querySelector(`button[data-t="${focusTime}"]`)?.focus();
   }, [focusTime, startTime]);
 
+  // Switching calendars keeps the chosen date on screen: if it is in the month being looked at, the new
+  // calendar opens on the month that holds it (an English month and a Nepali month only partly overlap).
+  const switchMode = (next) => {
+    if (next === mode) return;
+    if (value && isInView(view, startOfDay(value))) setAnchor(startOfDay(value));
+    setMode(next);
+  };
+
   const goTo = (target) => {
-    // Never wander before this month or past the booking horizon.
-    const lo = viewOf(today, mode).start;
-    let t = target;
-    if (t < lo) t = lo;
-    if (t > maxDate) t = maxDate;
-    t = startOfDay(t);
     moveFocus.current = true;
-    setFocusTime(t.getTime());
-    if (t < view.start || t >= view.next) setAnchor(t);
+    setFocusTime(target.getTime());
+    if (!isInView(view, target)) setAnchor(target);
   };
 
   const onKeyDown = (e) => {
-    const t = new Date(rovingTime);
-    const dow = t.getDay();
-    const step = {
-      ArrowLeft: () => addDays(t, -1),
-      ArrowRight: () => addDays(t, 1),
-      ArrowUp: () => addDays(t, -7),
-      ArrowDown: () => addDays(t, 7),
-      Home: () => addDays(t, -dow),
-      End: () => addDays(t, 6 - dow),
-      PageUp: () => (mode === "AD" ? new Date(t.getFullYear(), t.getMonth() - 1, Math.min(t.getDate(), 28)) : view.prev),
-      PageDown: () => (mode === "AD" ? new Date(t.getFullYear(), t.getMonth() + 1, Math.min(t.getDate(), 28)) : view.next),
-    }[e.key];
-    if (!step) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const target = focusTarget(e.key, new Date(rovingTime), view, { today, maxDate });
+    if (!target) return;
     e.preventDefault();
-    goTo(step());
+    goTo(target);
   };
 
-  const reason = (date) => {
-    if (date.getTime() === today.getTime()) return "today, requests need at least a day's notice";
-    if (date < today) return "past date";
-    if (date > maxDate) return "too far ahead";
-    if (isUnavailable?.(date)) return "already booked";
-    return "";
-  };
+  const reason = (date) => dayStatus(date, { today, maxDate, isUnavailable });
 
-  const cells = [...Array.from({ length: first }, () => null), ...days];
-  while (cells.length % 7) cells.push(null);
-  const weeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
   const titleId = `${uid}-title`;
   const selectedTime = value ? startOfDay(value).getTime() : null;
 
@@ -143,7 +95,7 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
             key={m}
             type="button"
             aria-pressed={mode === m}
-            onClick={() => setMode(m)}
+            onClick={() => switchMode(m)}
             className={`min-h-11 rounded-full px-4 font-body text-caption uppercase tracking-wide transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink ${mode === m ? "bg-ink text-gold-50" : "text-taupe hover:text-ink"}`}
           >
             {m === "AD" ? "English (AD)" : "नेपाली (BS)"}
@@ -202,7 +154,7 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
               const time = date.getTime();
               const selected = selectedTime === time;
               const isToday = time === today.getTime();
-              const dayNumber = mode === "AD" ? date.getDate() : Math.round((time - startTime) / DAY_MS) + 1;
+              const label = dayNumber(date, view);
               return (
                 <span key={time} role="gridcell" aria-selected={selected}>
                   <button
@@ -225,7 +177,7 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
                             : "text-ink hover:bg-gold-100"
                     } ${isToday && !selected ? "ring-1 ring-inset ring-gold" : ""}`}
                   >
-                    {dayNumber}
+                    {label}
                   </button>
                 </span>
               );

@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
+import RouteFallback from "../components/RouteFallback";
 
 // Pages that start with a full-bleed hero (landing, venue details) get the transparent overlay header
 const OVERLAY_HEADER_ROUTES = ["/", "/about", "/contact", "/profile"];
@@ -60,7 +61,10 @@ export default function MainLayout() {
       </a>
       <SiteHeader overlay={overlay} />
       <main id="main-content" tabIndex={-1} className="flex-grow outline-none">
-        <Outlet />
+        {/* A page that is still loading shows a skeleton here; the header and footer never go away */}
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
       <SiteFooter />
     </div>

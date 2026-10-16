@@ -1,0 +1,54 @@
+/*
+ * Layout rhythm shared by the customer pages (one set of numbers, no magic values in components).
+ *   --page-top      space between the header and the first block (2rem, 2.5rem from tablet up)
+ *   --page-bottom   space between the last block and the footer
+ *   --section-y     vertical padding of a full-width section (3rem, 4rem from desktop up)
+ *   --block-gap     gap between blocks inside a page (1.5rem, 2rem from desktop up)
+ * Content widths: reading pages 720px, forms 880px, grids use container-site (1280px).
+ * The header is sticky (in flow) on most pages, so page-pad only adds the breathing space;
+ * pages under the overlay header (landing, about, contact, profile, venue details) use page-pad-overlay.
+ */
+:root {
+  --page-top: 2rem;
+  --page-bottom: 4rem;
+  --section-y: 3rem;
+  --block-gap: 1.5rem;
+  --measure-reading: 720px;
+  --measure-form: 880px;
+}
+@media (width >= 48rem) {
+  :root {
+    --page-top: 2.5rem;
+  }
+}
+@media (width >= 64rem) {
+  :root {
+    --section-y: 4rem;
+    --block-gap: 2rem;
+  }
+}
+
+@utility page-pad {
+  padding-top: var(--page-top);
+  padding-bottom: var(--page-bottom);
+}
+@utility page-pad-overlay {
+  padding-top: calc(var(--spacing-header) + var(--page-top));
+  padding-bottom: var(--page-bottom);
+}
+@utility section-y {
+  padding-block: var(--section-y);
+}
+@utility block-gap {
+  gap: var(--block-gap);
+}
+@utility measure-reading {
+  width: 100%;
+  max-width: var(--measure-reading);
+  margin-inline: auto;
+}
+@utility measure-form {
+  width: 100%;
+  max-width: var(--measure-form);
+  margin-inline: auto;
+}

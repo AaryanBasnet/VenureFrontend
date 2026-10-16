@@ -1,13 +1,13 @@
 import SectionHeading from "../../../components/ui/SectionHeading";
 import TextLink from "../../../components/ui/TextLink";
 import { images } from "../../../assets/landing/images";
-import { venueTypes, venueTypesIntro } from "../content/landingContent";
 import VenueTypeCard from "../components/VenueTypeCard";
-import { useCategoryCounts } from "../hooks/useCategoryCounts";
+import { useLanding } from "../hooks/useLanding";
 
 // Figma 46:17 — intro copy on the left, five expanding category cards on the right.
 export default function VenueTypesSection() {
-  const { counts } = useCategoryCounts();
+  const { content, categoryCounts: counts } = useLanding();
+  const { venueTypes, venueTypesIntro } = content;
 
   return (
     <section id="venue-types" aria-labelledby="venue-types-title" className="bg-sand py-16 lg:py-[74px]">
@@ -33,8 +33,8 @@ export default function VenueTypesSection() {
             <VenueTypeCard
               key={type.slug}
               type={type}
-              image={images[type.image]}
-              badge={images[type.badge]}
+              image={images[type.imageKey]}
+              badge={images[type.badgeKey]}
               count={counts[type.slug]}
             />
           ))}
