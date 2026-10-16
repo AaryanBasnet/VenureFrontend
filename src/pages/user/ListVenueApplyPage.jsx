@@ -40,6 +40,34 @@ function Field({ id, label, hint, error, children, optional }) {
   );
 }
 
+// A preview of a chosen photo, drawn on a canvas. The picture never becomes an address or markup on the page.
+function Thumb({ file, label }) {
+  const canvas = useRef(null);
+  useEffect(() => {
+    let cancelled = false;
+    createImageBitmap(file)
+      .then((bitmap) => {
+        const el = canvas.current;
+        if (cancelled || !el) return bitmap.close();
+        const width = 480;
+        const height = Math.round((width * 3) / 4);
+        el.width = width;
+        el.height = height;
+        // fill the 4:3 frame like object-fit: cover
+        const scale = Math.max(width / bitmap.width, height / bitmap.height);
+        const w = bitmap.width * scale;
+        const h = bitmap.height * scale;
+        el.getContext("2d").drawImage(bitmap, (width - w) / 2, (height - h) / 2, w, h);
+        bitmap.close();
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [file]);
+  return <canvas ref={canvas} role="img" aria-label={label} className="aspect-[4/3] w-full bg-sand object-cover" />;
+}
+
 function FilePick({ id, label, hint, accept, types, file, onFile, error, required }) {
   const [problem, setProblem] = useState("");
   const input = useRef(null);
@@ -108,13 +136,6 @@ export default function ListVenueApplyPage() {
   const mapQuery = pin ? `${pin.lat},${pin.lng}` : f.area || f.city ? addressQuery : "Kathmandu, Nepal";
   const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=${pin || f.area ? 16 : f.city ? 13 : 11}&output=embed`;
   const findOnMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressQuery || "Nepal")}`;
-
-  // Previews are blob: addresses of image files only. Nothing typed by the person (such as a file name) is used as markup or as an address.
-  const previews = useMemo(
-    () => photos.filter((file) => PHOTO_TYPES.includes(file.type)).map((file) => ({ file, url: URL.createObjectURL(file) })).filter((p) => p.url.startsWith("blob:")),
-    [photos]
-  );
-  useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
 
   const errors = useMemo(() => {
     const e = {};
@@ -427,11 +448,11 @@ export default function ListVenueApplyPage() {
                   <p className="font-body text-small text-ink">{photos.length} of 12 photos. <span className="text-taupe">JPG, PNG or WebP, up to {MAX_MB} MB each. The first one is the cover.</span></p>
                   <button type="button" onClick={() => photoInput.current?.click()} disabled={photos.length >= 12} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink px-5 font-body text-button uppercase text-ink hover:bg-ink hover:text-gold-50 disabled:opacity-50"><ImagePlus aria-hidden="true" className="size-4" /> Add photos</button>
                 </div>
-                {previews.length > 0 ? (
+                {photos.length > 0 ? (
                   <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {previews.map((p, i) => (
-                      <li key={p.url} className="relative overflow-hidden rounded-card-md border border-line">
-                        <img src={p.url} alt={`Photo ${i + 1} of your venue`} className="aspect-[4/3] w-full object-cover" />
+                    {photos.map((file, i) => (
+                      <li key={`${file.name}-${file.size}`} className="relative overflow-hidden rounded-card-md border border-line">
+                        <Thumb file={file} label={`Photo ${i + 1} of your venue`} />
                         {i === 0 && <span className="absolute left-2 top-2 rounded-full bg-ink px-2.5 py-1 font-body text-caption text-gold-50">Cover</span>}
                         <button type="button" onClick={() => setPhotos((cur) => cur.filter((_, j) => j !== i))} aria-label={`Remove photo ${i + 1}`} className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full bg-white/95 text-ink shadow hover:bg-white"><X aria-hidden="true" className="size-4" /></button>
                         {i > 0 && <button type="button" onClick={() => setPhotos((cur) => [cur[i], ...cur.filter((_, j) => j !== i)])} className="absolute bottom-2 left-2 rounded-full bg-white/95 px-3 py-1.5 font-body text-caption text-ink shadow hover:bg-white">Make cover<span className="sr-only"> photo {i + 1}</span></button>}
