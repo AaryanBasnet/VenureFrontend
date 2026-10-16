@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import {
   apiError,
   useDeclineInquiry,
+  useExpiredQuotation,
   useInquiry,
   useQuotation,
   useWithdrawQuotation,
@@ -13,11 +14,11 @@ import { useVenueDetails } from "../../hooks/user/useVenueDetails";
 import { useVenueSpaces } from "../../features/venues/hooks/useVenueSpaces";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
 import QuotationBuilder from "../../features/inquiry/components/QuotationBuilder";
-import { effectiveStatus, formatDate, shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { effectiveStatus, formatDate, serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { toWhatsAppNumber } from "../../features/venues/venueFormat";
-import { ErrorState, PageHeader, Panel, StatusPill } from "../../components/owner/ui";
-import { btnDanger, btnOutline, btnPrimary } from "../../components/owner/ownerStyles";
+import { ErrorState, PageHeader, Panel, StatusPill } from "../../components/dashboard/ui";
+import { btnDanger, btnOutline, btnPrimary } from "../../components/dashboard/styles";
 
 const chip =
   "inline-flex items-center gap-1.5 rounded-full border border-ink px-4 py-2 font-body text-small text-ink transition-colors hover:bg-ink hover:text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
@@ -51,6 +52,7 @@ export default function OwnerInquiryDetailPage() {
   const quotationId = inquiry?.currentQuotation?._id ?? inquiry?.currentQuotation;
   const { data: quotation } = useQuotation(quotationId);
 
+  const expiredOn = useExpiredQuotation(quotation);
   const decline = useDeclineInquiry();
   const withdraw = useWithdrawQuotation();
   const [error, setError] = useState("");
@@ -104,8 +106,8 @@ export default function OwnerInquiryDetailPage() {
         <Panel title="Request details" className="self-start">
           <dl className="-my-3">
             <Row term="Date">
-              {formatDate(new Date(inquiry.preferredDate))}
-              <span className="block text-caption text-taupe-light">{bsLabel(inquiry.preferredDate)}</span>
+              {formatDate(serverDay(inquiry.preferredDate))}
+              <span className="block text-caption text-taupe">{bsLabel(serverDay(inquiry.preferredDate))}</span>
             </Row>
             <Row term="Shift">{inquiry.preferredShift ? shiftLabel(inquiry.preferredShift) : "Flexible"}</Row>
             <Row term="Space">{inquiry.space?.name ?? "Not chosen, you recommend"}</Row>
@@ -125,6 +127,9 @@ export default function OwnerInquiryDetailPage() {
         <div className="min-w-0 space-y-6">
           {sentNotice && <Notice tone="success" icon={CheckCircle2}>Quotation sent. The customer has been notified.</Notice>}
 
+          {expiredOn && ["pending", "quoted"].includes(inquiry.status) && (
+            <Notice>Your quotation expired on {formatDate(serverDay(expiredOn))}, so the customer could no longer accept it. Send a new quotation below if you can still host this date.</Notice>
+          )}
           {quotation && ["sent", "accepted"].includes(quotation.status) && <QuotationSummary quotation={quotation} />}
           {status === "accepted" && <Notice>The customer accepted this quotation. Their date is confirmed once the deposit is paid.</Notice>}
           {status === "booked" && <Notice tone="success" icon={CheckCircle2}>Booked and the deposit is paid. Manage it under <Link to="/owner/bookings" className="underline underline-offset-4">Bookings</Link>.</Notice>}

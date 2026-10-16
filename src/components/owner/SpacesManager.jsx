@@ -5,8 +5,9 @@ import { createSpace, deactivateSpace, getSpaces, updateSpace } from "../../api/
 import { apiError } from "../../features/inquiry/hooks/useInquiries";
 import { SHIFT_OPTIONS } from "../../features/inquiry/inquiryOptions";
 import { inputClass, labelClass } from "../ui/formStyles";
-import { btnDanger, btnOutline, btnPrimary } from "./ownerStyles";
-import { EmptyState, ErrorState, RowsSkeleton } from "./ui";
+import { btnDanger, btnOutline, btnPrimary } from "../dashboard/styles";
+import { EmptyState, ErrorState, RowsSkeleton } from "../dashboard/ui";
+import { plural } from "../../utils/plural";
 
 const linkBtn =
   "font-body text-small text-ink underline underline-offset-4 hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50";
@@ -105,7 +106,7 @@ export default function SpacesManager({ venue, onDone }) {
                     <div className="min-w-0">
                       <p className="break-words font-display text-h5 font-light text-ink">{s.name}</p>
                       <p className="mt-1 flex items-center gap-1.5 font-body text-small text-taupe">
-                        <Users aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} /> Up to {s.capacity} guests
+                        <Users aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} /> Up to {plural(s.capacity, "guest")}
                       </p>
                       {s.description && <p className="mt-2 break-words font-body text-small text-taupe">{s.description}</p>}
                     </div>

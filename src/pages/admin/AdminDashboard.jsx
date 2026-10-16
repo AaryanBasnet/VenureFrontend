@@ -1,239 +1,233 @@
-import React, { useMemo } from "react";
-import {
-  FaUsers,
-  FaChartLine,
-  FaDollarSign,
-  FaShoppingCart,
-  FaCalendarCheck,
-  FaUserPlus,
-  FaEye,
-} from "react-icons/fa";
-import { FiArrowUp, FiArrowDown, FiSearch } from "react-icons/fi";
-import { FaBuildingColumns } from "react-icons/fa6";
-import RecentActivity from "../../components/admin/RecentActivity";
-import { useGetCustomerCount } from "../../hooks/admin/useGetCustomerCount";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Activity, Building2, CalendarCheck, Check, ClipboardCheck, Star, Trophy, UserPlus, Users, Wallet, X } from "lucide-react";
+import MonthlyEarningsChart from "../../components/owner/MonthlyEarningsChart";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat } from "../../components/dashboard/ui";
+import { btnDanger, btnOutline, btnPrimary, npr, shortDate } from "../../components/dashboard/styles";
+import { useActivityLogs } from "../../hooks/admin/useActivityLogs";
 import { useGetApprovedVenuesCount } from "../../hooks/admin/useGetApprovedVenuesCount";
-import useGetTotalEarnings from "../../hooks/admin/useGetTotalEarnings";
+import { useGetCustomerCount } from "../../hooks/admin/useGetCustomerCount";
 import { useGetTotalBookingsForAdmin } from "../../hooks/admin/useGetTotalBookings";
-import NotificationDropdown from "../../components/NotificationDropdown";
+import useGetTotalEarnings from "../../hooks/admin/useGetTotalEarnings";
 import { useTopVenuesByBooking } from "../../hooks/admin/useTopVenuesByBooking";
+import { changeVenueStatus, getVenue } from "../../services/admin/adminVenueService";
+import dayjs from "../../utils/dayjsConfig";
 
-import clsx from "clsx";
+const seeAll = "font-body text-caption text-gold-800 underline underline-offset-4 hover:text-ink";
+const PENDING_KEY = ["admin_dashboard_pending_venues"];
 
-// StatCard component: memoized
-const StatCard = React.memo(({ stat }) => {
-  const TrendIcon = stat.trend === "up" ? FiArrowUp : FiArrowDown;
+const ACTIVITY_ICONS = { user: Users, registration: UserPlus, booking: CalendarCheck, venue: Building2, payment: Wallet, system: Activity };
 
-  // Dynamic colors with Tailwind + clsx
-  const iconBgClass = clsx({
-    [`bg-${stat.color}-100`]: true,
+// One pending venue with an inline approve / reject confirm.
+function PendingRow({ venue }) {
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(null); // "approved" | "rejected" | null
+  const mutation = useMutation({
+    mutationFn: (status) => changeVenueStatus(venue._id, status),
+    onSuccess: () => {
+      setConfirming(null);
+      for (const key of [PENDING_KEY, ["admin_venues"], ["admin_venue"], ["Count_Venues"], ["topVenuesByBooking"]]) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
+    },
   });
-  const iconColorClass = clsx({
-    [`text-${stat.color}-600`]: true,
-  });
 
+  const approving = confirming === "approved";
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div className={`p-3 rounded-lg ${iconBgClass}`}>
-          <stat.icon className={`w-6 h-6 ${iconColorClass}`} />
+    <li className="px-6 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-body text-body text-ink">{venue.venueName}</p>
+          <p className="mt-0.5 truncate font-body text-caption text-taupe">
+            {[venue.owner?.name && `by ${venue.owner.name}`, venue.location?.city, venue.createdAt && `submitted ${shortDate(venue.createdAt)}`].filter(Boolean).join(" · ")}
+          </p>
         </div>
-        <div
-          className={clsx(
-            "flex items-center gap-1 text-sm",
-            stat.trend === "up" ? "text-green-600" : "text-red-600"
-          )}
-        ></div>
-      </div>
-      <div className="mt-4">
-        <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
-        <p className="text-sm text-gray-600 mt-1">{stat.title}</p>
-        <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
-      </div>
-    </div>
-  );
-});
-
-// TopVenueItem component: memoized for list performance
-const TopVenueItem = React.memo(({ venue, index }) => (
-  <div
-    key={venue.venueId}
-    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors"
-  >
-    <div className="flex items-center gap-3">
-      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-        <span className="text-sm font-medium text-blue-600">#{index + 1}</span>
-      </div>
-      <div>
-        <p className="font-medium text-gray-900">{venue.venueName}</p>
-        <p className="text-sm text-gray-600">
-          {venue.bookingCount} bookings • {venue.location?.city},{" "}
-          {venue.location?.state}
-        </p>
-      </div>
-    </div>
-    <div className="text-right">
-      <div className="flex items-center gap-1">
-        <span className="text-yellow-400 text-base">★</span>
-        <span className="text-sm text-gray-600">
-          {venue.averageRating != null ? venue.averageRating : "N/A"}
-        </span>
-      </div>
-    </div>
-  </div>
-));
-
-const AdminDashboard = () => {
-
-  const {
-    data: topVenues = [],
-    isLoading: isTopVenuesLoading,
-    isError: isTopVenuesError,
-  } = useTopVenuesByBooking();
-
-  const { data: bookingCount, isLoading: isBookingLoading } =
-    useGetTotalBookingsForAdmin();
-
-  const { data: customerCount, isLoading: isCustomerLoading } =
-    useGetCustomerCount();
-
-  const { data: venueCount, isLoading: isVenueLoading } =
-    useGetApprovedVenuesCount();
-
-  const { data: totalRevenue, isLoading: isRevenueLoading } =
-    useGetTotalEarnings();
-
-  const currentMonthIndex = new Date().getMonth();
-  const currentMonthEarnings = useMemo(() => {
-    return totalRevenue?.[currentMonthIndex]?.totalEarnings ?? 0;
-  }, [totalRevenue, currentMonthIndex]);
-
-  // Compose stats data only when dependencies change
-  const statsData = useMemo(
-    () => [
-      {
-        title: "Total Users",
-        value: isCustomerLoading ? "Loading..." : customerCount ?? 0,
-        icon: FaUsers,
-        color: "blue",
-        description: "Registered users",
-      },
-      {
-        title: "Total Revenue",
-        value: isRevenueLoading
-          ? "Loading..."
-          : `NPR ${currentMonthEarnings.toLocaleString()}`,
-
-        icon: FaDollarSign,
-        color: "green",
-        description: "This month",
-      },
-      {
-        title: "Active Venues",
-        value: isVenueLoading ? "Loading..." : venueCount ?? 0,
-
-        icon: FaBuildingColumns,
-        color: "purple",
-        description: "Currently listed",
-      },
-      {
-        title: "Today's Bookings",
-        value: isBookingLoading ? "Loading..." : bookingCount ?? 0,
-
-        icon: FaCalendarCheck,
-        color: "orange",
-        description: "New bookings today",
-      },
-    ],
-    [
-      customerCount,
-      currentMonthEarnings,
-      venueCount,
-      bookingCount,
-      isCustomerLoading,
-      isRevenueLoading,
-      isVenueLoading,
-      isBookingLoading,
-    ]
-  );
-
-  return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      {/* Header Section */}
-      <header className="mb-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Dashboard Overview
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Welcome back! Here's what's happening with your platform.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-start  sm:items-center gap-2 sm:gap-4">
-            {/* Search Bar */}
-            {/* Notifications */}
-            <NotificationDropdown />
-          </div>
-        </div>
-      </header>
-
-      {/* Stats Cards */}
-      <section
-        aria-label="Platform statistics"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-      >
-        {statsData.map((stat, index) => (
-          <StatCard key={stat.title + index} stat={stat} />
-        ))}
-      </section>
-
-      {/* Bottom Section */}
-      <section
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-        aria-label="Dashboard details"
-      >
-        {/* Recent Activities */}
-        <RecentActivity />
-
-        {/* Top Venues */}
-        <section
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-          aria-labelledby="top-venues-heading"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3
-                id="top-venues-heading"
-                className="text-lg font-semibold text-gray-900"
-              >
-                Top Performing Venues
-              </h3>
-              <p className="text-sm text-gray-600">Based on bookings</p>
-            </div>
-            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View All
+        {!confirming && (
+          <div className="flex shrink-0 gap-2">
+            <button type="button" onClick={() => setConfirming("approved")} aria-label={`Approve ${venue.venueName}`} className={`${btnPrimary} !px-4 !py-1.5`}>
+              <Check aria-hidden="true" className="size-4" /> Approve
+            </button>
+            <button type="button" onClick={() => setConfirming("rejected")} aria-label={`Reject ${venue.venueName}`} className={`${btnDanger} !px-4 !py-1.5`}>
+              <X aria-hidden="true" className="size-4" /> Reject
             </button>
           </div>
-
-          {isTopVenuesLoading ? (
-            <p className="text-sm text-gray-500">Loading top venues...</p>
-          ) : isTopVenuesError ? (
-            <p className="text-sm text-red-500">Failed to load top venues.</p>
-          ) : topVenues.length === 0 ? (
-            <p className="text-sm text-gray-500">No venues available.</p>
-          ) : (
-            <div className="space-y-4">
-              {topVenues.map((venue, index) => (
-                <TopVenueItem key={venue.venueId} venue={venue} index={index} />
-              ))}
-            </div>
+        )}
+      </div>
+      {confirming && (
+        <div className="mt-3 rounded-card-sm bg-cream p-3">
+          <p className="font-body text-small text-ink">
+            {approving ? "Approve this venue? It goes live and the owner is told." : "Reject this venue? The owner is told it was not approved."}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate(confirming)} className={`${approving ? btnPrimary : btnDanger} !px-4 !py-1.5`}>
+              {mutation.isPending ? "Saving..." : approving ? "Yes, approve" : "Yes, reject"}
+            </button>
+            <button type="button" disabled={mutation.isPending} onClick={() => { mutation.reset(); setConfirming(null); }} className={`${btnOutline} !px-4 !py-1.5`}>
+              Keep waiting
+            </button>
+          </div>
+          {mutation.isError && (
+            <p role="alert" className="mt-2 font-body text-caption text-red-700">
+              {mutation.error?.response?.data?.message ?? "We could not update this venue. Please try again."}
+            </p>
           )}
-        </section>
-      </section>
-    </main>
+        </div>
+      )}
+    </li>
   );
-};
+}
 
-export default AdminDashboard;
+export default function AdminDashboard() {
+  const customers = useGetCustomerCount();
+  const venueCount = useGetApprovedVenuesCount();
+  const bookings = useGetTotalBookingsForAdmin();
+  const earnings = useGetTotalEarnings();
+  const topVenues = useTopVenuesByBooking();
+  const activity = useActivityLogs();
+  const pending = useQuery({
+    queryKey: PENDING_KEY,
+    queryFn: () => getVenue({ status: "pending", limit: 5, page: 1 }),
+  });
+
+  const monthIndex = new Date().getMonth();
+  const monthValue = earnings.data?.[monthIndex]?.totalEarnings ?? 0;
+  const pendingTotal = pending.data?.total ?? 0;
+  const pendingVenues = pending.data?.venues ?? [];
+  const logs = (activity.data ?? []).slice(0, 8);
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Admin"
+        title="Platform overview"
+        description="Venues waiting for your decision come first, then how the platform is doing."
+        actions={
+          <Link to="/admin/venue" className={btnOutline}>
+            <Building2 aria-hidden="true" className="size-4" /> Manage venues
+          </Link>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat label="Customers" value={(customers.data ?? 0).toLocaleString("en-US")} hint="Registered accounts" icon={Users} to="/admin/user" loading={customers.isPending} />
+        <Stat label="Approved venues" value={venueCount.data ?? 0} hint={pending.isSuccess && pendingTotal ? `${pendingTotal} more waiting for approval` : "Live on Venure"} icon={Building2} to="/admin/venue" loading={venueCount.isPending} />
+        <Stat label="Total bookings" value={(bookings.data ?? 0).toLocaleString("en-US")} hint="All time, every status" icon={CalendarCheck} loading={bookings.isPending} />
+        <Stat label="Booked this month" value={npr(monthValue)} hint="Confirmed and completed events" icon={Wallet} loading={earnings.isPending} />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Panel
+          title="Venues awaiting approval"
+          description={pending.isSuccess ? (pendingTotal ? `${pendingTotal} waiting for a decision` : "Nothing to review") : "Newest submissions first"}
+          bodyClassName="p-0"
+          action={<Link to="/admin/venue" className={seeAll}>All venues</Link>}
+        >
+          {pending.isPending ? (
+            <RowsSkeleton />
+          ) : pending.isError ? (
+            <ErrorState onRetry={pending.refetch} />
+          ) : pendingVenues.length === 0 ? (
+            <EmptyState icon={ClipboardCheck} title="No venues waiting">New venues submitted by owners will appear here for review.</EmptyState>
+          ) : (
+            <>
+              <ul className="divide-y divide-line">
+                {pendingVenues.map((v) => (
+                  <PendingRow key={v._id} venue={v} />
+                ))}
+              </ul>
+              {pendingTotal > pendingVenues.length && (
+                <p className="border-t border-line px-6 py-3 font-body text-caption text-taupe">
+                  Showing {pendingVenues.length} of {pendingTotal}.{" "}
+                  <Link to="/admin/venue" className="text-gold-800 underline underline-offset-4 hover:text-ink">Review the rest</Link>
+                </p>
+              )}
+            </>
+          )}
+        </Panel>
+
+        <Panel title="Top venues" description="Most confirmed and completed bookings" bodyClassName="p-0" action={<Link to="/admin/venue" className={seeAll}>All venues</Link>}>
+          {topVenues.isPending ? (
+            <RowsSkeleton />
+          ) : topVenues.isError ? (
+            <ErrorState onRetry={topVenues.refetch} />
+          ) : (topVenues.data ?? []).length === 0 ? (
+            <EmptyState icon={Trophy} title="No bookings yet">The venues with the most events will be ranked here.</EmptyState>
+          ) : (
+            <ol className="divide-y divide-line">
+              {topVenues.data.map((v, i) => (
+                <li key={v.venueId} className="flex items-center gap-4 px-6 py-4">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gold-100 font-display text-small text-gold-800" aria-hidden="true">{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-body text-body text-ink">{v.venueName}</p>
+                    <p className="mt-0.5 truncate font-body text-caption text-taupe">{[v.location?.city, v.location?.state].filter(Boolean).join(", ") || "Location not set"}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-body text-small text-ink">{v.bookingCount} {v.bookingCount === 1 ? "booking" : "bookings"}</p>
+                    <p className="mt-0.5 flex items-center justify-end gap-1 font-body text-caption text-taupe">
+                      <Star aria-hidden="true" className="size-3.5 text-gold-800" />
+                      {v.averageRating ? Number(v.averageRating).toFixed(1) : "No ratings"}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Panel>
+      </div>
+
+      <Panel title="Booked value by month" description={`${new Date().getFullYear()}, confirmed and completed events by event date`} className="mt-6">
+        {earnings.isError ? (
+          <ErrorState onRetry={earnings.refetch} />
+        ) : earnings.isPending ? (
+          <div role="status" aria-label="Loading" className="h-64 animate-pulse rounded-card-sm bg-gold-100" />
+        ) : (
+          <>
+            <div className="h-64" aria-hidden="true">
+              <MonthlyEarningsChart data={earnings.data ?? []} />
+            </div>
+            <table className="sr-only">
+              <caption>Booked value by month</caption>
+              <thead><tr><th scope="col">Month</th><th scope="col">Booked value</th><th scope="col">Bookings</th></tr></thead>
+              <tbody>
+                {(earnings.data ?? []).map((m) => (
+                  <tr key={m.month}><th scope="row">{m.month}</th><td>{npr(m.totalEarnings)}</td><td>{m.bookingCount ?? 0}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </Panel>
+
+      <Panel title="Recent activity" description="Latest things that happened on the platform" bodyClassName="p-0" className="mt-6">
+        {activity.isPending ? (
+          <RowsSkeleton rows={4} />
+        ) : activity.isError ? (
+          <ErrorState onRetry={activity.refetch} />
+        ) : logs.length === 0 ? (
+          <EmptyState icon={Activity} title="No activity yet">Sign-ups, bookings and venue changes will be listed here.</EmptyState>
+        ) : (
+          <ul className="divide-y divide-line">
+            {logs.map((a) => {
+              const Icon = ACTIVITY_ICONS[a.type] ?? Activity;
+              return (
+                <li key={a._id} className="flex items-start gap-4 px-6 py-4">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gold-100">
+                    <Icon aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-body text-small text-ink [overflow-wrap:anywhere]">{a.message}</p>
+                    <p className="mt-0.5 font-body text-caption text-taupe">
+                      {dayjs(a.createdAt).fromNow()}
+                      {a.createdBy?.name ? ` · ${a.createdBy.name}` : ""}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Panel>
+    </>
+  );
+}

@@ -6,7 +6,7 @@ const LABELS = {
     pending: "Waiting for the venue",
     quoted: "Quote received",
     accepted: "Accepted, deposit due",
-    booked: "Booked",
+    booked: "Confirmed",
     declined: "Declined by the venue",
     cancelled: "Cancelled",
     expired: "Expired",
@@ -23,19 +23,19 @@ const LABELS = {
 };
 
 const TONES = {
-  pending: "bg-gold-100 text-gold-800",
+  pending: "bg-gold-100 text-gold-900",
   quoted: "bg-gold text-ink",
   accepted: "bg-ink text-gold-50",
   booked: "bg-success text-white",
-  declined: "bg-line text-taupe",
-  cancelled: "bg-line text-taupe",
-  expired: "bg-line text-taupe",
+  declined: "border border-line bg-sand text-taupe",
+  cancelled: "border border-line bg-sand text-taupe",
+  expired: "border border-line bg-sand text-taupe",
 };
 
 export default function StatusBadge({ inquiry, role = "customer" }) {
   const status = effectiveStatus(inquiry);
   return (
-    <span className={`inline-block rounded-full px-3 py-1 font-body text-eyebrow uppercase ${TONES[status] ?? TONES.expired}`}>
+    <span className={`inline-block whitespace-nowrap rounded-full px-3 py-1 font-body text-eyebrow uppercase ${TONES[status] ?? TONES.expired}`}>
       {LABELS[role][status] ?? status}
     </span>
   );

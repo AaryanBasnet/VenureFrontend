@@ -10,7 +10,7 @@ function ChartTooltip({ active, payload, label }) {
   return (
     <div className="rounded-card-sm border border-line bg-white px-3 py-2 shadow-md">
       <p className="font-body text-caption text-taupe">{label}</p>
-      <p className="font-display text-h5 font-light text-ink">NPR {Number(payload[0].value).toLocaleString("en-US")}</p>
+      <p className="font-display text-h5 font-light text-ink">NPR {Number(payload[0].value).toLocaleString("en-IN")}</p>
     </div>
   );
 }

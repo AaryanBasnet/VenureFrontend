@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Clock, Loader2, Mail, MapPin, Phone } from "lucide-react";
 import PageHero from "../../components/ui/PageHero";
@@ -42,7 +42,7 @@ function Field({ id, label, error, children }) {
       </label>
       {children}
       {error && (
-        <p id={`${id}-error`} className={errorClass}>
+        <p id={`${id}-error`} role="alert" className={errorClass}>
           {error}
         </p>
       )}
@@ -58,7 +58,7 @@ function DetailRow({ icon: Icon, label, children }) {
       </span>
       <div>
         <p className="font-body text-eyebrow uppercase text-taupe">{label}</p>
-        <div className="mt-1 font-body text-body text-ink">{children}</div>
+        <div className="font-body text-body text-ink">{children}</div>
       </div>
     </li>
   );
@@ -72,6 +72,7 @@ export default function ContactUs() {
   const [errors, setErrors] = useState({});
   const [sent, setSent] = useState(null);
   const [failed, setFailed] = useState(false);
+  const formRef = useRef(null);
   const { mutateAsync: submitContact, isPending } = useSubmitContact();
 
   const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }));
@@ -89,7 +90,11 @@ export default function ContactUs() {
     const found = validate(values);
     setErrors(found);
     setFailed(false);
-    if (Object.keys(found).length) return;
+    if (Object.keys(found).length) {
+      // Take the visitor to the first problem once the errors are on screen
+      window.requestAnimationFrame(() => formRef.current?.querySelector('[aria-invalid="true"]')?.focus());
+      return;
+    }
 
     // The contact API stores name, email, phone and a message, so the extra details travel inside the message.
     const label = TOPICS.find((t) => t.id === topic)?.label;
@@ -105,8 +110,8 @@ export default function ContactUs() {
   };
 
   const details = [
-    contactDetails.email && { icon: Mail, label: "Email", node: <a href={`mailto:${contactDetails.email}`} className="underline underline-offset-4 hover:text-gold-800">{contactDetails.email}</a> },
-    contactDetails.phone && { icon: Phone, label: "Phone", node: <a href={`tel:${contactDetails.phone.replace(/[^\d+]/g, "")}`} className="underline underline-offset-4 hover:text-gold-800">{contactDetails.phone}</a> },
+    contactDetails.email && { icon: Mail, label: "Email", node: <a href={`mailto:${contactDetails.email}`} className="inline-flex min-h-11 items-center break-all underline underline-offset-4 hover:text-gold-800">{contactDetails.email}</a> },
+    contactDetails.phone && { icon: Phone, label: "Phone", node: <a href={`tel:${contactDetails.phone.replace(/[^\d+]/g, "")}`} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-gold-800">{contactDetails.phone}</a> },
     contactDetails.address && { icon: MapPin, label: "Visit", node: contactDetails.address },
     contactDetails.hours && { icon: Clock, label: "Hours", node: contactDetails.hours },
   ].filter(Boolean);
@@ -117,7 +122,7 @@ export default function ContactUs() {
         Tell us what you are planning, or the venue you would like to list, and we will take it from there.
       </PageHero>
 
-      <section aria-label="Contact form" className="bg-cream py-16 lg:py-[88px]">
+      <section aria-label="Get in touch" className="bg-cream py-16 lg:py-[88px]">
         <div className="container-site grid gap-12 lg:grid-cols-[1fr_380px] lg:gap-16">
           {sent ? (
             <div className="self-start rounded-card-xl border border-line bg-white p-8 lg:p-10" role="status">
@@ -136,7 +141,7 @@ export default function ContactUs() {
               </div>
             </div>
           ) : (
-            <form onSubmit={submit} noValidate className="rounded-card-xl border border-line bg-white p-6 sm:p-8 lg:p-10">
+            <form ref={formRef} onSubmit={submit} noValidate aria-label="Send us a message" className="rounded-card-xl border border-line bg-white p-6 sm:p-8 lg:p-10">
               <SectionHeading eyebrow="Send a message" title="How can we help?" as="h2" className="[&_h2]:text-h2" />
 
               <fieldset className="mt-8">
@@ -166,9 +171,9 @@ export default function ContactUs() {
                 <Field id="c-phone" label="Phone (optional)" error={errors.phone}>
                   <input {...control("c-phone", "phone")} type="tel" autoComplete="tel" placeholder="98XXXXXXXX" />
                 </Field>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-4">
                   <Field id="c-date" label="Event date">
-                    <input {...control("c-date", "date")} type="date" />
+                    <input {...control("c-date", "date")} type="date" min={new Date().toISOString().slice(0, 10)} />
                   </Field>
                   <Field id="c-guests" label="Guests">
                     <input {...control("c-guests", "guests")} type="number" min="1" inputMode="numeric" />

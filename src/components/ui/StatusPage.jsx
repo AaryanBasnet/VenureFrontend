@@ -7,19 +7,19 @@ import { usePageTitle } from "../../utils/usePageTitle";
 export default function StatusPage({ code, title, children, actions }) {
   usePageTitle(code === "404" ? "Page not found" : "Access denied");
   return (
-    <main id="main-content" className="flex min-h-screen flex-col bg-cream">
+    <main id="main-content" className="flex min-h-dvh flex-col bg-cream">
       <header className="container-site flex h-[var(--spacing-header)] items-center">
         <Link to="/" aria-label="Venure home" className="text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
-          <Logo className="w-16" label="Venure" />
+          <Logo className="w-16" label="Venure home" />
         </Link>
       </header>
 
       <div className="container-site flex flex-1 flex-col items-center justify-center pb-24 text-center">
-        <p aria-hidden="true" className="font-display text-[clamp(6rem,22vw,12rem)] font-light italic leading-none text-gold/50">
+        <p aria-hidden="true" className="font-display text-[clamp(6rem,22vw,12rem)] font-light italic leading-none text-gold-200">
           {code}
         </p>
-        <h1 className="-mt-2 font-display text-h2 font-light text-ink">{title}</h1>
-        <p className="mt-4 max-w-md font-body text-body-lg font-light text-gold-800">{children}</p>
+        <h1 className="-mt-2 text-balance font-display text-h2 font-light text-ink">{title}</h1>
+        <p className="mt-4 max-w-md font-body text-body-lg text-ink/80">{children}</p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">{actions}</div>
       </div>
     </main>

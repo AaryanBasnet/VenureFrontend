@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Banknote, CalendarCheck, CalendarDays, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import MonthlyEarningsChart from "../../components/owner/MonthlyEarningsChart";
-import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat, StatusPill } from "../../components/owner/ui";
-import { btnOutline, npr, shortDate } from "../../components/owner/ownerStyles";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat, StatusPill } from "../../components/dashboard/ui";
+import { btnOutline, npr, shortDate } from "../../components/dashboard/styles";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
-import { shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { useGetMonthlyEarningsForOwner } from "../../hooks/owner/useGetMonthlyEarningForOwner";
 import { useGetTotalBookingsForOwner } from "../../hooks/owner/useGetTotalBookingsForOwner";
 import useOwnerBookings from "../../hooks/owner/useOwnerBookings";
@@ -147,7 +147,7 @@ export default function OwnerAnalyticsPage() {
                     <p className="truncate font-body text-body text-ink">{b.venue?.venueName ?? "Venue"}</p>
                     <p className="mt-0.5 font-body text-caption text-taupe">
                       {b.customer?.name ?? b.contactName ?? "Customer"} · {shortDate(b.startTime)}{" "}
-                      <span className="text-taupe-light">({bsLabel(b.startTime)})</span>
+                      <span className="text-taupe">({bsLabel(serverDay(b.startTime))})</span>
                       {b.shift ? ` · ${shiftLabel(b.shift)}` : ""}
                     </p>
                   </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, CheckCheck, Clock, Send, MessageCircle } from "lucide-react";
+import { Check, CheckCheck, Clock, Loader2, Send, MessageCircle } from "lucide-react";
 
 const timeOf = (t) => (t ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
 const senderId = (msg) => (typeof msg.sender === "object" ? msg.sender?._id : msg.sender);
@@ -18,7 +18,7 @@ function Ticks({ status }) {
 }
 
 // Message thread and composer. Shared by the customer and owner chat pages.
-export default function ChatBox({ messages = [], onSend, currentUserId, isTyping = false }) {
+export default function ChatBox({ messages = [], onSend, currentUserId, isTyping = false, loading = false, error = false, onRetry }) {
   const [text, setText] = useState("");
   const logRef = useRef(null);
   const areaRef = useRef(null);
@@ -26,7 +26,9 @@ export default function ChatBox({ messages = [], onSend, currentUserId, isTyping
   useEffect(() => {
     // Scroll only the message list, never the whole page.
     const log = logRef.current;
-    if (log) log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
+    if (!log) return;
+    const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    log.scrollTo({ top: log.scrollHeight, behavior: calm ? "auto" : "smooth" });
   }, [messages]);
 
   useEffect(() => {
@@ -46,12 +48,31 @@ export default function ChatBox({ messages = [], onSend, currentUserId, isTyping
   return (
     <div className="flex h-full flex-col bg-cream">
       <div ref={logRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-6" role="log" aria-live="polite" aria-label="Messages">
-        {messages.length === 0 ? (
+        {loading && messages.length === 0 ? (
+          <div role="status" className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <Loader2 aria-hidden="true" className="size-6 animate-spin text-gold-800" />
+            <p className="font-body text-small text-taupe">Loading messages</p>
+          </div>
+        ) : error && messages.length === 0 ? (
+          <div role="alert" className="flex h-full flex-col items-center justify-center text-center">
+            <p className="font-display text-h5 font-normal text-ink">We could not load this conversation</p>
+            <p className="mt-1 font-body text-small text-taupe">Please check your connection and try again.</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 inline-flex min-h-11 items-center rounded-full border border-gold-800 bg-gold-800 px-6 font-body text-button uppercase text-white transition-colors hover:border-gold hover:bg-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Try again
+              </button>
+            )}
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <span className="flex size-14 items-center justify-center rounded-full bg-gold-100 text-gold-800">
               <MessageCircle aria-hidden="true" className="size-6" strokeWidth={1.5} />
             </span>
-            <h3 className="mt-4 font-display text-h5 font-normal text-ink">Start the conversation</h3>
+            <p className="mt-4 font-display text-h5 font-normal text-ink">Start the conversation</p>
             <p className="mt-1 max-w-xs font-body text-small text-taupe">Send a message to say hello. Replies appear here as they arrive.</p>
           </div>
         ) : (
@@ -113,7 +134,7 @@ export default function ChatBox({ messages = [], onSend, currentUserId, isTyping
             }
           }}
           placeholder="Type your message"
-          className="max-h-32 min-h-11 w-full resize-none rounded-card-md border border-border-strong bg-paper-white px-4 py-3 font-body text-small text-charcoal placeholder:text-taupe-light focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+          className="max-h-32 min-h-11 w-full resize-none rounded-card-md border border-border-strong bg-paper-white px-4 py-3 font-body text-small text-charcoal placeholder:text-taupe focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
         />
         <button
           type="submit"

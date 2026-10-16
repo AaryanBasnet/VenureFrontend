@@ -1,8 +1,8 @@
-import { useContext, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useGoToLogin } from "../../auth/returnTo";
 import { usePageTitle } from "../../utils/usePageTitle";
-import { MessageCircle, Phone } from "lucide-react";
+import { ExternalLink, MessageCircle, Phone } from "lucide-react";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../auth/AuthProvider";
 import { useVenueDetails } from "../../hooks/user/useVenueDetails";
@@ -17,9 +17,11 @@ import VenuePackages from "../../features/venues/sections/VenuePackages";
 import { cheapestPlatePrice, toWhatsAppNumber } from "../../features/venues/venueFormat";
 import VenueSectionNav from "../../features/venues/sections/VenueSectionNav";
 import VenueReviews from "../../features/venues/sections/VenueReviews";
+import VenueMobileBar from "../../features/venues/sections/VenueMobileBar";
+import { rememberPendingFavorite, useFavorites, usePendingFavorite, useToggleFavorite } from "../../features/favorites/hooks/useFavorites";
 
 const contactBtn =
-  "inline-flex items-center gap-2 rounded-full border border-gold-50/70 px-6 py-3 font-body text-button uppercase transition-colors hover:bg-gold-50 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+  "inline-flex min-h-11 items-center gap-2 rounded-full border border-gold-50/70 px-6 py-3 font-body text-button uppercase transition-colors hover:bg-gold-50 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 function PageMessage({ title, children }) {
   return (
@@ -38,12 +40,24 @@ const VenueDetails = () => {
   const goToLogin = useGoToLogin();
   const { isAuthenticated, user } = useContext(AuthContext);
 
-  const { data: venue, isPending, isError } = useVenueDetails(id);
+  const { data: venue, isPending, isError, error, refetch } = useVenueDetails(id);
+  const { hash } = useLocation();
   const { data: spaces = [], isPending: spacesPending } = useVenueSpaces(venue?._id);
   const { startChatWith } = useChat(user, venue?._id || null);
-  usePageTitle(venue?.venueName);
+  usePageTitle(venue?.venueName ?? (isError ? "Venue not found" : null));
+  const favorites = useFavorites();
+  const toggleFavorite = useToggleFavorite();
+  usePendingFavorite(favorites, toggleFavorite);
+  const [chatBusy, setChatBusy] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [selectedDrink, setSelectedDrink] = useState(null);
+
+  // Links like /venue/123#reviews arrive before the page has any content, so scroll once the venue has loaded.
+  useEffect(() => {
+    if (!venue || !hash) return undefined;
+    const frame = requestAnimationFrame(() => document.getElementById(hash.slice(1))?.scrollIntoView());
+    return () => cancelAnimationFrame(frame);
+  }, [venue, hash, spacesPending]);
 
   if (isPending) {
     return (
@@ -58,12 +72,23 @@ const VenueDetails = () => {
   }
 
   if (isError || !venue) {
+    // The server answers 400/404 for an id that does not exist; anything else (no connection, a server error) is worth retrying.
+    const missing = [400, 404].includes(error?.response?.status);
     return (
-      <PageMessage title="We could not find this venue">
-        <p className="font-body text-body text-taupe">It may have been removed, or the link is wrong.</p>
-        <Link to="/venues" className="font-body text-button uppercase text-gold-800 underline underline-offset-4">
-          Browse venues
-        </Link>
+      <PageMessage title={missing ? "We could not find this venue" : "We could not load this venue"}>
+        <p role={missing ? undefined : "alert"} className="max-w-md font-body text-body text-taupe">
+          {missing ? "It may have been removed, or the link is wrong." : "Please check your connection and try again."}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          {!missing && (
+            <button type="button" onClick={() => refetch()} className="min-h-11 rounded-full bg-ink px-6 font-body text-button uppercase text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+              Try again
+            </button>
+          )}
+          <Link to="/venues" className="inline-flex min-h-11 items-center font-body text-button uppercase text-gold-800 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+            Browse venues
+          </Link>
+        </div>
       </PageMessage>
     );
   }
@@ -72,13 +97,23 @@ const VenueDetails = () => {
   const fromPlate = cheapestPlatePrice(venue);
   const hasMenu = (venue.packages?.length ?? 0) + (venue.drinkOptions?.length ?? 0) > 0;
   const available = ["overview", "spaces", ...(hasMenu ? ["menu"] : []), "location", "reviews"];
-  const phoneDigits = (venue.contactPhone ?? "").replace(/[^\d+]/g, "");
-  const whatsappNumber = toWhatsAppNumber(venue.contactPhone);
+  // Full international number (+977...), so the call and WhatsApp links work from any phone.
+  const phoneNumber = toWhatsAppNumber(venue.contactPhone);
+  const hasPhone = phoneNumber.length >= 10;
+  const isFavorite = favorites.ids.has(venue._id);
+  const onToggleFavorite = () => {
+    if (favorites.enabled) {
+      toggleFavorite.mutate(venue._id);
+    } else {
+      rememberPendingFavorite(venue._id);
+      goToLogin();
+    }
+  };
 
   // "Request a date" starts the inquiry wizard; a chosen space, package and drink come along as preferences.
   const handleCheckDate = (space) => {
     if (!isAuthenticated) {
-      goToLogin();
+      goToLogin({ from: `/venue/${venue._id}/inquire` }); // after signing in they land on the form they asked for
       return;
     }
     navigate(`/venue/${venue._id}/inquire`, {
@@ -93,28 +128,35 @@ const VenueDetails = () => {
     }
     const ownerId = venue.owner?._id || venue.owner;
     if (!ownerId) {
-      toast.error("Venue owner information unavailable");
+      toast.error("We could not reach this venue's owner. Please try again later.");
       return;
     }
+    if (chatBusy) return;
+    setChatBusy(true);
     try {
       const chat = await startChatWith(ownerId);
       navigate("/chat", { state: { chatId: chat._id, currentUserId: user._id, venueId: venue._id } });
     } catch {
-      toast.error("Unable to start chat");
+      toast.error("We could not start the chat. Please try again.");
+    } finally {
+      setChatBusy(false);
     }
   };
 
   return (
-    <div className="pb-24 lg:pb-0">
+    <div>
       <VenueHero
         venue={venue}
         maxCapacity={maxCapacity}
         spaceCount={spaces.length}
         fromPlate={fromPlate}
         onCheckDate={() => handleCheckDate()}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
+        favoriteBusy={toggleFavorite.isPending}
       />
       <VenueSectionNav venueName={venue.venueName} fromPlate={fromPlate} available={available} onCheckDate={() => handleCheckDate()} />
-      <VenueGallery images={venue.venueImages} />
+      <VenueGallery images={venue.venueImages} venueName={venue.venueName} />
       <VenueOverview venue={venue} />
       <VenueSpaces spaces={spaces} isPending={spacesPending} onCheckDate={handleCheckDate} />
       <VenuePackages
@@ -124,34 +166,37 @@ const VenueDetails = () => {
         onSelectPackage={setSelectedPackage}
         selectedDrink={selectedDrink}
         onSelectDrink={setSelectedDrink}
+        onRequest={() => handleCheckDate()}
       />
 
       <section aria-labelledby="ask-title" className="bg-ink py-12 text-gold-50">
         <div className="container-site flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
             <h2 id="ask-title" className="font-display text-h3 font-light">
-              Not sure which space fits?
+              Questions before you request?
             </h2>
             <p className="mt-2 font-body text-body text-gold-200">
               Ask the venue about dates, menus and capacity before you request.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={handleChatWithOwner} className={contactBtn}>
+            <button type="button" onClick={handleChatWithOwner} disabled={chatBusy} className={`${contactBtn} disabled:opacity-60`}>
               <MessageCircle aria-hidden="true" className="size-4" /> Message the venue
             </button>
-            {phoneDigits && (
+            {hasPhone && (
               <>
-                <a href={`tel:${phoneDigits}`} className={contactBtn}>
+                <a href={`tel:+${phoneNumber}`} className={contactBtn}>
                   <Phone aria-hidden="true" className="size-4" /> Call
+                  <span className="sr-only"> the venue</span>
                 </a>
                 <a
-                  href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hello, I am interested in ${venue.venueName} on Venure.`)}`}
+                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Hello, I am interested in ${venue.venueName} on Venure.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={contactBtn}
                 >
-                  WhatsApp
+                  WhatsApp <ExternalLink aria-hidden="true" className="size-3.5" />
+                  <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               </>
             )}
@@ -163,15 +208,7 @@ const VenueDetails = () => {
 
       <VenueReviews venue={venue} />
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-cream/95 p-3 backdrop-blur lg:hidden">
-        <button
-          type="button"
-          onClick={() => handleCheckDate()}
-          className="w-full rounded-full bg-ink py-3 font-body text-button uppercase text-gold-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        >
-          Request a date
-        </button>
-      </div>
+      <VenueMobileBar fromPlate={fromPlate} onCheckDate={() => handleCheckDate()} />
     </div>
   );
 };

@@ -1,13 +1,12 @@
 import { Diamond } from "lucide-react";
 import SectionHeading from "../../../components/ui/SectionHeading";
 import Button from "../../../components/ui/Button";
-import { partnerCta } from "../content/landingContent";
+import { useLanding } from "../hooks/useLanding";
 
 // Figma 46:298 — centered CTA inviting venue owners to apply.
-// "Apply as a Venue Partner" goes to /contact: there's no self-serve owner
-// application flow yet (owner accounts are admin-provisioned), matching the
-// header's own "Enquire" link.
+// The button leads to the dedicated owner page, where owners create an account and list a venue.
 export default function PartnerCtaSection() {
+  const { partnerCta } = useLanding().content;
   return (
     <section aria-labelledby="partner-cta-title" className="border-t border-line bg-cream py-16 lg:py-[74px]">
       <div className="container-site flex max-w-[896px] flex-col items-center text-center">
@@ -21,7 +20,7 @@ export default function PartnerCtaSection() {
           className="pt-6"
         />
         <p className="mt-5 max-w-xl font-body text-body-lg font-light text-gold-800">{partnerCta.description}</p>
-        <Button to="/contact?topic=partner" arrow className="mt-8">
+        <Button to="/list-your-venue" arrow className="mt-8">
           Apply as a venue partner
         </Button>
       </div>

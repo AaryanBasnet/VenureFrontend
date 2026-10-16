@@ -1,6 +1,4 @@
-import { useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { toast } from "react-toastify";
 import api from "../../../api/api";
 
 /**
@@ -26,22 +24,13 @@ export const useVenues = (filters = {}) => {
     staleTime: 1000 * 60 * 2, // 2 min — venue lists are stable mid-session
   });
 
-  // Surface network/server errors as toasts so the user gets feedback even
-  // if the component renders a graceful empty state instead of an error wall.
-  useEffect(() => {
-    if (query.isError) {
-      toast.error(
-        query.error?.response?.data?.message ||
-          "Failed to load venues. Please try again."
-      );
-    }
-  }, [query.isError, query.error]);
-
   return {
     venues: query.data?.data ?? [],
+    total: query.data?.total ?? 0,
     totalPages: query.data?.pages ?? 1,
     isPending: query.isPending,
     isFetching: query.isFetching, // true during background refetch / page change
     isError: query.isError,
+    refetch: query.refetch,
   };
 };

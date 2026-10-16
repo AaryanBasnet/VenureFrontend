@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { inputClass, labelClass } from "../ui/formStyles";
-import { btnOutline } from "./ownerStyles";
+import { btnOutline } from "../dashboard/styles";
 import { emptyDrink, emptyPackage } from "./menuEditorUtils";
 
 const MAX = 6;

@@ -1,283 +1,171 @@
-import React, { useState } from "react";
-import {
-  Search,
-  RefreshCw,
-  Mail,
-  Phone,
-  User,
-  MessageSquare,
-  Calendar,
-  Filter,
-  Download,
-  Eye,
-  MoreHorizontal,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Mail, Phone, Search } from "lucide-react";
+import { toast } from "react-toastify";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton } from "../../components/dashboard/ui";
+import { btnOutline, btnPrimary, shortDate } from "../../components/dashboard/styles";
+import { inputClass, labelClass } from "../../components/ui/formStyles";
 import useGetContact from "../../hooks/useGetContact";
+import { plural } from "../../utils/plural";
 
-export default function AdminContactPage() {
-  // Using mock data for demonstration
-  // const contacts = mockContacts;
-  const { data: contacts = [] } = useGetContact();
-  const isLoading = false;
+const PER_PAGE = 10;
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
-  const [, setSelectedContact] = useState(null);
+const timeOf = (d) => (d ? new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "");
 
-  const filtered = contacts.filter((contact) => {
-    const matchesSearch =
-      contact.name?.toLowerCase().includes(search.toLowerCase()) ||
-      contact.email?.toLowerCase().includes(search.toLowerCase()) ||
-      contact.message?.toLowerCase().includes(search.toLowerCase()) ||
-      contact.phone?.includes(search);
+function MessageRow({ msg }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const panelId = `msg-${msg._id}`;
+  const mailto = msg.email ? `mailto:${msg.email}?subject=${encodeURIComponent("Re: your message to Venure")}` : null;
 
-    const matchesStatus = statusFilter === "all";
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "newest")
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    if (sortBy === "oldest")
-      return new Date(a.createdAt) - new Date(b.createdAt);
-    if (sortBy === "name") return a.name.localeCompare(b.name);
-    return 0;
-  });
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return (
-      date.toLocaleDateString("en-GB", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }) +
-      " at " +
-      date.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    );
-  };
-
-  const truncateMessage = (message, maxLength = 100) => {
-    return message.length > maxLength
-      ? message.substring(0, maxLength) + "..."
-      : message;
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(msg.email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy. Select the address and copy it by hand.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header with Stats */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+    <li>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-start gap-4 px-6 py-4 text-left hover:bg-cream focus-visible:bg-cream focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+      >
+        <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gold-100 font-display text-h5 font-light text-gold-800">
+          {(msg.name ?? "?").charAt(0).toUpperCase()}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-baseline justify-between gap-x-4">
+            <span className="break-words font-body text-body text-ink">{msg.name}</span>
+            <span className="font-body text-caption text-taupe">{shortDate(msg.createdAt)}</span>
+          </span>
+          <span className={`mt-0.5 block break-words font-body text-small text-taupe ${open ? "" : "line-clamp-1"}`}>{msg.message}</span>
+        </span>
+        <ChevronDown aria-hidden="true" className={`mt-2 size-4 shrink-0 text-taupe transition-transform ${open ? "rotate-180" : ""}`} strokeWidth={1.5} />
+      </button>
+
+      {open && (
+        <div id={panelId} className="px-6 pb-5 sm:pl-[5.5rem]">
+          <p className="whitespace-pre-line break-words font-body text-small text-ink">{msg.message}</p>
+          <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 font-body text-small">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-blue-600 bg-clip-text text-transparent mb-2">
-                Contact Submissions
-              </h1>
-              <p className="text-slate-600">
-                Manage and respond to customer inquiries
-              </p>
+              <dt className="text-caption uppercase text-taupe">Received</dt>
+              <dd className="text-ink">
+                {shortDate(msg.createdAt)} at {timeOf(msg.createdAt)}
+              </dd>
             </div>
-
-            {/* Quick Stats */}
-            <div className="flex flex-wrap gap-4">
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 min-w-[140px]">
-                <div className="flex items-center gap-2 mb-1">
-                  <MessageSquare className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-slate-600">
-                    Total Messages
-                  </span>
-                </div>
-                <div className="text-2xl font-bold text-slate-800">
-                  {contacts.length}
-                </div>
+            <div className="min-w-0">
+              <dt className="text-caption uppercase text-taupe">Email</dt>
+              <dd className="break-all text-ink">{msg.email || "Not given"}</dd>
+            </div>
+            {msg.phone && (
+              <div>
+                <dt className="text-caption uppercase text-taupe">Phone</dt>
+                <dd className="text-ink">
+                  <a href={`tel:${msg.phone}`} className="inline-flex items-center gap-1.5 underline underline-offset-4 hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+                    <Phone aria-hidden="true" className="size-4" strokeWidth={1.5} /> {msg.phone}
+                  </a>
+                </dd>
               </div>
-            </div>
+            )}
+          </dl>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {mailto ? (
+              <>
+                <a href={mailto} className={btnPrimary}>
+                  <Mail aria-hidden="true" className="size-4" strokeWidth={1.5} /> Reply by email
+                </a>
+                <button type="button" onClick={copyEmail} className={btnOutline}>
+                  {copied ? <Check aria-hidden="true" className="size-4" strokeWidth={1.5} /> : <Copy aria-hidden="true" className="size-4" strokeWidth={1.5} />}
+                  {copied ? "Copied" : "Copy email"}
+                </button>
+              </>
+            ) : (
+              <p className="font-body text-small text-taupe">This person did not leave an email address{msg.phone ? ", but you can call them." : "."}</p>
+            )}
           </div>
         </div>
+      )}
+    </li>
+  );
+}
 
-        {/* Controls */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
-            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or message..."
-                  className="pl-10 pr-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full lg:w-80 transition-all"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+export default function AdminContactPage() {
+  const { data: contacts = [], isPending, isError, refetch } = useGetContact();
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const q = search.trim().toLowerCase();
 
-              <select
-                className="px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="new">New</option>
-                <option value="replied">Replied</option>
-                <option value="archived">Archived</option>
-              </select>
+  useEffect(() => {
+    setPage(1);
+  }, [q]);
 
-              <select
-                className="px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="name">Name A-Z</option>
-              </select>
-            </div>
-          </div>
+  // The server already sorts newest first; sort again so the order never depends on it.
+  const filtered = useMemo(
+    () =>
+      [...contacts]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .filter((c) => !q || [c.name, c.email, c.phone, c.message].some((f) => f?.toLowerCase().includes(q))),
+    [contacts, q]
+  );
+  const pages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const shown = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Inbox"
+        title="Messages"
+        description="Messages sent through the contact form on the site, newest first."
+        actions={!isPending && !isError && <p className="font-body text-small text-taupe">{contacts.length} in total</p>}
+      />
+
+      <div className="mb-6 sm:max-w-sm">
+        <label htmlFor="msg-search" className={labelClass}>Search messages</label>
+        <div className="relative">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-taupe" strokeWidth={1.5} />
+          <input id="msg-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, email, phone or text" className={`${inputClass} pl-10`} />
         </div>
-
-        {/* Content */}
-        {isLoading ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500 text-lg">
-                Loading contact submissions...
-              </p>
-            </div>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12">
-            <div className="text-center">
-              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-slate-400 text-lg">
-                No contact submissions found
-              </p>
-              <p className="text-slate-400 text-sm mt-1">
-                Try adjusting your search or filter criteria
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-slate-100 to-gray-100 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        Contact Info
-                      </div>
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" />
-                        Message
-                      </div>
-                    </th>
-
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        Submitted
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {sorted.map((contact) => (
-                    <tr
-                      key={contact._id}
-                      className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="font-medium text-slate-800">
-                            {contact.name}
-                          </div>
-                          <div className="flex items-center gap-1 text-sm text-slate-600">
-                            <Mail className="w-3 h-3" />
-                            {contact.email || "—"}
-                          </div>
-                          {contact.phone && (
-                            <div className="flex items-center gap-1 text-sm text-slate-600">
-                              <Phone className="w-3 h-3" />
-                              {contact.phone}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div
-                          className="max-w-md text-slate-700 cursor-pointer hover:text-blue-600 transition-colors"
-                          title={contact.message}
-                          onClick={() => setSelectedContact(contact)}
-                        >
-                          {truncateMessage(contact.message)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-500">
-                          {formatDate(contact.createdAt)}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="lg:hidden">
-              <div className="p-4 space-y-4">
-                {sorted.map((contact) => (
-                  <div
-                    key={contact._id}
-                    className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-slate-800">
-                          {contact.name}
-                        </h3>
-                        <div className="flex items-center gap-1 text-sm text-slate-600 mt-1">
-                          <Mail className="w-3 h-3" />
-                          {contact.email || "—"}
-                        </div>
-                        {contact.phone && (
-                          <div className="flex items-center gap-1 text-sm text-slate-600 mt-1">
-                            <Phone className="w-3 h-3" />
-                            {contact.phone}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <p
-                      className="text-slate-700 mb-3 text-sm leading-relaxed cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() => setSelectedContact(contact)}
-                    >
-                      {truncateMessage(contact.message, 150)}
-                    </p>
-
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-slate-500 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(contact.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
+
+      <Panel bodyClassName="p-0">
+        {isPending ? (
+          <RowsSkeleton rows={4} />
+        ) : isError ? (
+          <ErrorState onRetry={refetch}>Messages could not be loaded right now.</ErrorState>
+        ) : contacts.length === 0 ? (
+          <EmptyState icon={Mail} title="No messages yet">Messages from the contact form will show up here.</EmptyState>
+        ) : filtered.length === 0 ? (
+          <EmptyState icon={Search} title="No matching messages">Nothing matches "{search.trim()}".</EmptyState>
+        ) : (
+          <ul className="divide-y divide-line">
+            {shown.map((m) => (
+              <MessageRow key={m._id} msg={m} />
+            ))}
+          </ul>
+        )}
+
+        {filtered.length > PER_PAGE && (
+          <nav aria-label="Message pages" className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-6 py-4">
+            <p className="font-body text-caption text-taupe" aria-live="polite">
+              Page {page} of {pages} · {plural(filtered.length, "message")}
+            </p>
+            <div className="flex gap-2">
+              <button type="button" className={btnOutline} disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <ChevronLeft aria-hidden="true" className="size-4" strokeWidth={1.5} /> Previous
+              </button>
+              <button type="button" className={btnOutline} disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
+                Next <ChevronRight aria-hidden="true" className="size-4" strokeWidth={1.5} />
+              </button>
+            </div>
+          </nav>
+        )}
+      </Panel>
+    </>
   );
 }

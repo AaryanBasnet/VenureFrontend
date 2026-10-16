@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotification";
+import { useMenu } from "../../hooks/useMenu";
 
 const ago = (iso) => {
   const minutes = Math.floor((Date.now() - new Date(iso)) / 60000);
@@ -16,34 +16,23 @@ const ago = (iso) => {
 // tone="light" is white on the dark site header; tone="dark" is for cream backgrounds (owner area).
 export default function NotificationBell({ userId, tone = "light" }) {
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications(userId);
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const { open, close, toggle, rootRef, buttonRef, onKeyDown, panelId } = useMenu();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onPointer = (e) => ref.current && !ref.current.contains(e.target) && setOpen(false);
-    const onKey = (e) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   const openItem = (n) => {
     if (!n.read) markRead(n._id);
-    setOpen(false);
+    close();
     if (n.link) navigate(n.link);
   };
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={rootRef} onKeyDown={onKeyDown}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        ref={buttonRef}
+        onClick={toggle}
         aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
         aria-haspopup="true"
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
         className={`relative flex size-10 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${tone === "dark" ? "text-ink hover:bg-ink/5 focus-visible:outline-ink" : "text-white hover:bg-white/10 focus-visible:outline-white"}`}
@@ -59,6 +48,7 @@ export default function NotificationBell({ userId, tone = "light" }) {
       <AnimatePresence>
         {open && (
           <motion.div
+            id={panelId}
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
@@ -68,7 +58,7 @@ export default function NotificationBell({ userId, tone = "light" }) {
             <div className="flex items-center justify-between border-b border-line px-5 py-3">
               <p className="font-display text-h5 font-normal text-ink">Notifications</p>
               {unreadCount > 0 && (
-                <button type="button" onClick={markAllRead} className="font-body text-caption text-gold-800 underline underline-offset-4 hover:text-ink">
+                <button type="button" data-menu-item onClick={markAllRead} className="font-body text-caption text-gold-800 underline underline-offset-4 hover:text-ink">
                   Mark all as read
                 </button>
               )}
@@ -81,6 +71,7 @@ export default function NotificationBell({ userId, tone = "light" }) {
                   <li key={n._id}>
                     <button
                       type="button"
+                      data-menu-item
                       onClick={() => openItem(n)}
                       className={`flex w-full items-start gap-3 border-b border-line px-5 py-3.5 text-left hover:bg-sand focus-visible:bg-sand focus-visible:outline-none ${n.read ? "" : "bg-gold-50"}`}
                     >

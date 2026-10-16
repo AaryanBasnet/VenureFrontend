@@ -3,6 +3,7 @@ import ResponsiveImage from "../../../components/ui/ResponsiveImage";
 import { images } from "../../../assets/landing/images";
 
 import { cheapestPlatePrice, priceFormatter } from "../../venues/venueFormat";
+import { plural } from "../../../utils/plural";
 
 /**
  * Featured venue card (Figma component 117:7364). Shows name + location/guests by
@@ -39,13 +40,13 @@ export default function FeaturedVenueCard({ venue, fallbackImage, imageSizes, cl
         </h3>
         <p className="mt-2 font-body text-caption font-light text-white">
           {location}
-          {venue.capacity ? ` · ${venue.capacity} guests` : ""}
+          {venue.capacity ? ` · ${plural(venue.capacity, "guest")}` : ""}
         </p>
 
         <div className="grid grid-rows-[1fr] transition-[grid-template-rows] duration-500 ease-out motion-reduce:transition-none lg:grid-rows-[0fr] lg:group-hover:grid-rows-[1fr] lg:group-focus-within:grid-rows-[1fr]">
           <div className="flex min-h-0 items-center justify-between overflow-hidden pt-4 lg:pt-0 lg:group-hover:pt-4 lg:group-focus-within:pt-4">
             {cheapestPlatePrice(venue) > 0 ? (
-              <span className="font-body text-body text-gold">
+              <span className="font-body text-body text-gold-200">
                 From NPR {priceFormatter.format(cheapestPlatePrice(venue))} per plate
               </span>
             ) : (
@@ -53,9 +54,9 @@ export default function FeaturedVenueCard({ venue, fallbackImage, imageSizes, cl
             )}
             <Link
               to={`/venue/${venue._id}/inquire`}
-              className="relative z-10 rounded-full bg-gold px-4 py-2 font-body text-button uppercase text-white transition-colors hover:bg-gold-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="relative z-10 rounded-full bg-gold-800 px-4 py-2.5 font-body text-button uppercase text-white transition-colors hover:bg-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              Enquire →
+              Request a date
             </Link>
           </div>
         </div>

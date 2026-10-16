@@ -1,15 +1,18 @@
 import {
   Armchair,
+  Mountain,
   ParkingCircle,
+  Projector,
   ShieldCheck,
   Snowflake,
   Sparkles,
   Speaker,
+  Trees,
   UtensilsCrossed,
+  Waves,
   Wifi,
 } from "lucide-react";
 import SectionHeading from "../../../components/ui/SectionHeading";
-import { categoryLabel } from "../venueFormat";
 
 const AMENITY_ICONS = {
   wifi: Wifi,
@@ -19,6 +22,10 @@ const AMENITY_ICONS = {
   catering: UtensilsCrossed,
   security: ShieldCheck,
   seating: Armchair,
+  garden: Trees,
+  projector: Projector,
+  "lake view": Waves,
+  "mountain view": Mountain,
 };
 
 function AmenityPill({ name }) {
@@ -33,7 +40,6 @@ function AmenityPill({ name }) {
 
 // Figma 385:316 "Venue overview": heading, description and tags, then the amenities as cards.
 export default function VenueOverview({ venue }) {
-  const category = categoryLabel(venue.category);
   const amenities = venue.amenities ?? [];
 
   return (
@@ -48,22 +54,17 @@ export default function VenueOverview({ venue }) {
             className="[&_h2]:text-h2"
           />
           <div className="flex flex-col gap-5">
-            {venue.description && (
-              <p className="font-body text-body text-ink/85 [overflow-wrap:anywhere]">{venue.description}</p>
-            )}
-            {category && (
-              <ul className="flex flex-wrap gap-2">
-                <li className="rounded-full border border-line px-3 py-1 font-body text-eyebrow uppercase text-gold-800">
-                  {category}
-                </li>
-              </ul>
+            {venue.description ? (
+              <p className="whitespace-pre-line font-body text-body text-ink/85 [overflow-wrap:anywhere]">{venue.description}</p>
+            ) : (
+              <p className="font-body text-body text-taupe">The venue has not added a description yet. Send a message to ask about it.</p>
             )}
           </div>
         </div>
 
         {amenities.length > 0 && (
           <div className="mt-12">
-            <h3 className="font-display text-h4 font-light text-ink">What is included</h3>
+            <h3 className="font-display text-h4 font-light text-ink">Amenities</h3>
             <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {amenities.map((name) => (
                 <AmenityPill key={name} name={name} />

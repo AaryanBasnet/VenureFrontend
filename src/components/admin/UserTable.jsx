@@ -1,161 +1,187 @@
-import React from "react";
-import { FiMoreVertical, FiTrash2 } from "react-icons/fi";
-import { MdBlock } from "react-icons/md";
+import { Fragment, useId, useState } from "react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { toast } from "react-toastify";
+import { Pill } from "../dashboard/ui";
+import { btnDanger, btnOutline, shortDate } from "../dashboard/styles";
+import { inputClass, labelClass } from "../ui/formStyles";
 
-const UserTable = ({
-  users,
-  openActionMenu,
-  setOpenActionMenu,
-  handleBlockUser,
-  handleDeleteClick,
-}) => {
-  const avatarBaseUrl = import.meta.env.VITE_API_BASE_URL.replace("/api", "");
+const ROLE_LABEL = { Customer: "Customer", VenueOwner: "Venue owner", Admin: "Admin" };
+const ROLE_TONE = { Customer: "neutral", VenueOwner: "success", Admin: "gold" };
 
+const dangerLink =
+  "font-body text-small text-red-700 underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700";
+
+const errText = (e) => e?.message || "Could not deactivate this account. Please try again.";
+
+// Labelled search box used above both lists.
+export function SearchField({ label, value, onChange, placeholder }) {
+  const id = useId();
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-100">
-            <tr className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              <th className="px-6 py-4">Name</th>
-              <th className="px-6 py-4">Register Date</th>
-              <th className="px-6 py-4 text-center">Phone</th>
-              <th className="px-6 py-4 text-center">Account Type</th>
-              <th className="px-6 py-4 text-center">Bookings</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {users.length > 0 ? (
-              users.map((user) => (
-                <tr
-                  key={user._id}
-                  className="hover:bg-blue-50 transition-colors duration-150 ease-in-out"
-                >
-                  {/* Name + Email + Avatar */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-4">
-                      {user.avatar ? (
-                        <div className="relative ">
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br p-1 shadow-2xl">
-                            <img
-                              src={`${avatarBaseUrl}${user.avatar}`}
-                              alt={`${user.name}'s avatar`}
-                              className="w-full h-full rounded-full object-cover bg-white"
-                              onError={(e) => {
-                                e.target.src =
-                                  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNzUiIGN5PSI3NSIgcj0iNzUiIGZpbGw9IiNmM2Y0ZjYiLz48Y2lyY2xlIGN4PSI3NSIgY3k9IjY1IiByPSIyNSIgZmlsbD0iIzY2NzI4MCIvPjxwYXRoIGQ9Ik0yNSAxMjVjMC0yNy42MTMgMjIuMzg3LTUwIDUwLTUwczUwIDIyLjM4NyA1MCA1MHYyNUgyNXYtMjV6IiBmaWxsPSIjNjY3MjgwIi8+PC9zdmc+";
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="h-14 w-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg uppercase border-2 border-blue-200 shadow-sm">
-                          {user.name?.charAt(0) || "U"}
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-base font-semibold text-gray-900 truncate max-w-xs">
-                          {user.name}
-                        </div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {user.email}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Register Date */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
-
-                  {/* Phone (centered) */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center font-medium">
-                    {user.phone || "-"}
-                  </td>
-
-                  {/* Account Type (centered) */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center font-medium">
-                    <span
-                      className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold leading-tight ${
-                        user.role === "admin"
-                          ? "bg-purple-100 text-purple-800"
-                          : user.role === "seller"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {user.role || "User"}
-                    </span>
-                  </td>
-
-                  {/* Bookings Count (centered) */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center font-bold">
-                    {user.bookingCount ?? 0}
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right relative">
-                    <button
-                      onClick={() =>
-                        setOpenActionMenu(
-                          openActionMenu === user._id ? null : user._id
-                        )
-                      }
-                      aria-label="Open user action menu"
-                      className="p-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150"
-                    >
-                      <FiMoreVertical size={24} />
-                    </button>
-
-                    {openActionMenu === user._id && (
-                      <div
-                        className="absolute right-0 mt-2 w-48 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20 transform origin-top-right animate-fadeIn"
-                        role="menu"
-                      >
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              handleBlockUser(user);
-                              setOpenActionMenu(null);
-                            }}
-                            className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left transition-colors duration-150"
-                            role="menuitem"
-                          >
-                            <MdBlock className="text-lg" /> Block User
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleDeleteClick(user);
-                              setOpenActionMenu(null);
-                            }}
-                            className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 w-full text-left transition-colors duration-150"
-                            role="menuitem"
-                          >
-                            <FiTrash2 className="text-lg" /> Delete User
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="text-center text-gray-500 py-10 italic text-lg"
-                >
-                  No users found matching your criteria.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+    <div className="w-full sm:max-w-sm">
+      <label htmlFor={id} className={labelClass}>{label}</label>
+      <div className="relative">
+        <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-taupe" />
+        <input id={id} type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={`${inputClass} pl-11`} />
       </div>
     </div>
   );
-};
+}
 
-export default UserTable;
+// Previous / next with a plain-language position line.
+export function Pager({ page, totalPages, total, limit, noun, onPage }) {
+  if (total === 0) return null;
+  const from = (page - 1) * limit + 1;
+  const to = Math.min(page * limit, total);
+  return (
+    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-4 sm:px-6">
+      <p className="font-body text-small text-taupe" aria-live="polite">
+        {from}-{to} of {total} {noun}
+      </p>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => onPage(page - 1)} disabled={page <= 1} className={`${btnOutline} !px-4 !py-2`}>
+          <ChevronLeft aria-hidden="true" className="size-4" /> Previous
+        </button>
+        <span className="px-2 font-body text-small text-taupe">Page {page} of {totalPages}</span>
+        <button type="button" onClick={() => onPage(page + 1)} disabled={page >= totalPages} className={`${btnOutline} !px-4 !py-2`}>
+          Next <ChevronRight aria-hidden="true" className="size-4" />
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+function Initial({ name }) {
+  return (
+    <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gold-100 font-display text-h5 font-light uppercase text-gold-800">
+      {(name || "?").trim().charAt(0)}
+    </span>
+  );
+}
+
+function ConfirmPanel({ user, pending, error, onConfirm, onCancel }) {
+  return (
+    <div role="alertdialog" aria-label={`Confirm deactivating ${user.name}`} className="rounded-card-md border border-red-300 bg-red-50 p-4 font-body text-small text-ink">
+      <p>
+        Deactivate <strong className="font-medium">{user.name}</strong>? They are signed out everywhere straight away and can no longer log in.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-3">
+        <button type="button" onClick={onConfirm} disabled={pending} className={btnDanger}>
+          {pending ? "Deactivating..." : "Yes, deactivate"}
+        </button>
+        <button type="button" onClick={onCancel} disabled={pending} className={btnOutline}>Keep account</button>
+      </div>
+      {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}
+    </div>
+  );
+}
+
+// Directory of accounts: a table from md up, stacked cards on phones.
+// variant "owners" swaps the role and bookings columns for a venues column.
+export default function UserTable({ users, currentUserId, variant = "users", venueCounts = null, onDeactivate }) {
+  const owners = variant === "owners";
+  const [confirmId, setConfirmId] = useState(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+
+  const lock = (u) => (u.role === "Admin" ? "Protected" : u._id === currentUserId ? "This is you" : null);
+
+  const open = (id) => { setConfirmId(id); setError(""); };
+  const close = () => { setConfirmId(null); setError(""); };
+  const confirm = async (u) => {
+    setPending(true);
+    setError("");
+    try {
+      await onDeactivate(u._id);
+      toast.success(`${u.name} was deactivated`);
+      setConfirmId(null);
+    } catch (e) {
+      setError(errText(e));
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const count = (u) => (owners ? (venueCounts ? (venueCounts[u._id] ?? 0) : "-") : (u.bookingCount ?? 0));
+  const countLabel = owners ? "Venues" : "Bookings";
+
+  const action = (u) => {
+    const locked = lock(u);
+    if (locked) return <span className="font-body text-caption text-taupe">{locked}</span>;
+    return (
+      <button type="button" aria-expanded={confirmId === u._id} aria-label={`Deactivate ${u.name}`} onClick={() => (confirmId === u._id ? close() : open(u._id))} className={dangerLink}>
+        Deactivate
+      </button>
+    );
+  };
+
+  const panel = (u) => (
+    <ConfirmPanel user={u} pending={pending} error={error} onConfirm={() => confirm(u)} onCancel={close} />
+  );
+
+  return (
+    <>
+      <table className="hidden w-full text-left md:table">
+        <caption className="sr-only">{owners ? "Venue owners" : "People with an account"}</caption>
+        <thead>
+          <tr className="border-b border-line font-body text-eyebrow uppercase text-taupe">
+            <th scope="col" className="px-6 py-3 font-medium">{owners ? "Owner" : "Person"}</th>
+            <th scope="col" className="px-3 py-3 font-medium">Phone</th>
+            {!owners && <th scope="col" className="px-3 py-3 font-medium">Role</th>}
+            <th scope="col" className="px-3 py-3 font-medium">Joined</th>
+            <th scope="col" className="px-3 py-3 text-right font-medium">{countLabel}</th>
+            <th scope="col" className="px-6 py-3 text-right font-medium">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((u) => (
+            <Fragment key={u._id}>
+              <tr className="border-b border-line last:border-0">
+                <td className="max-w-[18rem] px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <Initial name={u.name} />
+                    <div className="min-w-0">
+                      <p className="truncate font-body text-body text-ink">{u.name}</p>
+                      <p className="truncate font-body text-caption text-taupe">{u.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-4 font-body text-small text-ink">{u.phone || <span className="text-taupe">Not given</span>}</td>
+                {!owners && <td className="px-3 py-4"><Pill tone={ROLE_TONE[u.role]}>{ROLE_LABEL[u.role] ?? u.role}</Pill></td>}
+                <td className="whitespace-nowrap px-3 py-4 font-body text-small text-ink">{shortDate(u.createdAt)}</td>
+                <td className="px-3 py-4 text-right font-display text-h5 font-light text-ink">{count(u)}</td>
+                <td className="px-6 py-4 text-right">{action(u)}</td>
+              </tr>
+              {confirmId === u._id && (
+                <tr className="border-b border-line last:border-0">
+                  <td colSpan={owners ? 5 : 6} className="px-6 pb-4">{panel(u)}</td>
+                </tr>
+              )}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+
+      <ul className="divide-y divide-line md:hidden">
+        {users.map((u) => (
+          <li key={u._id} className="p-4">
+            <div className="flex items-start gap-3">
+              <Initial name={u.name} />
+              <div className="min-w-0 flex-1">
+                <p className="break-words font-body text-body text-ink">{u.name}</p>
+                <p className="break-all font-body text-caption text-taupe">{u.email}</p>
+              </div>
+              {!owners && <Pill tone={ROLE_TONE[u.role]}>{ROLE_LABEL[u.role] ?? u.role}</Pill>}
+            </div>
+            <dl className="mt-3 grid grid-cols-3 gap-3 font-body text-small">
+              <div><dt className="text-eyebrow uppercase text-taupe">Phone</dt><dd className="mt-0.5 break-words text-ink">{u.phone || "Not given"}</dd></div>
+              <div><dt className="text-eyebrow uppercase text-taupe">Joined</dt><dd className="mt-0.5 text-ink">{shortDate(u.createdAt)}</dd></div>
+              <div><dt className="text-eyebrow uppercase text-taupe">{countLabel}</dt><dd className="mt-0.5 text-ink">{count(u)}</dd></div>
+            </dl>
+            <div className="mt-3">{action(u)}</div>
+            {confirmId === u._id && <div className="mt-3">{panel(u)}</div>}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}

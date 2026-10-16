@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./styles/theme.css";
+@import "./styles/layout.css";
 
 /* Fonts are loaded once, non-blocking, from index.html */
 
@@ -20,91 +21,16 @@ html {
   scroll-padding-top: var(--spacing-header);
 }
 
-/* Font utilities */
-.font-playfair {
-  font-family: "Playfair Display", serif;
-}
-
+/* Legacy font utility, still used by the owner area */
 .font-poppins {
   font-family: "Poppins", sans-serif;
 }
 
-/* Loader spinner */
-.loader-border {
-  border: 2px solid transparent;
-  border-top-color: white;
-  border-right-color: white;
-  animation: spin 0.75s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+/* Form controls never zoom the page on iOS: inputs stay at 16px on small screens */
+@media (max-width: 47.99rem) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: max(1rem, 16px);
   }
-}
-
-/* Hide scrollbar */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slide-up {
-  from { 
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scale-in {
-  from { 
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to { 
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes underline {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.8s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.8s ease-out;
-}
-
-.animate-slide-up-delayed {
-  animation: slide-up 0.8s ease-out 0.2s both;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.6s ease-out 0.6s both;
-}
-
-.animate-scale-in-delayed {
-  animation: scale-in 0.8s ease-out 0.8s both;
-}
-
-.animate-underline {
-  animation: underline 0.8s ease-out 1.5s both;
-  transform-origin: left;
 }

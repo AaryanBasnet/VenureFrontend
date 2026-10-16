@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Banknote, CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Landmark, Wallet } from "lucide-react";
 import MonthlyEarningsChart from "../../components/owner/MonthlyEarningsChart";
-import { EmptyState, ErrorState, PageHeader, Panel, Pill, RowsSkeleton, Stat } from "../../components/owner/ui";
-import { btnOutline, npr, shortDate } from "../../components/owner/ownerStyles";
+import { EmptyState, ErrorState, PageHeader, Panel, Pill, RowsSkeleton, Stat } from "../../components/dashboard/ui";
+import { btnOutline, npr, shortDate } from "../../components/dashboard/styles";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
-import { shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { useGetMonthlyEarningsForOwner } from "../../hooks/owner/useGetMonthlyEarningForOwner";
 import useOwnerBookings from "../../hooks/owner/useOwnerBookings";
 
@@ -35,7 +35,7 @@ function BalancePill({ booking }) {
 function Who({ b }) {
   return (
     <>
-      {b.customer?.name ?? b.contactName ?? "Customer"} · {shortDate(b.startTime)} <span className="text-taupe-light">({bsLabel(b.startTime)})</span>
+      {b.customer?.name ?? b.contactName ?? "Customer"} · {shortDate(b.startTime)} <span className="text-taupe">({bsLabel(serverDay(b.startTime))})</span>
       {b.shift ? ` · ${shiftLabel(b.shift)}` : ""}
     </>
   );

@@ -2,10 +2,11 @@ import Logo from "../../../components/ui/Logo";
 import Button from "../../../components/ui/Button";
 import ResponsiveImage from "../../../components/ui/ResponsiveImage";
 import { images } from "../../../assets/landing/images";
-import { hero } from "../content/landingContent";
+import { useLanding } from "../hooks/useLanding";
 
 // Figma 46:3 — full-bleed courtyard photo, emblem, tagline, two CTAs
 export default function HeroSection() {
+  const { hero } = useLanding().content;
   return (
     <section
       aria-label="Introduction"
@@ -31,7 +32,7 @@ export default function HeroSection() {
 
         <p className="font-display mt-6 max-w-2xl text-tagline font-light italic md:mt-8">{hero.tagline}</p>
 
-        <p className="mt-8 max-w-xs font-body text-caption font-light uppercase tracking-[0.28em] text-white/90">
+        <p className="mt-8 max-w-md text-balance font-body text-caption font-medium uppercase tracking-[0.28em] text-white">
           {hero.eyebrow}
         </p>
 
@@ -39,8 +40,8 @@ export default function HeroSection() {
           <Button to="/venues" arrow>
             Explore venues
           </Button>
-          <Button variant="outline-light" href="#stories">
-            View lookbook
+          <Button variant="outline-light" to="/#stories">
+            See venue stories
           </Button>
         </div>
       </div>

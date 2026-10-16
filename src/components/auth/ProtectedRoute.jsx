@@ -1,17 +1,18 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { afterLoginPath } from "../../auth/returnTo";
+import { afterLoginPath, currentPath } from "../../auth/returnTo";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
 
 function AuthSpinner() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div role="status" className="flex min-h-screen items-center justify-center bg-cream">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
-        <p className="text-slate-500 text-sm font-light tracking-wide">
-          Authenticating…
+        <div aria-hidden="true" className="size-10 animate-spin rounded-full border-2 border-line border-t-gold" />
+        <p aria-hidden="true" className="font-body text-small text-taupe">
+          Checking your session
         </p>
+        <span className="sr-only">Checking your session</span>
       </div>
     </div>
   );
@@ -42,7 +43,9 @@ export default function ProtectedRoute({
   guestOnly = false,
   redirectTo = "/unauthorized",
 }) {
-  const { user, isAuthenticated, isInitializing } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isInitializing = useAuthStore((s) => s.isInitializing);
   const location = useLocation();
 
   // Block render until the /auth/me cookie-check resolves on mount
@@ -56,7 +59,7 @@ export default function ProtectedRoute({
 
   // Protected paths: unauthenticated users go to login
   if (!guestOnly && !isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: currentPath(location) }} />;
   }
 
   // Role mismatch: authenticated but wrong role

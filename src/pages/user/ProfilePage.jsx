@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useContext, useState } from "react";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { ArrowRight, Calendar, ClipboardList, Heart, Mail, MapPin, Phone } from "lucide-react";
 import { toast } from "react-toastify";
 import { useUpdateUserProfile, useUserProfile } from "../../hooks/user/useUserProfile";
 import EditProfileModal from "../../components/modal/EditProfileModal";
 import Button from "../../components/ui/Button";
 import { assetUrl } from "../../utils/assetUrl";
+import { AuthContext } from "../../auth/AuthProvider";
+import { currentPath } from "../../auth/returnTo";
+import LoadingPage from "../../components/LoadingPage";
 
 const ACTIVITY = [
   { to: "/my-inquiries", icon: ClipboardList, title: "My inquiries", text: "Requests you sent and the quotations that came back." },
@@ -37,9 +40,15 @@ function Detail({ icon: Icon, label, value, onAdd }) {
 }
 
 export default function ProfilePage() {
-  const { data, isPending, isError, refetch } = useUserProfile();
+  const { user: signedIn, loading: authLoading } = useContext(AuthContext);
+  const location = useLocation();
+  const { data, isPending, isError, refetch } = useUserProfile({ enabled: Boolean(signedIn) });
   const update = useUpdateUserProfile();
   const [editing, setEditing] = useState(false);
+
+  if (authLoading) return <LoadingPage />;
+  // Signing in sends the visitor straight back here
+  if (!signedIn) return <Navigate to="/login" replace state={{ from: currentPath(location) }} />;
 
   if (isPending) {
     return (

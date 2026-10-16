@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { MessageCircle, Star, ThumbsUp } from "lucide-react";
-import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat } from "../../components/owner/ui";
-import { shortDate } from "../../components/owner/ownerStyles";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat } from "../../components/dashboard/ui";
+import { shortDate } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
 import { useOwnerVenueReviews } from "../../hooks/owner/useOwnerVenueReviews";
+import Select from "../../components/ui/Select";
 
 const avatarBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace("/api", "");
 
@@ -101,21 +102,21 @@ export default function OwnerVenueReviewsPage() {
             </div>
             <div>
               <label htmlFor="review-venue" className={labelClass}>Venue</label>
-              <select id="review-venue" value={venueFilter} onChange={(e) => setVenueFilter(e.target.value)} className={inputClass}>
+              <Select id="review-venue" value={venueFilter} onChange={(e) => setVenueFilter(e.target.value)} className={inputClass}>
                 <option value="all">All venues</option>
                 {venues.map((v) => (
                   <option key={v._id} value={v._id}>{v.venueName}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="review-rating" className={labelClass}>Rating</label>
-              <select id="review-rating" value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)} className={inputClass}>
+              <Select id="review-rating" value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)} className={inputClass}>
                 <option value="all">All ratings</option>
                 {[5, 4, 3, 2, 1].map((n) => (
                   <option key={n} value={n}>{n} {n === 1 ? "star" : "stars"}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </form>
 
@@ -152,7 +153,8 @@ export default function OwnerVenueReviewsPage() {
                             <time dateTime={r.createdAt} className="font-body text-caption text-taupe">{shortDate(r.createdAt)}</time>
                           </div>
                           <div className="mt-1"><Stars rating={r.rating} /></div>
-                          {r.comment && <p className="mt-2 break-words font-body text-small text-ink">{r.comment}</p>}
+                          {r.title && <p className="mt-2 break-words font-display text-h5 font-light text-ink">{r.title}</p>}
+                          {r.comment && <p className="mt-1 break-words font-body text-small text-ink">{r.comment}</p>}
                         </div>
                       </li>
                     ))}

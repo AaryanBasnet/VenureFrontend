@@ -24,7 +24,7 @@ export default function VenueLocation({ venue }) {
             <MapPin aria-hidden="true" className="mt-1 size-5 shrink-0 text-gold-800" />
             <span>
               {lines.map((line) => (
-                <span key={line} className="block">
+                <span key={line} className="block [overflow-wrap:anywhere]">
                   {line}
                 </span>
               ))}
@@ -34,9 +34,10 @@ export default function VenueLocation({ venue }) {
             href={mapsUrl(venue)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex w-fit items-center gap-2 rounded-full bg-ink px-6 py-3 font-body text-button uppercase text-gold-50 transition-colors hover:bg-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-ink px-6 py-3 font-body text-button uppercase text-gold-50 transition-colors hover:bg-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Open in maps <ExternalLink aria-hidden="true" className="size-4" />
+            <span className="sr-only">(opens in a new tab)</span>
           </a>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { toast } from "react-toastify";
+import { hasSessionMarker } from "../auth/sessionMarker";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ||"http://localhost:5051/api";
 
@@ -63,19 +64,23 @@ api.interceptors.response.use(
     const is401 = error.response?.status === 401;
     const alreadyRetried = original._retry;
     const isRefreshCall = original.url?.includes("/auth/refresh");
+    // A 401 from these means "wrong credentials" or "nobody signed in", not "access token expired": a refresh cannot help.
+    const isCredentialCall = /\/(auth\/(login|register|google|logout)|password\/)/.test(original.url || "");
+    // A visitor who has never signed in on this browser has no refresh token either; skip the pointless round trip.
+    const noSession = !hasSessionMarker();
 
-    if (!is401 || alreadyRetried || isRefreshCall) {
+    if (!is401 || alreadyRetried || isRefreshCall || isCredentialCall || noSession) {
       // Global toast for errors that individual hooks don't typically handle.
       // Hooks that manage their own onError toasts can set _suppressToast: true
       // in their axios request config to opt out.
       if (!is401 && original._suppressToast !== true) {
         const status = error.response?.status;
         if (!error.response) {
-          toast.error("Connection error. Please check your internet.");
+          toast.error("Connection error. Please check your internet.", { toastId: "net-error" });
         } else if (status === 429) {
-          toast.error(getErrorMessage(error));
+          toast.error(getErrorMessage(error), { toastId: "rate-limit" }); // one toast, however many requests failed
         } else if (status >= 500) {
-          toast.error(getErrorMessage(error));
+          toast.error(getErrorMessage(error), { toastId: "server-error" });
         }
         // 4xx domain errors (400, 403, 404, 409, 422) are left to individual
         // hooks — they carry specific business meaning the hook knows best.

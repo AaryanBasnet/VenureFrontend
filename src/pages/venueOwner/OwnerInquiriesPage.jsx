@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Inbox } from "lucide-react";
 import { useOwnerInquiries } from "../../features/inquiry/hooks/useInquiries";
-import { effectiveStatus, shiftLabel } from "../../features/inquiry/inquiryOptions";
+import { effectiveStatus, serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
-import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, StatusPill } from "../../components/owner/ui";
-import { shortDate } from "../../components/owner/ownerStyles";
+import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, StatusPill } from "../../components/dashboard/ui";
+import { shortDate } from "../../components/dashboard/styles";
+import { useRovingTabs } from "../../hooks/useRovingTabs";
+import { plural } from "../../utils/plural";
 
 const TABS = [
   { id: "needs", label: "Needs a reply", match: (s) => s === "pending", empty: "No requests waiting. New requests from customers show up here." },
@@ -14,9 +16,13 @@ const TABS = [
   { id: "closed", label: "Closed", match: (s) => ["declined", "cancelled", "expired"].includes(s), empty: "No closed requests." },
 ];
 
+const TAB_IDS = TABS.map((t) => t.id);
+const tabDomId = (id) => `tab-${id}`;
+
 export default function OwnerInquiriesPage() {
   const { data: inquiries = [], isPending, isError, refetch } = useOwnerInquiries();
   const [tab, setTab] = useState("needs");
+  const roving = useRovingTabs({ ids: TAB_IDS, selected: tab, onSelect: setTab, idFor: tabDomId });
   const current = TABS.find((t) => t.id === tab);
   const counts = Object.fromEntries(TABS.map((t) => [t.id, inquiries.filter((q) => t.match(effectiveStatus(q))).length]));
   const shown = inquiries.filter((q) => current.match(effectiveStatus(q)));
@@ -25,17 +31,13 @@ export default function OwnerInquiriesPage() {
     <>
       <PageHeader eyebrow="Inbox" title="Inquiries" description="Requests from customers. Reply with a quotation to hold their date." />
 
-      <div role="tablist" aria-label="Request status" className="mb-6 flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Request status" {...roving.listProps} className="mb-6 flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
             key={t.id}
-            id={`tab-${t.id}`}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
+            {...roving.tabProps(t.id)}
             aria-controls="inquiry-panel"
-            onClick={() => setTab(t.id)}
-            className={`rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+            className={`min-h-11 rounded-full border px-4 py-2 font-body text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
               tab === t.id ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"
             }`}
           >
@@ -65,8 +67,8 @@ export default function OwnerInquiriesPage() {
                         {q.customer?.name ?? q.contactName} <span className="text-taupe">· {q.venue?.venueName}</span>
                       </p>
                       <p className="mt-1 font-body text-caption text-taupe">
-                        {shortDate(q.preferredDate)} <span className="text-taupe-light">({bsLabel(q.preferredDate)})</span>
-                        {q.preferredShift ? ` · ${shiftLabel(q.preferredShift)}` : ""} · {q.numberOfGuests} guests · {q.eventType}
+                        {shortDate(q.preferredDate)} <span className="text-taupe">({bsLabel(serverDay(q.preferredDate))})</span>
+                        {q.preferredShift ? ` · ${shiftLabel(q.preferredShift)}` : ""} · {plural(q.numberOfGuests, "guest")} · {q.eventType}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">

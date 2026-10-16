@@ -1,4 +1,5 @@
-import { MapPin, Star } from "lucide-react";
+import { useState } from "react";
+import { Heart, MapPin, Star } from "lucide-react";
 import { cloudinaryTransform } from "../../../utils/cloudinary";
 import { categoryLabel, locationLine, priceFormatter, tagline } from "../venueFormat";
 
@@ -15,26 +16,30 @@ function Stat({ value, label }) {
 
 // Figma 385:316 hero. Stats come from real data (spaces, rating); the Figma's
 // distance/altitude stats need venue fields the backend does not have yet.
-export default function VenueHero({ venue, maxCapacity, spaceCount, fromPlate, onCheckDate }) {
+export default function VenueHero({ venue, maxCapacity, spaceCount, fromPlate, onCheckDate, isFavorite = false, onToggleFavorite, favoriteBusy = false }) {
   const photo = venue.venueImages?.[0]?.url;
   const category = categoryLabel(venue.category);
   const hasRating = venue.totalReviews > 0;
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   return (
     <section aria-labelledby="venue-title" className="relative isolate overflow-hidden bg-ink text-gold-50">
-      {photo && (
+      {photo && !photoFailed ? (
         <img
           src={cloudinaryTransform(photo, HERO_TRANSFORM)}
           alt=""
           fetchPriority="high"
+          onError={() => setPhotoFailed(true)}
           className="absolute inset-0 -z-20 size-full object-cover"
         />
+      ) : (
+        <div aria-hidden="true" className="absolute inset-0 -z-20 bg-gradient-to-br from-ink via-ink to-gold-800/50" />
       )}
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/80 via-black/40 to-black/30" />
       <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-44 bg-gradient-to-b from-black/60 to-transparent" />
 
-      <div className="container-site flex min-h-[560px] flex-col justify-end pb-10 pt-[calc(var(--spacing-header)+3rem)] lg:min-h-[640px]">
-        <div className="flex flex-wrap gap-2">
+      <div className="container-site flex min-h-[480px] flex-col sm:min-h-[560px] justify-end pb-10 pt-[calc(var(--spacing-header)+3rem)] lg:min-h-[640px]">
+        <div className="flex flex-wrap items-center gap-2">
           {category && (
             <span className="rounded-full border border-white/30 px-3 py-1 font-body text-eyebrow uppercase">{category}</span>
           )}
@@ -43,19 +48,32 @@ export default function VenueHero({ venue, maxCapacity, spaceCount, fromPlate, o
               {venue.location.city}
             </span>
           )}
+          {onToggleFavorite && (
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              disabled={favoriteBusy}
+              aria-pressed={isFavorite}
+              className="ml-auto inline-flex size-11 items-center justify-center gap-2 rounded-full border border-white/30 font-body text-button uppercase transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:opacity-60 sm:w-auto sm:px-4"
+            >
+              <Heart aria-hidden="true" className={`size-4 ${isFavorite ? "fill-gold text-gold" : ""}`} strokeWidth={1.5} />
+              <span className="sr-only sm:not-sr-only">{isFavorite ? "Saved" : "Save"}</span>
+              <span className="sr-only sm:hidden"> {venue.venueName} to favorites</span>
+            </button>
+          )}
         </div>
 
         <div className="mt-5 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <h1 id="venue-title" className="font-display text-display font-light">
+            <h1 id="venue-title" className="font-display text-display font-light [overflow-wrap:anywhere]">
               {venue.venueName}
             </h1>
             <p className="mt-4 flex items-center gap-2 font-body text-body text-gold-50">
-              <MapPin aria-hidden="true" className="size-4 text-gold" />
+              <MapPin aria-hidden="true" className="size-4 shrink-0 text-gold" />
               {locationLine(venue.location)}
             </p>
             {venue.description && (
-              <p className="mt-3 max-w-xl font-body text-body text-gold-50/90">{tagline(venue.description)}</p>
+              <p className="mt-3 max-w-xl font-body text-body text-gold-50/90 [overflow-wrap:anywhere]">{tagline(venue.description)}</p>
             )}
           </div>
 
@@ -69,15 +87,15 @@ export default function VenueHero({ venue, maxCapacity, spaceCount, fromPlate, o
             <button
               type="button"
               onClick={onCheckDate}
-              className="rounded-full border border-gold-50/70 px-7 py-3 font-body text-button uppercase transition-colors hover:bg-gold-50 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="min-h-11 rounded-full border border-gold-50/70 px-7 py-3 font-body text-button uppercase transition-colors hover:bg-gold-50 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              Request a date →
+              Request a date
             </button>
           </div>
         </div>
 
         <dl className="mt-10 grid grid-cols-2 gap-6 border-t border-white/20 pt-6 lg:grid-cols-4">
-          <Stat value={maxCapacity ? `Up to ${maxCapacity}` : "—"} label="Guests" />
+          <Stat value={maxCapacity ? `Up to ${maxCapacity}` : "—"} label={maxCapacity === 1 ? "Guest" : "Guests"} />
           <Stat value={spaceCount ? `${spaceCount} ${spaceCount === 1 ? "space" : "spaces"}` : "—"} label="Halls & spaces" />
           <Stat
             value={
@@ -90,7 +108,7 @@ export default function VenueHero({ venue, maxCapacity, spaceCount, fromPlate, o
                 "New"
               )
             }
-            label={hasRating ? `${venue.totalReviews} reviews` : "No reviews yet"}
+            label={hasRating ? `${venue.totalReviews} ${venue.totalReviews === 1 ? "review" : "reviews"}` : "No reviews yet"}
           />
           <Stat value={category ?? "Venue"} label="Type" />
         </dl>
