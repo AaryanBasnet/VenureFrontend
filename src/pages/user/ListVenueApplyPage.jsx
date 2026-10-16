@@ -109,7 +109,11 @@ export default function ListVenueApplyPage() {
   const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=${pin || f.area ? 16 : f.city ? 13 : 11}&output=embed`;
   const findOnMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressQuery || "Nepal")}`;
 
-  const previews = useMemo(() => photos.map((file) => ({ file, url: URL.createObjectURL(file) })), [photos]);
+  // Previews are blob: addresses of image files only. Nothing typed by the person (such as a file name) is used as markup or as an address.
+  const previews = useMemo(
+    () => photos.filter((file) => PHOTO_TYPES.includes(file.type)).map((file) => ({ file, url: URL.createObjectURL(file) })).filter((p) => p.url.startsWith("blob:")),
+    [photos]
+  );
   useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
 
   const errors = useMemo(() => {
@@ -427,7 +431,7 @@ export default function ListVenueApplyPage() {
                   <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {previews.map((p, i) => (
                       <li key={p.url} className="relative overflow-hidden rounded-card-md border border-line">
-                        <img src={p.url} alt={`Photo ${i + 1}: ${p.file.name}`} className="aspect-[4/3] w-full object-cover" />
+                        <img src={p.url} alt={`Photo ${i + 1} of your venue`} className="aspect-[4/3] w-full object-cover" />
                         {i === 0 && <span className="absolute left-2 top-2 rounded-full bg-ink px-2.5 py-1 font-body text-caption text-gold-50">Cover</span>}
                         <button type="button" onClick={() => setPhotos((cur) => cur.filter((_, j) => j !== i))} aria-label={`Remove photo ${i + 1}`} className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full bg-white/95 text-ink shadow hover:bg-white"><X aria-hidden="true" className="size-4" /></button>
                         {i > 0 && <button type="button" onClick={() => setPhotos((cur) => [cur[i], ...cur.filter((_, j) => j !== i)])} className="absolute bottom-2 left-2 rounded-full bg-white/95 px-3 py-1.5 font-body text-caption text-ink shadow hover:bg-white">Make cover<span className="sr-only"> photo {i + 1}</span></button>}
