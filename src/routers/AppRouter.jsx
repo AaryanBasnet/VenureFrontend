@@ -29,6 +29,7 @@ const TermsPage = lazy(loaders.TermsPage);
 const PrivacyPage = lazy(loaders.PrivacyPage);
 const ContactUs = lazy(loaders.ContactUs);
 const ListYourVenuePage = lazy(loaders.ListYourVenuePage);
+const ListVenueApplyPage = lazy(loaders.ListVenueApplyPage);
 const VenuesPage = lazy(loaders.VenuesPage);
 const FavoritesPage = lazy(loaders.FavoritesPage);
 const MyBookings = lazy(loaders.MyBookings);
@@ -47,6 +48,9 @@ const AdminUsersPage = lazy(loaders.AdminUsersPage);
 const AdminVenuePage = lazy(loaders.AdminVenuePage);
 const AdminVenueOwnerPage = lazy(loaders.AdminVenueOwnerPage);
 const AdminReviewsPage = lazy(loaders.AdminReviewsPage);
+const AdminApplicationsPage = lazy(loaders.AdminApplicationsPage);
+const AdminApplicationDetailPage = lazy(loaders.AdminApplicationDetailPage);
+const SetPasswordPage = lazy(loaders.SetPasswordPage);
 const AdminContactPage = lazy(loaders.AdminContactPage);
 
 // Owner Pages
@@ -83,6 +87,7 @@ export default function AppRouter() {
             <Route path="/about" element={<AboutUs />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/list-your-venue" element={<ListYourVenuePage />} />
+            <Route path="/list-your-venue/apply" element={<ListVenueApplyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             {/* Testimonials were replaced by reviews of completed bookings */}
@@ -112,6 +117,8 @@ export default function AppRouter() {
             <Route path="/register" element={<RegisterPage />} />
           </Route>
           <Route path="/password-reset" element={<PasswordResetFlow />} />
+          {/* The emailed link for an approved venue owner: reachable whether or not someone is signed in */}
+          <Route path="/set-password" element={<SetPasswordPage />} />
 
           {/* Admin Protected Routes */}
           <Route element={<ProtectedRoute requiredRole="Admin" />}>
@@ -121,6 +128,8 @@ export default function AppRouter() {
               <Route path="/admin/venue" element={<AdminVenuePage />} />
               <Route path="/admin/contact" element={<AdminContactPage />} />
               <Route path="/admin/owner" element={<AdminVenueOwnerPage />} />
+              <Route path="/admin/applications" element={<AdminApplicationsPage />} />
+              <Route path="/admin/applications/:id" element={<AdminApplicationDetailPage />} />
               <Route path="/admin/reviews" element={<AdminReviewsPage />} />
               <Route path="/admin/testimonial" element={<Navigate to="/admin/reviews" replace />} />
             </Route>

@@ -14,6 +14,8 @@ import { inquiryErrorMessage, useCreateInquiry } from "../../features/inquiry/ho
 import { useMyInquiries } from "../../features/inquiry/hooks/useInquiries";
 import { EVENT_TYPES, SHIFT_OPTIONS, formatDate, formatHours, serverDay, shiftLabel, toInquiryDate } from "../../features/inquiry/inquiryOptions";
 import Select from "../../components/ui/Select";
+import { AttachmentPicker } from "../../features/inquiry/components/Attachments";
+import { uploadInquiryAttachmentsApi } from "../../api/user/inquiry";
 import { plural } from "../../utils/plural";
 
 const field =
@@ -86,6 +88,8 @@ export default function InquiryPage() {
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState("");
   const [sent, setSent] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [fileNotice, setFileNotice] = useState(""); // set when the request went through but the files did not
 
   // Wait for the session check (/auth/me) before deciding the visitor is logged out.
   useEffect(() => {
@@ -191,7 +195,7 @@ export default function InquiryPage() {
 
     sending.current = true;
     try {
-      await create.mutateAsync({
+      const created = await create.mutateAsync({
         venue: venue._id,
         ...(spaceId ? { space: spaceId } : {}),
         preferredDate: toInquiryDate(date),
@@ -202,6 +206,14 @@ export default function InquiryPage() {
         contactName: name.trim(),
         phoneNumber: phone.trim(),
       });
+      // The request already exists at this point. If the files fail it still stands, and the person is told where to retry.
+      if (files.length) {
+        try {
+          await uploadInquiryAttachmentsApi(created.data._id, files);
+        } catch (uploadErr) {
+          setFileNotice(inquiryErrorMessage(uploadErr));
+        }
+      }
       try {
         sessionStorage.removeItem(draftKey(id));
       } catch {
@@ -275,6 +287,11 @@ export default function InquiryPage() {
           <p className="mt-3 max-w-xl font-body text-body text-ink/85">
             The venue will review your date and reply with a quotation. You will get a notification when it arrives. Until you accept a quotation, nothing is booked and nothing is charged.
           </p>
+          {fileNotice && (
+            <p role="alert" className="mt-4 max-w-xl rounded-card-sm border border-gold-800/30 bg-white px-4 py-3 font-body text-small text-ink">
+              Your request was sent, but we could not attach your {files.length === 1 ? "file" : "files"}: {fileNotice} Open the request under My inquiries to add {files.length === 1 ? "it" : "them"} again.
+            </p>
+          )}
           <ol className="mt-6 max-w-xl space-y-3 font-body text-small text-ink">
             {["The venue checks the date and sends you a quotation.", "You read it under My inquiries, then accept or decline.", "If you accept, you pay the deposit on eSewa and the date is yours."].map((t, i) => (
               <li key={t} className="flex gap-3"><span aria-hidden="true" className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-gold-100 text-caption text-gold-800">{i + 1}</span>{t}</li>
@@ -447,6 +464,7 @@ export default function InquiryPage() {
                 <textarea id="notes" rows={8} maxLength={600} value={notes} onChange={(e) => setNotes(e.target.value)} aria-describedby="notes-count" placeholder="Menu wishes, timings, decoration, anything the venue should know" className={field} />
                 <p id="notes-count" className="mt-1.5 text-right font-body text-caption text-taupe">{notes.length} of 600 characters</p>
               </div>
+              <AttachmentPicker files={files} onChange={setFiles} />
               <label className="flex min-h-11 cursor-pointer items-start gap-3 font-body text-small text-ink">
                 <input type="checkbox" checked={siteVisit} onChange={(e) => setSiteVisit(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-ink" />
                 I would like to visit the venue before confirming.

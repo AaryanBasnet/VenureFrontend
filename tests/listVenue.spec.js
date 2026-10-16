@@ -1,25 +1,8 @@
-// The public "List your venue" page for owners: content, FAQ keyboard behaviour, owner sign-up, and what signed-in people see.
+// The public "List your venue" page for owners: content, FAQ keyboard behaviour, and the way into the application.
 import { test, expect } from "@playwright/test";
-import { creds, login, missingCreds, watchErrors } from "./helpers.js";
-import { dbAvailable, withDb } from "./db.js";
+import { watchErrors } from "./helpers.js";
 
 const PATH = "/list-your-venue";
-const stamp = Date.now().toString(36);
-const OWNER = { name: "E2E New Owner", email: `e2e-listvenue-${stamp}@example.com`, phone: "9812345678", password: "Owner-Test-1234a" };
-
-async function deleteTestUser(email) {
-  if (!dbAvailable) return;
-  await withDb(async ({ db }) => {
-    const user = await db.collection("users").findOne({ email });
-    if (!user) return;
-    await db.collection("refreshtokens").deleteMany({ user: user._id });
-    await db.collection("users").deleteOne({ _id: user._id });
-  });
-}
-
-test.afterAll(async () => {
-  await deleteTestUser(OWNER.email);
-});
 
 test("the page has one h1, the four steps, the checklist and links from the home page and the footer", async ({ page }) => {
   const errors = watchErrors(page);
@@ -29,9 +12,9 @@ test("the page has one h1, the four steps, the checklist and links from the home
   await expect(page).toHaveTitle(/^List your venue/);
   await expect(page.getByRole("main")).toBeVisible();
 
-  const steps = page.getByRole("list").filter({ has: page.getByRole("heading", { level: 3, name: /Create an owner account/ }) });
+  const steps = page.getByRole("list").filter({ has: page.getByRole("heading", { level: 3, name: /Apply/ }) });
   await expect(steps.getByRole("listitem")).toHaveCount(4);
-  for (const need of ["Photos", "Hall capacities", "Package prices per plate", "A contact number"]) {
+  for (const need of ["Registration and PAN", "Photos", "Hall capacities", "Contact details"]) {
     await expect(page.getByRole("heading", { level: 3, name: need })).toBeVisible();
   }
   // Honest page: no invented money or numbers
@@ -90,83 +73,21 @@ test("the FAQ opens and closes with the keyboard and keeps aria-expanded in step
   await expect(page.getByRole("link", { name: "ask us about fees" })).toHaveAttribute("href", "/contact?topic=partner");
 });
 
-test("sign-up validates, focuses the first error, and needs the terms ticked", async ({ page }) => {
+test("both Apply buttons lead to the application, and there is no account form on the page", async ({ page }) => {
   await page.goto(PATH);
-  await page.getByRole("button", { name: "Create owner account" }).click();
-  await expect(page.getByText("Enter your full name.")).toBeVisible();
-  await expect(page.getByText("Tick the box to agree before creating your account.")).toBeVisible();
-  await expect(page.getByLabel("Full name")).toBeFocused();
-  await expect(page).toHaveURL(new RegExp(`${PATH}$`));
-
-  const form = page.getByRole("form", { name: "Create a venue owner account" });
-  await form.getByLabel("Full name").fill(OWNER.name);
-  await form.getByLabel("Phone number").fill("98-12");
-  await form.getByLabel("Email address").fill("not-an-email");
-  await form.getByLabel("Password", { exact: true }).fill("weak");
-  await form.getByLabel("Confirm password").fill("different");
-  await page.getByRole("button", { name: "Create owner account" }).click();
-  await expect(page.getByText("Use 9 to 15 digits, with no spaces or dashes.")).toBeVisible();
-  await expect(page.getByText("Enter a valid email address.")).toBeVisible();
-  await expect(page.getByText("The passwords do not match.")).toBeVisible();
-  // The links in the consent line open the real pages
-  await expect(form.getByRole("link", { name: /terms of use/ })).toHaveAttribute("href", "/terms");
-  await expect(form.getByRole("link", { name: /privacy page/ })).toHaveAttribute("href", "/privacy");
-});
-
-test("creating an owner account lands on the owner's venues page, and the page then offers the dashboard", async ({ page }) => {
-  test.skip(!dbAvailable, "Needs the local database to remove the account it creates");
-  await page.goto(PATH);
-  const form = page.getByRole("form", { name: "Create a venue owner account" });
-  await form.getByLabel("Full name").fill(OWNER.name);
-  await form.getByLabel("Phone number").fill(OWNER.phone);
-  await form.getByLabel("Email address").fill(OWNER.email);
-  await form.getByLabel("Password", { exact: true }).fill(OWNER.password);
-  await form.getByLabel("Confirm password").fill(OWNER.password);
-  await form.getByLabel(/I agree to Venure/).check();
-
-  const response = page.waitForResponse((r) => r.url().includes("/auth/register") && r.request().method() === "POST");
-  await page.getByRole("button", { name: "Create owner account" }).click();
-  const status = (await response).status();
-  // Registration is limited to a few accounts an hour per IP; a 429 is the limiter working, not a bug in the page.
-  test.skip(status === 429, "Registration is IP rate limited locally (HTTP 429): run again later or raise the limit");
-  expect(status).toBe(201);
-
-  await expect(page).toHaveURL(/\/owner\/venues$/);
-  await expect(page.getByText("Your owner account is ready")).toBeVisible();
-  await expect(page.getByRole("button", { name: /add venue/i }).first()).toBeVisible();
-
-  // Back on the page, the same person is offered the dashboard instead of the form
-  await page.goto(PATH);
-  await expect(page.getByRole("link", { name: "Go to your dashboard" })).toHaveAttribute("href", "/owner/dashboard");
-  await expect(page.getByRole("form", { name: "Create a venue owner account" })).toHaveCount(0);
-});
-
-test.describe("signed in", () => {
-  test("a customer is told they need a separate owner account, with a way to sign out", async ({ page }) => {
-    test.skip(missingCreds("customer"), "Set the E2E_CUSTOMER_* environment variables (see tests/helpers.js)");
-    await login(page, creds.customer);
-    await page.goto(PATH);
-    await expect(page.getByText("You are signed in as a customer")).toBeVisible();
-    await expect(page.getByText(/separate account/)).toBeVisible();
-    await expect(page.getByRole("form", { name: "Create a venue owner account" })).toHaveCount(0);
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page).toHaveURL(/\/login/);
-    // Signed out, the form is back
-    await page.goto(PATH);
-    await expect(page.getByRole("form", { name: "Create a venue owner account" })).toBeVisible();
-  });
-
-  test("an owner is offered the dashboard", async ({ page }) => {
-    test.skip(missingCreds("owner"), "Set the E2E_OWNER_* environment variables (see tests/helpers.js)");
-    await login(page, creds.owner);
-    await page.goto(PATH);
-    await expect(page.getByRole("link", { name: "Go to your dashboard" })).toHaveAttribute("href", "/owner/dashboard");
-    await expect(page.getByRole("form", { name: "Create a venue owner account" })).toHaveCount(0);
-  });
+  const apply = page.getByRole("link", { name: /Apply to list your venue|Start your application/ });
+  await expect(apply).toHaveCount(2);
+  for (const link of await apply.all()) await expect(link).toHaveAttribute("href", "/list-your-venue/apply");
+  await expect(page.getByRole("link", { name: "Sign in" }).filter({ hasText: /^Sign in$/ }).last()).toHaveAttribute("href", "/login");
+  // No account form on this page any more: owners come in through the application
+  await expect(page.getByLabel("Password")).toHaveCount(0);
+  await apply.first().click();
+  await expect(page).toHaveURL(/\/list-your-venue\/apply$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Tell us about your venue" })).toBeVisible();
 });
 
 for (const [label, width, height] of [["desktop", 1280, 900], ["phone", 390, 844]]) {
-  test(`accessibility basics on ${label}: labels, names, heading order, reflow and the skip to sign-up`, async ({ page }) => {
+  test(`accessibility basics on ${label}: labels, names, heading order, reflow and the jump to the application`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto(PATH);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -211,8 +132,7 @@ for (const [label, width, height] of [["desktop", 1280, 900], ["phone", 390, 844
     expect(report).toMatchObject({ h1: 1, skips: [], unlabelled: [], unnamed: [], badControls: 0, noAlt: 0, small: [], overflow: 0 });
     expect(report.lang).toBeTruthy();
 
-    // The in-page link goes to the sign-up form
-    await page.getByRole("link", { name: "Create an owner account" }).first().click();
-    await expect(page.getByRole("heading", { level: 2, name: /Create a venue\s*owner account/ })).toBeInViewport();
+    // The "Start your application" section is the last call to action on the page
+    await expect(page.getByRole("heading", { level: 2, name: /Apply to list\s*your venue/ })).toBeVisible();
   });
 }

@@ -1,28 +1,27 @@
 import { Link } from "react-router-dom";
-import { Camera, Phone, Ruler, Utensils } from "lucide-react";
+import { Camera, FileText, Phone, Ruler } from "lucide-react";
 import PageHero from "../../components/ui/PageHero";
 import SectionHeading from "../../components/ui/SectionHeading";
 import Button from "../../components/ui/Button";
 import ResponsiveImage from "../../components/ui/ResponsiveImage";
 import { images } from "../../assets/landing/images";
 import FaqList from "../../features/listVenue/components/FaqList";
-import OwnerSignUp from "../../features/listVenue/components/OwnerSignUp";
 
 // Everything on this page describes what the platform does today. No fees, commissions, numbers or
 // testimonials are stated: for anything about cost, owners are pointed to the contact page.
 
 const STEPS = [
-  { title: "Create an owner account", text: "Sign up below with your name, email and phone number. It takes a minute." },
-  { title: "Add your venue", text: "Describe your venue, then add its halls and food packages with photos." },
-  { title: "Receive requests", text: "Each request tells you the date, the shift and the number of guests." },
-  { title: "Reply with a quotation", text: "Send an itemised quotation. The customer pays the deposit online through eSewa and settles the balance at your venue." },
+  { title: "Apply", text: "Tell us about your venue, add photos, and upload your registration and PAN certificates. It takes about 10 minutes." },
+  { title: "We check it", text: "We read your application and your documents. If we need anything, we write to the email you gave us." },
+  { title: "Choose your password", text: "When it is approved, we email you a link. You choose a password and sign in with your email." },
+  { title: "Receive requests", text: "Each request tells you the date, the shift and the number of guests. You reply with a quotation, and the customer pays the deposit online through eSewa." },
 ];
 
 const NEEDS = [
-  { icon: Camera, title: "Photos", text: "Clear photos of the venue and each hall. They are the first thing customers look at." },
-  { icon: Ruler, title: "Hall capacities", text: "How many guests each hall holds, so requests match the right space." },
-  { icon: Utensils, title: "Package prices per plate", text: "Your food packages with the price per plate and the minimum number of plates." },
-  { icon: Phone, title: "A contact number", text: "A phone number we and your customers can reach you on." },
+  { icon: FileText, title: "Registration and PAN", text: "A photo or PDF of your business registration certificate and your PAN certificate, and your 9 digit PAN number." },
+  { icon: Camera, title: "Photos", text: "At least 3 clear photos of the venue and its halls. They are the first thing customers look at." },
+  { icon: Ruler, title: "Hall capacities", text: "The name of each hall and how many guests it holds, so requests match the right space." },
+  { icon: Phone, title: "Contact details", text: "An email you check and a phone number our team can reach you on." },
 ];
 
 const FAQ = [
@@ -85,8 +84,8 @@ export default function ListYourVenuePage() {
                 Instead of a round of calls, you receive a request with the date, the shift and the number of guests. You reply with a quotation, and a deposit holds the date.
               </p>
             </div>
-            <Button href="#create-account" arrow className="mt-10">
-              Create an owner account
+            <Button to="/list-your-venue/apply" arrow className="mt-10">
+              Apply to list your venue
             </Button>
           </div>
           <ResponsiveImage
@@ -100,7 +99,7 @@ export default function ListYourVenuePage() {
 
       <section aria-labelledby="how-title" className="bg-sand py-16 lg:py-[88px]">
         <div className="container-site">
-          <SectionHeading id="how-title" eyebrow="How it works" title="From sign-up" accent="to your first request" className="[&_h2]:text-h2" />
+          <SectionHeading id="how-title" eyebrow="How it works" title="From application" accent="to your first request" className="[&_h2]:text-h2" />
           <ol className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-4">
             {STEPS.map((step, index) => (
               <li key={step.title} className="rounded-card-lg border border-line bg-cream p-7">
@@ -136,16 +135,26 @@ export default function ListYourVenuePage() {
         </div>
       </section>
 
-      <section id="create-account" aria-labelledby="signup-title" className="scroll-mt-24 bg-sand py-16 lg:py-[88px]">
-        <div className="container-site grid gap-10 lg:grid-cols-[1fr_minmax(0,560px)] lg:gap-20">
+      <section id="create-account" aria-labelledby="apply-title" className="scroll-mt-24 bg-sand py-16 lg:py-[88px]">
+        <div className="container-site grid gap-10 lg:grid-cols-[1fr_minmax(0,560px)] lg:items-center lg:gap-20">
           <div>
-            <SectionHeading id="signup-title" eyebrow="Get started" title="Create a venue" accent="owner account" className="[&_h2]:text-h2" />
+            <SectionHeading id="apply-title" eyebrow="Get started" title="Apply to list" accent="your venue" className="[&_h2]:text-h2" />
             <p className="mt-6 max-w-md font-body text-body-lg font-light text-ink/85">
-              After you sign up you land on your venues page, where you add your first venue. It goes live once we have reviewed it.
+              You do not need an account to apply. When we approve your application we create your owner account and email you a link to choose a password.
             </p>
           </div>
           <div className="rounded-card-xl border border-line bg-cream p-6 sm:p-9">
-            <OwnerSignUp />
+            <p className="font-display text-h4 font-light text-ink">Ready when you are</p>
+            <p className="mt-3 font-body text-body text-ink/85">Have your registration certificate, your PAN certificate and a few photos at hand.</p>
+            <Button to="/list-your-venue/apply" arrow className="mt-6">
+              Start your application
+            </Button>
+            <p className="mt-6 font-body text-small text-taupe">
+              Already approved?{" "}
+              <Link to="/login" className="text-ink underline underline-offset-4 hover:text-gold-800">
+                Sign in
+              </Link>
+            </p>
           </div>
         </div>
       </section>
