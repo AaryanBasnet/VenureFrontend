@@ -13,6 +13,7 @@ import {
 } from "../../features/inquiry/hooks/useInquiries";
 import StatusBadge from "../../features/inquiry/components/StatusBadge";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
+import RequestFiles from "../../features/inquiry/components/Attachments";
 import DepositPayment from "../../features/inquiry/components/DepositPayment";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { effectiveStatus, formatDate, formatHours, serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
@@ -263,6 +264,7 @@ export default function InquiryDetailPage() {
             {inquiry.message && <Row term="Notes">{inquiry.message}</Row>}
             {inquiry.createdAt && <Row term="Sent">{formatDate(serverDay(inquiry.createdAt))}</Row>}
           </dl>
+          <RequestFiles inquiry={inquiry} editable={["pending", "quoted"].includes(inquiry.status)} onChanged={refetch} />
           <Link to={`/venue/${inquiry.venue?._id}`} className="mt-4 inline-flex min-h-11 items-center font-body text-small text-gold-800 underline underline-offset-4">View the venue</Link>
         </aside>
       </div>

@@ -12,6 +12,7 @@ import {
 } from "../../features/inquiry/hooks/useInquiries";
 import { useVenueDetails } from "../../hooks/user/useVenueDetails";
 import { useVenueSpaces } from "../../features/venues/hooks/useVenueSpaces";
+import RequestFiles from "../../features/inquiry/components/Attachments";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
 import QuotationBuilder from "../../features/inquiry/components/QuotationBuilder";
 import { effectiveStatus, formatDate, serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
@@ -116,6 +117,7 @@ export default function OwnerInquiryDetailPage() {
             <Row term="Contact">{inquiry.contactName}{"\n"}{inquiry.phoneNumber}</Row>
             {inquiry.message && <Row term="Notes">{inquiry.message}</Row>}
           </dl>
+          <RequestFiles inquiry={inquiry} />
           {phone && (
             <div className="mt-6 flex flex-wrap gap-2">
               <a href={`tel:${phone}`} className={chip}><Phone aria-hidden="true" className="size-3.5" /> Call</a>

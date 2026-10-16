@@ -18,3 +18,13 @@ export const rejectQuotationApi = async (id) => (await instance.put(`/quotations
 // eSewa sends the customer back with ?data=<base64>. The server checks it with eSewa
 // and creates the confirmed booking.
 export const verifyEsewaPaymentApi = async (data) => (await instance.post("/payment/esewa/verify", { data })).data.data;
+
+// Files on a request (a menu card, a guest list). Sent as multipart under the field name "attachments".
+export const uploadInquiryAttachmentsApi = async (id, files) => {
+  const form = new FormData();
+  files.forEach((file) => form.append("attachments", file));
+  return (await instance.post(`/inquiries/${id}/attachments`, form)).data.data;
+};
+export const removeInquiryAttachmentApi = async (id, attachmentId) => (await instance.delete(`/inquiries/${id}/attachments/${attachmentId}`)).data.data;
+// A signed link that works for a few minutes; ask for it only when the file is opened.
+export const getInquiryAttachmentLinkApi = async (id, attachmentId) => (await instance.get(`/inquiries/${id}/attachments/${attachmentId}/link`)).data.data.url;
