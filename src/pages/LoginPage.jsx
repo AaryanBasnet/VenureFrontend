@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import LoginForm from "../components/auth/LoginForm";
 import GoogleSignInButton from "../components/auth/GoogleSignInButton";
 import { googleSignInConfigured } from "../components/auth/googleConfig";
+import DemoLogins from "../components/auth/DemoLogins";
 import GoogleDivider from "../components/auth/GoogleDivider";
 import AuthDialog from "../components/auth/AuthDialog";
 import AuthStoryPanel from "../components/auth/AuthStoryPanel";
@@ -48,6 +49,8 @@ export default function LoginPage() {
               <h1 className="font-display text-[32px] leading-[1.08] tracking-[-0.8px] text-charcoal sm:text-[42px]">Welcome back</h1>
               <p className="font-body text-body text-taupe">Sign in to see your saved venues, requests and bookings.</p>
             </div>
+
+            <DemoLogins />
 
             {googleSignInConfigured && (
               <>

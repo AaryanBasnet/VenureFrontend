@@ -4,7 +4,7 @@ import { defineConfig } from "@playwright/test";
 // The write-path specs create, change and delete real records (venues, bookings, reviews, notifications) in the shared
 // test database, so they must never run at the same time as the read-only specs or as each other. Each one is its own
 // project and each project waits for the one before it.
-const WRITE_SPECS = ["ownerWrites", "adminWrites", "inquiryFlows", "requestFiles", "venueApplication", "bookingLifecycle", "calendarLogic", "landing", "listVenue"];
+const WRITE_SPECS = ["ownerWrites", "adminWrites", "inquiryFlows", "requestFiles", "venueApplication", "bookingLifecycle", "calendarLogic", "landing", "listVenue", "demoAccounts"];
 const writeProjects = WRITE_SPECS.map((name, i) => ({
   name,
   testMatch: new RegExp(String.raw`${name}\.spec\.js$`),

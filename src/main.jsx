@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { MotionConfig } from "framer-motion";
 import ErrorBoundary from "./components/common/ErrorBoundary.jsx";
+import DemoBanner from "./components/auth/DemoBanner.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ createRoot(document.getElementById("root")).render(
       <QueryClientProvider client={queryClient}>
         <AuthContextProvider>
           <AppRouter />
+          <DemoBanner />
           <ToastContainer
             position="top-right"
             autoClose={3500}
