@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { venueTypes } from "../../landing/content/landingContent";
+import { SPACE_TYPES, VENUE_TYPES } from "../venueTypes";
 import { plural } from "../../../utils/plural";
 import { useDebouncedField } from "../hooks/useDebouncedField";
 import { AMENITIES, GUEST_PRESETS } from "../venueFilters";
@@ -17,7 +17,7 @@ const chip = (on) =>
 
 // "Refine your search": every control writes straight to the URL (through `update`), so the results change as you go.
 // `idPrefix` keeps ids unique because the panel is rendered once for desktop and once inside the mobile sheet.
-export default function FilterPanel({ sheet = false, idPrefix, filters, update, counts, total, isCounting, activeCount, onClear, onShow }) {
+export default function FilterPanel({ sheet = false, idPrefix, filters, update, counts, spaceCounts = {}, total, isCounting, activeCount, onClear, onShow }) {
   const [search, setSearch] = useDebouncedField(filters.q, (s) => s.trim(), (v) => update({ q: v }, { replace: true }));
   const allCount = Object.values(counts).reduce((a, b) => a + b, 0);
   const customGuests = filters.guests && !GUEST_PRESETS.includes(Number(filters.guests)) ? filters.guests : "";
@@ -64,11 +64,28 @@ export default function FilterPanel({ sheet = false, idPrefix, filters, update, 
           <span className="flex-1">All types</span>
           <span className="text-caption text-taupe">{allCount}</span>
         </label>
-        {venueTypes.map((t) => (
-          <label key={t.slug} className={row}>
-            <input type="radio" name={`${idPrefix}-category`} checked={filters.category === t.slug} onChange={() => update({ category: t.slug })} className={radio} />
-            <span className="flex-1">{t.name}</span>
-            <span className="text-caption text-taupe">{counts[t.slug] ?? 0}</span>
+        {VENUE_TYPES.map(([slug, name]) => (
+          <label key={slug} className={row}>
+            <input type="radio" name={`${idPrefix}-category`} checked={filters.category === slug} onChange={() => update({ category: slug })} className={radio} />
+            <span className="flex-1">{name}</span>
+            <span className="text-caption text-taupe">{counts[slug] ?? 0}</span>
+          </label>
+        ))}
+      </fieldset>
+      </div>
+
+      <div className="border-t border-line pt-5">
+        <fieldset className={section}>
+        <legend className={legend}>Kind of space</legend>
+        <label className={row}>
+          <input type="radio" name={`${idPrefix}-spaceType`} checked={!filters.spaceType} onChange={() => update({ spaceType: "" })} className={radio} />
+          <span className="flex-1">Any space</span>
+        </label>
+        {SPACE_TYPES.map(([slug, name]) => (
+          <label key={slug} className={row}>
+            <input type="radio" name={`${idPrefix}-spaceType`} checked={filters.spaceType === slug} onChange={() => update({ spaceType: slug })} className={radio} />
+            <span className="flex-1">{name}</span>
+            <span className="text-caption text-taupe">{spaceCounts[slug] ?? 0}</span>
           </label>
         ))}
       </fieldset>

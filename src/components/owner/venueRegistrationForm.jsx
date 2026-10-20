@@ -5,7 +5,7 @@ import { AuthContext } from "../../auth/AuthProvider";
 import useAddVenue from "../../hooks/owner/useAddVenue";
 import { useUpdateVenue } from "../../hooks/owner/useUpdateVenue";
 import { assetUrl } from "../../utils/assetUrl";
-import { venueTypes } from "../../features/landing/content/landingContent";
+import { VENUE_TYPES } from "../../features/venues/venueTypes";
 import { errorClass, inputClass, labelClass } from "../ui/formStyles";
 import { btnPrimary } from "../dashboard/styles";
 import { DrinkOptionsEditor, PackagesEditor } from "./MenuEditors";
@@ -193,13 +193,13 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
         <h2 id="venue-basics" className={heading}>The basics</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {field("venueName", "Venue name", { placeholder: "e.g. Hotel Himalaya Banquet" })}
-          {field("category", "Category", {
+          {field("category", "Venue type", {
             as: "select",
             children: (
               <>
-                <option value="" disabled>Select a category</option>
-                {venueTypes.map((type) => (
-                  <option key={type.slug} value={type.slug}>{type.name}</option>
+                <option value="" disabled>Select a venue type</option>
+                {VENUE_TYPES.map(([slug, name]) => (
+                  <option key={slug} value={slug}>{name}</option>
                 ))}
               </>
             ),

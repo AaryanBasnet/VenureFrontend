@@ -54,9 +54,11 @@ async function fillApplication(page, { email, name }) {
   await page.getByRole("button", { name: "Continue" }).click();
 
   await page.fill("#hn-0", "Glass Hall");
+  await page.selectOption("#ht-0", "intimate-halls");
   await page.fill("#hc-0", "300");
   await page.getByRole("button", { name: "Add another hall" }).click();
   await page.fill("#hn-1", "Lawn");
+  await page.selectOption("#ht-1", "garden-estates");
   await page.fill("#hc-1", "600");
   await page.getByRole("button", { name: "Continue" }).click();
 
@@ -81,7 +83,7 @@ test("an owner applies without an account, and is told what happens next", async
 
   const saved = await withDb(({ db }) => db.collection("venueapplications").findOne({ email: APPLICANT.email }));
   expect(saved).toMatchObject({ status: "pending", venueName: APPLICANT.venue, venueType: "banquet-party-palace", panNumber: "123456789" });
-  expect(saved.halls).toEqual([{ name: "Glass Hall", capacity: 300 }, { name: "Lawn", capacity: 600 }]);
+  expect(saved.halls).toEqual([{ name: "Glass Hall", spaceType: "intimate-halls", capacity: 300 }, { name: "Lawn", spaceType: "garden-estates", capacity: 600 }]);
   expect(saved.photos).toHaveLength(3);
   expect(saved.coordinates).toEqual({ lat: 27.671, lng: 85.4298 });
   // No account and no venue yet
@@ -89,11 +91,19 @@ test("an owner applies without an account, and is told what happens next", async
   expect(errors()).toEqual([]);
 });
 
-test("the same email cannot apply twice while the first is waiting", async ({ page }) => {
-  await fillApplication(page, { email: APPLICANT.email, name: `${APPLICANT.venue} again` });
+test("the same email cannot apply twice while the first is waiting, and is told on the first step", async ({ page }) => {
+  await page.goto("/list-your-venue/apply");
+  await page.evaluate(() => sessionStorage.removeItem("venure:apply-draft"));
+  await page.reload();
+  await page.fill("#name", `${APPLICANT.venue} again`);
+  await page.selectOption("#category", "banquet-party-palace");
+  await page.fill("#email", APPLICANT.email);
+  await page.fill("#phone", "9812345678");
+  await page.fill("#ownerName", "Sita Sharma");
+  await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "already being reviewed" })).toBeVisible();
-  // The answer stays on the last step with everything still filled in
-  await expect(page.getByRole("button", { name: "Send for review" })).toBeEnabled();
+  await expect(page.getByRole("heading", { level: 1, name: "Tell us about your venue" })).toBeVisible(); // did not move on
+  expect(await withDb(({ db }) => db.collection("venueapplications").countDocuments({ email: APPLICANT.email }))).toBe(1);
 });
 
 test("the admin sees it waiting, opens the documents, and approves it", async ({ page }) => {
@@ -109,7 +119,7 @@ test("the admin sees it waiting, opens the documents, and approves it", async ({
   await expect(page.getByRole("heading", { level: 1, name: APPLICANT.venue })).toBeVisible();
   await expect(page.getByRole("link", { name: APPLICANT.email })).toBeVisible();
   await expect(page.getByText("27.67100, 85.42980")).toBeVisible();
-  await expect(page.getByText("Glass Hall", { exact: true })).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "Glass Hall" })).toBeVisible();
   await expect(page.getByText("600 guests")).toBeVisible();
   await expect(page.getByText("123456789")).toBeVisible();
   await expect(page.getByRole("img", { name: /Photo 1 of/ })).toBeVisible();
@@ -120,8 +130,9 @@ test("the admin sees it waiting, opens the documents, and approves it", async ({
   expect(tab.url()).toContain("signature=");
   await tab.close();
 
-  // The suggested site category is pre-chosen; approving needs one click
-  await expect(page.locator("#category")).toHaveValue("garden-estates");
+  // No category to pick: it is listed as the venue type the owner chose, with each hall under its own kind of space
+  await expect(page.getByText("Banquet hall and party palace").first()).toBeVisible();
+  await expect(page.getByText("Intimate hall")).toBeVisible();
   await page.getByRole("button", { name: "Approve", exact: true }).click();
   // The local backend has no mail account, so the page says the email could not be sent and offers to send it again
   await expect(page.getByText(/Approved, but the email could not be sent/)).toBeVisible();
@@ -134,7 +145,7 @@ test("the admin sees it waiting, opens the documents, and approves it", async ({
   expect(owner).toMatchObject({ role: "VenueOwner", name: "Sita Sharma" });
   expect(owner.password).toBeUndefined();
   const venue = await withDb(({ db }) => db.collection("venues").findOne({ owner: owner._id }));
-  expect(venue).toMatchObject({ venueName: APPLICANT.venue, status: "approved", category: "garden-estates" });
+  expect(venue).toMatchObject({ venueName: APPLICANT.venue, status: "approved", category: "banquet-party-palace", spaceTypes: ["garden-estates", "intimate-halls"] });
 });
 
 test("the owner cannot sign in yet, then chooses a password from the link and signs in", async ({ page }) => {
@@ -214,4 +225,82 @@ test("a customer cannot open the admin pages", async ({ page }) => {
   await login(page, creds.customer);
   await page.goto("/admin/applications");
   await expect(page).not.toHaveURL(/\/admin\/applications/);
+});
+
+test.describe("the application page itself", () => {
+  const fresh = async (page) => {
+    await page.goto("/list-your-venue/apply");
+    await page.evaluate(() => sessionStorage.removeItem("venure:apply-draft"));
+    await page.reload();
+  };
+
+  test("going away and back keeps what was typed", async ({ page }) => {
+    await fresh(page);
+    await page.fill("#name", "Kept Hall");
+    await page.selectOption("#category", "heritage-traditional");
+    await page.fill("#email", `kept-${Date.now().toString(36)}@example.com`);
+    await page.fill("#phone", "9812345678");
+    await page.fill("#ownerName", "Kept Owner");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.selectOption("#province", "Bagmati");
+    await page.fill("#city", "Bhaktapur");
+    await page.fill("#area", "Suryabinayak chowk");
+
+    // Leaving and coming back (what the browser Back button does) restores the steps already typed
+    await page.goto("/terms");
+    await page.goBack();
+    await expect(page.getByRole("heading", { level: 1, name: "Where is it?" })).toBeVisible();
+    await expect(page.locator("#city")).toHaveValue("Bhaktapur");
+    await expect(page.locator("#area")).toHaveValue("Suryabinayak chowk");
+    await page.getByRole("button", { name: "Back" }).click();
+    await expect(page.locator("#name")).toHaveValue("Kept Hall");
+    await expect(page.locator("#category")).toHaveValue("heritage-traditional");
+  });
+
+  test("the terms link on the review step opens in a new tab", async ({ page }) => {
+    await fresh(page);
+    await page.evaluate(() => sessionStorage.setItem("venure:apply-draft", JSON.stringify({ step: 5, f: { name: "X Hall", email: "x@example.com" }, halls: [] })));
+    await page.reload();
+    const link = page.getByRole("link", { name: /terms of use/ });
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("rel", /noopener/);
+  });
+
+  test("the map is not loaded until there is an address, and does not reload on every key press", async ({ page }) => {
+    const mapRequests = [];
+    page.on("request", (r) => r.url().includes("maps.google.com/maps") && mapRequests.push(r.url()));
+    await fresh(page);
+    await page.fill("#name", "Map Hall");
+    await page.selectOption("#category", "hotel-resort");
+    await page.fill("#email", `map-${Date.now().toString(36)}@example.com`);
+    await page.fill("#phone", "9812345678");
+    await page.fill("#ownerName", "Map Owner");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByText("The map appears once you enter your street or landmark above.")).toBeVisible();
+    expect(await page.locator("iframe").count()).toBe(0);
+    expect(mapRequests).toHaveLength(0);
+
+    // Typing quickly loads the map once, after typing pauses
+    await page.locator("#area").pressSequentially("Suryabinayak chowk", { delay: 40 });
+    await expect(page.locator("iframe")).toHaveCount(1, { timeout: 8000 });
+    expect(mapRequests.length).toBeLessThanOrEqual(1);
+  });
+
+  test("an email that already has an account is refused on the first step, with a way to sign in", async ({ page }) => {
+    await fresh(page);
+    await page.fill("#name", "Taken Hall");
+    await page.selectOption("#category", "hotel-resort");
+    await page.fill("#email", creds.customer.email); // a real account in the local database
+    await page.fill("#phone", "9812345678");
+    await page.fill("#ownerName", "Taken Owner");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "This email already has an account." })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in", exact: true }).first()).toHaveAttribute("href", "/login");
+    await expect(page.getByRole("heading", { level: 1, name: "Tell us about your venue" })).toBeVisible(); // did not move on
+
+    // A different email lets the step through
+    await page.fill("#email", `free-${Date.now().toString(36)}@example.com`);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Where is it?" })).toBeVisible();
+  });
 });

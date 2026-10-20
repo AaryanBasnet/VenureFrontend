@@ -10,8 +10,8 @@ import { images } from "../../../assets/landing/images";
  */
 export default function StoryCard({ story, variant = "compact", className = "" }) {
   const { eyebrow, title, description, imageKey, imageSizes, venueId, category } = story;
-  // A story leads to its venue when one is set, else to its category; with neither it stays plain text.
-  const to = venueId ? `/venue/${venueId}` : category ? `/venues?category=${category}` : null;
+  // A story leads to its venue when one is set, else to its kind of space (the stored field is still called category); with neither it stays plain text.
+  const to = venueId ? `/venue/${venueId}` : category ? `/venues?spaceType=${category}` : null;
   const heading = to ? (
     <Link to={to} className="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current">
       {title}

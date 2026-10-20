@@ -41,7 +41,7 @@ export async function createWorld(playwright, label) {
   const created = await ownerApi.post("venues", {
     data: {
       venueName,
-      category: "garden-estates",
+      category: "banquet-party-palace",
       description: "Created by the booking lifecycle end to end suite.",
       location: { address: "3 Test Road", city: "Lalitpur", state: "Bagmati", country: "Nepal" },
       amenities: ["Parking"],
@@ -52,7 +52,7 @@ export async function createWorld(playwright, label) {
   const venueId = (await created.json()).data._id;
   const spaces = {};
   for (const [key, name] of [["a", "Glass Hall"], ["b", "Pine Lawn"]]) {
-    const res = await ownerApi.post(`venues/${venueId}/spaces`, { data: { name, capacity: 300 } });
+    const res = await ownerApi.post(`venues/${venueId}/spaces`, { data: { name, spaceType: "garden-estates", capacity: 300 } });
     expect(res.status()).toBe(201);
     spaces[key] = (await res.json()).data._id;
   }

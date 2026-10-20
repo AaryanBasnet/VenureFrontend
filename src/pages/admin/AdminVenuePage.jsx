@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { venueTypeLabel } from "../../features/venues/venueTypes";
 import { Link } from "react-router-dom";
 import { Building2, Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, MapPin, Search, User, X } from "lucide-react";
 import { toast } from "react-toastify";
@@ -27,7 +28,7 @@ const TABS = [
 const STATUS_TONE = { approved: "success", pending: "gold", rejected: "danger" };
 const STATUS_LABEL = { approved: "Approved", pending: "Pending review", rejected: "Rejected" };
 
-const categoryLabel = (c) => (c ? c.replace(/-/g, " ").replace(/^./, (m) => m.toUpperCase()) : "No category");
+const categoryLabel = (c) => venueTypeLabel(c) ?? "No venue type";
 
 const linkBtn =
   "inline-flex items-center gap-1.5 font-body text-small text-ink underline underline-offset-4 hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";

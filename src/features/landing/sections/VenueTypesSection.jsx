@@ -4,9 +4,10 @@ import { images } from "../../../assets/landing/images";
 import VenueTypeCard from "../components/VenueTypeCard";
 import { useLanding } from "../hooks/useLanding";
 
-// Figma 46:17 — intro copy on the left, five expanding category cards on the right.
+// Figma 46:17 — intro copy on the left, five expanding cards on the right. The cards are the five kinds of space
+// (garden estates, intimate halls...), each one a link to the venues that have such a space.
 export default function VenueTypesSection() {
-  const { content, categoryCounts: counts } = useLanding();
+  const { content, spaceTypeCounts: counts } = useLanding();
   const { venueTypes, venueTypesIntro } = content;
 
   return (

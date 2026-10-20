@@ -69,7 +69,7 @@ test("create a venue with a food package and a drink option, then add a hall", a
   await page.getByRole("button", { name: /^Add venue$/ }).click();
 
   await page.getByLabel(/Venue name/).fill(name);
-  await page.locator("#venue-category").selectOption("garden-estates");
+  await page.locator("#venue-category").selectOption("banquet-party-palace");
   await page.getByLabel(/Description/).fill("A test venue made by the end to end suite.");
   await page.getByLabel(/Contact phone/).fill("9801234567");
   await page.getByLabel(/Street address/).fill("1 Test Road");
@@ -99,13 +99,21 @@ test("create a venue with a food package and a drink option, then add a hall", a
   await page.getByRole("button", { name: "Add space" }).click();
   await expect(page.getByRole("alert").filter({ hasText: /name/i })).toBeVisible();
 
+  // A hall also needs its kind of space
   await page.getByLabel("Name", { exact: true }).fill("Glass Hall");
   await page.getByLabel("Capacity (guests)").fill("250");
   await page.getByRole("button", { name: "Add space" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Choose the kind of space it is." })).toBeVisible();
+  await page.getByRole("combobox", { name: "Kind of space" }).click();
+  await page.getByRole("option", { name: "Intimate hall" }).click();
+  await page.getByRole("button", { name: "Add space" }).click();
   await expect(page.getByText("Glass Hall", { exact: true })).toBeVisible();
+  await expect(page.locator("p", { hasText: /^Intimate hall$/ })).toBeVisible();
   await expect(page.getByText("Up to 250 guests")).toBeVisible();
 
   await page.getByLabel("Name", { exact: true }).fill("Pine Lawn");
+  await page.getByRole("combobox", { name: "Kind of space" }).click();
+  await page.getByRole("option", { name: "Garden estate" }).click();
   await page.getByLabel("Capacity (guests)").fill("400");
   await page.getByRole("button", { name: "Add space" }).click();
   await expect(page.getByText("Pine Lawn", { exact: true })).toBeVisible();

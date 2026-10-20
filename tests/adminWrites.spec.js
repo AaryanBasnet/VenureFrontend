@@ -19,7 +19,7 @@ async function makeVenue(venueName) {
   const res = await owner.post("venues", {
     data: {
       venueName,
-      category: "garden-estates",
+      category: "banquet-party-palace",
       description: "Created by the admin end to end suite.",
       location: { address: "2 Test Road", city: "Bhaktapur", state: "Bagmati", country: "Nepal" },
       amenities: ["Parking"],
@@ -28,7 +28,7 @@ async function makeVenue(venueName) {
   });
   expect(res.status()).toBe(201);
   const venue = (await res.json()).data;
-  const space = await owner.post(`venues/${venue._id}/spaces`, { data: { name: "Main Hall", capacity: 200 } });
+  const space = await owner.post(`venues/${venue._id}/spaces`, { data: { name: "Main Hall", spaceType: "garden-estates", capacity: 200 } });
   expect(space.status()).toBe(201);
   return venue._id;
 }

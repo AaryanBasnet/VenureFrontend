@@ -7,11 +7,11 @@ export const landingDefaults = {
     eyebrow: "Authentic spaces · Living heritage · Nepal",
   },
   venueTypesIntro: {
-    eyebrow: "Venue types",
+    eyebrow: "Spaces",
     title: "Find your",
     accent: "perfect space",
     description:
-      "Five distinct categories of Nepal's finest heritage venues, each with its own character and atmosphere.",
+      "Five kinds of space across Nepal's finest venues, each with its own character and atmosphere.",
   },
   venueTypes: [
     { slug: "heritage-courtyards", name: "Heritage Courtyards", imageKey: "heritageCourtyards", badgeKey: "heritageBadge" },

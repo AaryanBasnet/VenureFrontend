@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { categoryLabel, priceFormatter } from "./venueFormat";
+import { categoryLabel, priceFormatter, spaceTypeLabel } from "./venueFormat";
+import { SPACE_TYPE_LABELS, VENUE_TYPE_LABELS } from "./venueTypes";
 
 export const PAGE_SIZE = 9;
 export const CITIES = ["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara", "Nagarkot", "Dhulikhel", "Chitwan"];
@@ -28,10 +29,17 @@ export function readFilters(params) {
   let minPrice = whole(params.get("minPrice"), 7);
   let maxPrice = whole(params.get("maxPrice"), 7);
   if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) [minPrice, maxPrice] = [maxPrice, minPrice];
+  // Only known values reach the API. An older link such as ?category=garden-estates (that was a venue category
+  // before it became a kind of space) still works: it is read as the space type it is now.
+  const categoryParam = params.get("category") ?? "";
+  const spaceParam = params.get("spaceType") ?? "";
+  const isSpaceType = (v) => Object.hasOwn(SPACE_TYPE_LABELS, v);
+  const spaceType = isSpaceType(spaceParam) ? spaceParam : isSpaceType(categoryParam) ? categoryParam : "";
   return {
     q: params.get("q") ?? "",
     city: params.get("city") ?? "",
-    category: params.get("category") ?? "",
+    category: Object.hasOwn(VENUE_TYPE_LABELS, categoryParam) ? categoryParam : "",
+    spaceType,
     guests: whole(params.get("guests"), 6),
     minPrice,
     maxPrice,
@@ -47,6 +55,7 @@ export function toApiFilters(f) {
     search: f.q || undefined,
     city: f.city || undefined,
     category: f.category || undefined,
+    spaceType: f.spaceType || undefined,
     guests: f.guests || undefined,
     minPrice: f.minPrice || undefined,
     maxPrice: f.maxPrice || undefined,
@@ -71,6 +80,7 @@ export function activeChips(f) {
   if (f.q) chips.push({ key: "q", label: `“${f.q}”`, clear: { q: "" } });
   if (f.city) chips.push({ key: "city", label: f.city, clear: { city: "" } });
   if (f.category) chips.push({ key: "category", label: categoryLabel(f.category) ?? f.category, clear: { category: "" } });
+  if (f.spaceType) chips.push({ key: "spaceType", label: spaceTypeLabel(f.spaceType) ?? f.spaceType, clear: { spaceType: "" } });
   if (f.guests) chips.push({ key: "guests", label: `${priceFormatter.format(Number(f.guests))}+ guests`, clear: { guests: "" } });
   if (f.minPrice || f.maxPrice) chips.push({ key: "price", label: priceLabel(f), clear: { minPrice: "", maxPrice: "" } });
   f.amenities.forEach((a) => chips.push({ key: `amenity-${a}`, label: a, clear: { amenities: f.amenities.filter((x) => x !== a).join(",") } }));
@@ -81,6 +91,22 @@ export function activeChips(f) {
 export function useVenueFilters() {
   const [params, setParams] = useSearchParams();
   const filters = useMemo(() => readFilters(params), [params]);
+
+  // An older link with ?category=garden-estates is rewritten to ?spaceType=garden-estates so the chip and the clear button agree with the address bar.
+  useEffect(() => {
+    const legacy = params.get("category");
+    if (legacy && Object.hasOwn(SPACE_TYPE_LABELS, legacy)) {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("category");
+          if (!next.get("spaceType")) next.set("spaceType", legacy);
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [params, setParams]);
 
   const update = useCallback(
     (patch, { replace = false } = {}) => {
