@@ -98,8 +98,12 @@ test.describe("quotation builder", () => {
     await page.fill("#li-price-1", "100");
     await page.locator('label[for="li-guest-1"]').click(); // the choice is a pill; the radio behind it is visually hidden
     await expect(page.locator("#li-guest-1")).toBeChecked();
-    await page.fill("#q-guests", "50");
-    await expect.poll(() => amounts(page)).toEqual({ total: 105000, deposit: 30000, balance: 75000 });
+    // The guest count is the customer's: it is shown but cannot be changed by the venue
+    await expect(page.locator("#q-guests")).toHaveAttribute("readonly", "");
+    await expect(page.getByText("The customer's number. It cannot be changed here.")).toBeVisible();
+    const guests = Number(await page.locator("#q-guests").inputValue());
+    expect(guests).toBeGreaterThan(0);
+    await expect.poll(() => amounts(page)).toEqual({ total: 100000 + 100 * guests, deposit: 30000, balance: 70000 + 100 * guests });
 
     await page.getByRole("button", { name: "Remove item 2" }).click();
     await expect.poll(() => amounts(page)).toEqual({ total: 100000, deposit: 30000, balance: 70000 });

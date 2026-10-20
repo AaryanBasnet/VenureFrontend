@@ -21,8 +21,7 @@ function HowOwnersJoin() {
       <div className="font-body text-small text-taupe">
         <p className="text-ink">How venue owners join</p>
         <p className="mt-1">
-          Owners create their own account: they register on the Venure sign-up page and choose "Venue owner". They appear here straight away and can list venues for your review.
-          Admins cannot create owner accounts for them.
+          Owners apply at List your venue, with their business documents. When you approve an application under Applications, their account is created and they appear here. The sign-up page makes customers only.
         </p>
       </div>
     </aside>
@@ -86,7 +85,7 @@ export default function AdminVenueOwnerPage() {
             </EmptyState>
           ) : (
             <EmptyState icon={UserCog} title="No venue owners yet">
-              Owners appear here once someone registers and chooses "Venue owner" on the sign-up page.
+              Owners appear here once you approve a venue application.
             </EmptyState>
           )
         ) : (
