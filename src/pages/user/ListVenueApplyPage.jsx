@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check, CheckCircle2, FileText, ImagePlus, LocateFixed, MapPin, Plus, ShieldCheck, Trash2, X } from "lucide-react";
 import Select from "../../components/ui/Select";
+import FileThumb from "../../components/common/FileThumb";
 import { inputClass, labelClass, errorClass } from "../../components/ui/formStyles";
 import { checkApplicationEmailApi, submitVenueApplicationApi } from "../../api/venueApplications";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -62,32 +63,8 @@ function Field({ id, label, hint, error, children, optional }) {
   );
 }
 
-// A preview of a chosen photo, drawn on a canvas. The picture never becomes an address or markup on the page.
 function Thumb({ file, label }) {
-  const canvas = useRef(null);
-  useEffect(() => {
-    let cancelled = false;
-    createImageBitmap(file)
-      .then((bitmap) => {
-        const el = canvas.current;
-        if (cancelled || !el) return bitmap.close();
-        const width = 480;
-        const height = Math.round((width * 3) / 4);
-        el.width = width;
-        el.height = height;
-        // fill the 4:3 frame like object-fit: cover
-        const scale = Math.max(width / bitmap.width, height / bitmap.height);
-        const w = bitmap.width * scale;
-        const h = bitmap.height * scale;
-        el.getContext("2d").drawImage(bitmap, (width - w) / 2, (height - h) / 2, w, h);
-        bitmap.close();
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [file]);
-  return <canvas ref={canvas} role="img" aria-label={label} className="aspect-[4/3] w-full bg-sand object-cover" />;
+  return <FileThumb file={file} label={label} className="aspect-[4/3] w-full" />;
 }
 
 function FilePick({ id, label, hint, accept, types, file, onFile, error, required }) {

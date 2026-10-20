@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Inbox } from "lucide-react";
 import { useOwnerInquiries } from "../../features/inquiry/hooks/useInquiries";
@@ -6,26 +6,32 @@ import { effectiveStatus, serverDay, shiftLabel } from "../../features/inquiry/i
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, StatusPill } from "../../components/dashboard/ui";
 import { shortDate } from "../../components/dashboard/styles";
+import Pagination from "../../features/venues/components/Pagination";
 import { useRovingTabs } from "../../hooks/useRovingTabs";
 import { plural } from "../../utils/plural";
 
 const TABS = [
-  { id: "needs", label: "Needs a reply", match: (s) => s === "pending", empty: "No requests waiting. New requests from customers show up here." },
-  { id: "waiting", label: "Waiting for customer", match: (s) => s === "quoted" || s === "accepted", empty: "Nothing is waiting on a customer right now." },
-  { id: "booked", label: "Booked", match: (s) => s === "booked", empty: "No booked requests yet." },
-  { id: "closed", label: "Closed", match: (s) => ["declined", "cancelled", "expired"].includes(s), empty: "No closed requests." },
+  { id: "needs", label: "Needs a reply", group: "pending", empty: "No requests waiting. New requests from customers show up here." },
+  { id: "waiting", label: "Waiting for customer", group: "quoted", empty: "Nothing is waiting on a customer right now." },
+  { id: "booked", label: "Booked", group: "booked", empty: "No booked requests yet." },
+  { id: "closed", label: "Closed", group: "closed", empty: "No closed requests." },
 ];
 
 const TAB_IDS = TABS.map((t) => t.id);
+const PAGE_SIZE = 15;
 const tabDomId = (id) => `tab-${id}`;
 
 export default function OwnerInquiriesPage() {
-  const { data: inquiries = [], isPending, isError, refetch } = useOwnerInquiries();
   const [tab, setTab] = useState("needs");
-  const roving = useRovingTabs({ ids: TAB_IDS, selected: tab, onSelect: setTab, idFor: tabDomId });
+  const [page, setPage] = useState(1);
   const current = TABS.find((t) => t.id === tab);
-  const counts = Object.fromEntries(TABS.map((t) => [t.id, inquiries.filter((q) => t.match(effectiveStatus(q))).length]));
-  const shown = inquiries.filter((q) => current.match(effectiveStatus(q)));
+  const { data, isPending, isError, refetch } = useOwnerInquiries({ group: current.group, page, limit: PAGE_SIZE });
+  const selectTab = (id) => { setTab(id); setPage(1); };
+  // The last request on the last page moved to another tab: step back a page
+  useEffect(() => { if (data && data.page > data.pages) setPage(data.pages); }, [data]);
+  const roving = useRovingTabs({ ids: TAB_IDS, selected: tab, onSelect: selectTab, idFor: tabDomId });
+  const counts = Object.fromEntries(TABS.map((t) => [t.id, data?.counts[t.group] ?? 0]));
+  const shown = data?.items ?? [];
 
   return (
     <>
@@ -82,6 +88,7 @@ export default function OwnerInquiriesPage() {
           )}
         </div>
       </Panel>
+      {data && <div className="mt-6"><Pagination page={data.page} totalPages={data.pages} total={data.total} shown={shown.length} pageSize={PAGE_SIZE} onPage={setPage} noun="request" /></div>}
     </>
   );
 }

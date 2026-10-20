@@ -5,6 +5,9 @@
 export {
   connectSocket,
   sendMessage,
+  markChatSeen,
+  subscribeToSeen,
+  unsubscribeFromSeen,
   subscribeToMessages,
   unsubscribeFromMessages,
   subscribeToNotifications,

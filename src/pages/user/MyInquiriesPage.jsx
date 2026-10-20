@@ -1,28 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, Users } from "lucide-react";
 import { useMyInquiries, useRequireLogin } from "../../features/inquiry/hooks/useInquiries";
+import Pagination from "../../features/venues/components/Pagination";
 import StatusBadge from "../../features/inquiry/components/StatusBadge";
 import { effectiveStatus, formatShortDate, serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 
 // Which statuses each filter shows. "Needs you" is the list a customer should look at first.
 const FILTERS = [
-  { key: "all", label: "All", match: () => true },
-  { key: "action", label: "Needs you", match: (s) => s === "quoted" || s === "accepted" },
-  { key: "waiting", label: "Waiting", match: (s) => s === "pending" },
-  { key: "booked", label: "Booked", match: (s) => s === "booked" },
-  { key: "closed", label: "Closed", match: (s) => ["declined", "cancelled", "expired"].includes(s) },
+  { key: "all", label: "All", group: "all" },
+  { key: "action", label: "Needs you", group: "quoted" },
+  { key: "waiting", label: "Waiting", group: "pending" },
+  { key: "booked", label: "Booked", group: "booked" },
+  { key: "closed", label: "Closed", group: "closed" },
 ];
 
+const PAGE_SIZE = 10;
 const guestsLabel = (n) => `${n} ${n === 1 ? "guest" : "guests"}`;
 
 export default function MyInquiriesPage() {
   const { ready } = useRequireLogin();
-  const { data: inquiries = [], isPending, isError, refetch, isFetching } = useMyInquiries(ready);
   const [filter, setFilter] = useState("all");
+  const [page, setPage] = useState(1);
   const active = FILTERS.find((f) => f.key === filter);
-  const counts = Object.fromEntries(FILTERS.map((f) => [f.key, inquiries.filter((q) => f.match(effectiveStatus(q))).length]));
-  const visible = inquiries.filter((q) => active.match(effectiveStatus(q)));
+  const { data, isPending, isError, refetch, isFetching } = useMyInquiries({ group: active.group, page, limit: PAGE_SIZE }, ready);
+  const counts = Object.fromEntries(FILTERS.map((f) => [f.key, data?.counts[f.group] ?? 0]));
+  const visible = data?.items ?? [];
+  const pick = (key) => { setFilter(key); setPage(1); };
+  // The last request on the last page was cancelled or moved to another tab: step back a page
+  useEffect(() => { if (data && data.page > data.pages) setPage(data.pages); }, [data]);
 
   return (
     <div className="container-site page-pad">
@@ -44,7 +50,7 @@ export default function MyInquiriesPage() {
             {isFetching ? "Trying again" : "Try again"}
           </button>
         </div>
-      ) : inquiries.length === 0 ? (
+      ) : data.counts.all === 0 ? (
         <div className="mt-10 max-w-xl rounded-card-lg border border-dashed border-line bg-cream p-8">
           <p className="font-display text-h4 font-light text-ink">No requests yet</p>
           <p className="mt-2 font-body text-small text-taupe">Find a venue you like and choose “Request a date”.</p>
@@ -58,7 +64,7 @@ export default function MyInquiriesPage() {
                 key={f.key}
                 type="button"
                 aria-pressed={filter === f.key}
-                onClick={() => setFilter(f.key)}
+                onClick={() => pick(f.key)}
                 className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 font-body text-small focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${filter === f.key ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"}`}
               >
                 {f.label}
@@ -101,6 +107,7 @@ export default function MyInquiriesPage() {
               })}
             </ul>
           )}
+          <div className="mt-8"><Pagination page={data.page} totalPages={data.pages} total={data.total} shown={visible.length} pageSize={PAGE_SIZE} onPage={setPage} noun="request" /></div>
         </>
       )}
     </div>

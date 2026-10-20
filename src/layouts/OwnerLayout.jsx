@@ -1,6 +1,6 @@
 import { BarChart3, Building2, CalendarCheck, Inbox, LayoutDashboard, MessageSquare, Star, Wallet } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
-import { useOwnerInquiries } from "../features/inquiry/hooks/useInquiries";
+import { useOwnerInquiries, WAITING } from "../features/inquiry/hooks/useInquiries";
 
 const SECTIONS = [
   { title: "Overview", items: [
@@ -20,7 +20,7 @@ const SECTIONS = [
 ];
 
 export default function OwnerLayout() {
-  const { data: inquiries = [] } = useOwnerInquiries();
-  const waiting = inquiries.filter((q) => q.status === "pending" && !q.booking).length;
+  const { data: inquiries } = useOwnerInquiries(WAITING);
+  const waiting = inquiries?.counts.pending ?? 0;
   return <DashboardLayout role="Owner" homeTo="/owner/dashboard" sections={SECTIONS} badges={{ inquiries: waiting }} />;
 }

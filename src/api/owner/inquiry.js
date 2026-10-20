@@ -1,6 +1,7 @@
 import instance from "../api";
 
-export const getOwnerInquiriesApi = async () => (await instance.get("/inquiries/owner")).data.data;
+// One page of requests: { items, total, page, pages, counts }. params: { group, page, limit }
+export const getOwnerInquiriesApi = async (params = {}) => (await instance.get("/inquiries/owner", { params: { page: 1, ...params } })).data.data;
 // The venue must say why it declines: { id, reason }
 export const declineInquiryApi = async ({ id, reason }) => (await instance.put(`/inquiries/${id}/decline`, { reason })).data.data;
 

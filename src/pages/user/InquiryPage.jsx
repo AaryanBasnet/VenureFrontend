@@ -69,7 +69,8 @@ export default function InquiryPage() {
   const { data: venue, isPending, isError } = useVenueDetails(id);
   const { data: spaces = [] } = useVenueSpaces(venue?._id);
   const create = useCreateInquiry();
-  const { data: mine = [] } = useMyInquiries(isAuthenticated);
+  const { data: openHere } = useMyInquiries({ group: "open", venue: venue?._id, limit: 50 }, isAuthenticated && Boolean(venue?._id));
+  const mine = openHere?.items ?? [];
   const [visibleMonth, setVisibleMonth] = useState(() => new Date());
   const { data: booked = [], isFetching: checking, isPlaceholderData, isError: availabilityFailed } = useAvailability(venue?._id, visibleMonth);
   const onMonthChange = useCallback((m) => setVisibleMonth(m), []);

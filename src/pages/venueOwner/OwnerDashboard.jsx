@@ -5,7 +5,7 @@ import { AuthContext } from "../../auth/AuthProvider";
 import MonthlyEarningsChart from "../../components/owner/MonthlyEarningsChart";
 import { EmptyState, ErrorState, PageHeader, Panel, RowsSkeleton, Stat, StatusPill } from "../../components/dashboard/ui";
 import { btnPrimary, npr, shortDate } from "../../components/dashboard/styles";
-import { useOwnerInquiries } from "../../features/inquiry/hooks/useInquiries";
+import { useOwnerInquiries, WAITING } from "../../features/inquiry/hooks/useInquiries";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
 import useActiveVenueCount from "../../hooks/owner/useGetActiveVenueCount";
@@ -22,12 +22,13 @@ const greeting = () => {
 // money and charts follow.
 export default function OwnerDashboard() {
   const { user } = useContext(AuthContext);
-  const inquiries = useOwnerInquiries();
+  const inquiries = useOwnerInquiries(WAITING);
   const bookings = useOwnerBookings();
   const earnings = useGetMonthlyEarningsForOwner();
   const venues = useActiveVenueCount(user?._id);
 
-  const needsReply = (inquiries.data ?? []).filter((q) => q.status === "pending" && !q.booking);
+  const needsReply = inquiries.data?.items ?? [];
+  const needsTotal = inquiries.data?.total ?? 0;
   const now = Date.now();
   const upcoming = (bookings.data ?? [])
     .filter((b) => ["confirmed", "pending_deposit"].includes(b.status) && new Date(b.startTime).getTime() >= now)
@@ -49,7 +50,7 @@ export default function OwnerDashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Waiting for a reply" value={needsReply.length} hint={needsReply.length ? "Send a quotation to hold their date" : "You are all caught up"} icon={Inbox} to="/owner/inquiries" loading={inquiries.isPending} />
+        <Stat label="Waiting for a reply" value={needsTotal} hint={needsTotal ? "Send a quotation to hold their date" : "You are all caught up"} icon={Inbox} to="/owner/inquiries" loading={inquiries.isPending} />
         <Stat label="Upcoming events" value={upcoming.length} hint="Confirmed or awaiting deposit" icon={CalendarCheck} to="/owner/bookings" loading={bookings.isPending} />
         <Stat label="Booked this month" value={npr(monthEarnings)} hint="Total value of confirmed events" icon={Wallet} to="/owner/payments" loading={earnings.isPending} />
         <Stat label="Active venues" value={venues.data ?? 0} hint="Listed on Venure" icon={Building2} to="/owner/venues" loading={venues.isPending} />

@@ -3,13 +3,15 @@ import { Camera, Loader2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "../ui/Button";
 import { errorClass, inputClass, labelClass } from "../ui/formStyles";
+import FileThumb from "../common/FileThumb";
 import { assetUrl } from "../../utils/assetUrl";
 
 // Edit-profile dialog. Sends multipart form data: name, phone, address and an optional profile image.
 const EditProfileModal = ({ user, onClose, onSubmit, isLoading }) => {
   const [form, setForm] = useState({ name: user.name || "", phone: user.phone || "", address: user.address || "" });
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(assetUrl(user.avatar));
+  const current = assetUrl(user.avatar);
+  const preview = file || current;
   const [errors, setErrors] = useState({});
   const firstField = useRef(null);
   const dialog = useRef(null);
@@ -50,13 +52,6 @@ const EditProfileModal = ({ user, onClose, onSubmit, isLoading }) => {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose, isLoading]);
-
-  useEffect(() => {
-    if (!file) return undefined;
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -117,8 +112,10 @@ const EditProfileModal = ({ user, onClose, onSubmit, isLoading }) => {
 
           <form onSubmit={submit} noValidate className="mt-6 space-y-5">
             <div className="flex items-center gap-4">
-              {preview ? (
-                <img src={preview} alt="" className="size-20 rounded-full border border-line object-cover" />
+              {file ? (
+                <FileThumb file={file} label="Your new photo" width={160} height={160} className="size-20 rounded-full border border-line" />
+              ) : current ? (
+                <img src={current} alt="" className="size-20 rounded-full border border-line object-cover" />
               ) : (
                 <span aria-hidden="true" className="flex size-20 items-center justify-center rounded-full bg-gold-100 text-gold-800">
                   <Camera className="size-7" strokeWidth={1.25} />

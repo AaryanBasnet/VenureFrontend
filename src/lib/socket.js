@@ -34,6 +34,11 @@ export const connectSocket = () => {
 // Only chatId and text are used by the server; sender/receiver come from the session and chat
 export const sendMessage = ({ chatId, text }) => socket.emit("sendMessage", { chatId, text });
 
+// Tell the server the open conversation has been read; the sender is then told "seen"
+export const markChatSeen = (chatId) => socket.emit("markSeen", { chatId });
+export const subscribeToSeen = (callback) => socket.on("messagesSeen", callback);
+export const unsubscribeFromSeen = () => socket.off("messagesSeen");
+
 export const subscribeToMessages = (callback) =>
   socket.on("receiveMessage", callback);
 export const unsubscribeFromMessages = () => socket.off("receiveMessage");

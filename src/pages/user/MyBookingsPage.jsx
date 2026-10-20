@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, Loader2, Users } from "lucide-react";
 import { bsLabel } from "../../features/inquiry/bsCalendar";
 import { apiError, useRequireLogin } from "../../features/inquiry/hooks/useInquiries";
 import { useCancelBookingNow, useMyBookingList } from "../../features/bookings/hooks/useBookings";
+import Pagination from "../../features/venues/components/Pagination";
 import BookingStatusBadge from "../../features/bookings/components/BookingStatusBadge";
 import ReviewForm from "../../features/bookings/components/ReviewForm";
 import { isUpcoming, npr, pluralDays, refundPercentageNow, tierRows } from "../../features/bookings/bookingFormat";
@@ -15,7 +16,7 @@ const TABS = [
   { key: "cancelled", label: "Cancelled", empty: "No cancelled bookings." },
 ];
 
-const tabOf = (b) => (b.status === "cancelled" ? "cancelled" : b.status === "completed" || !isUpcoming(b) ? "past" : "upcoming");
+const PAGE_SIZE = 10;
 const smallBtn = "inline-flex min-h-11 items-center gap-2 px-1 font-body text-small underline underline-offset-4 disabled:opacity-60";
 
 function BookingCard({ booking, onCancelled }) {
@@ -140,16 +141,25 @@ function BookingCard({ booking, onCancelled }) {
 
 export default function MyBookingsPage() {
   const { ready } = useRequireLogin();
-  const { data: bookings = [], isPending, isError, refetch, isFetching } = useMyBookingList(ready);
   const [picked, setPicked] = useState(null);
+  const [page, setPage] = useState(1);
   const [notice, setNotice] = useState("");
-  const sorted = [...bookings].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-  const groups = { upcoming: [], past: [], cancelled: [] };
-  sorted.forEach((b) => groups[tabOf(b)].push(b));
-  groups.past.reverse(); // newest first for events that already happened
-  // Open on the first tab that has something in it, unless the customer chose one.
-  const tab = picked ?? (groups.upcoming.length ? "upcoming" : groups.past.length ? "past" : groups.cancelled.length ? "cancelled" : "upcoming");
+  // Open on the first tab that has something in it, unless the customer chose one. The first answer carries every tab's
+  // size, so with nothing upcoming the page moves on to the next tab by itself.
+  const [firstWithBookings, setFirstWithBookings] = useState("upcoming");
+  const tab = picked ?? firstWithBookings;
   const current = TABS.find((t) => t.key === tab);
+  const { data, isPending, isError, refetch, isFetching } = useMyBookingList({ group: tab, page, limit: PAGE_SIZE }, ready);
+  const counts = data?.counts ?? {};
+  const list = data?.items ?? [];
+  const pick = (key) => { setPicked(key); setPage(1); };
+  useEffect(() => {
+    if (!data || picked) return;
+    const first = TABS.find((t) => data.counts[t.key] > 0);
+    if (first && first.key !== firstWithBookings) setFirstWithBookings(first.key);
+  }, [data, picked, firstWithBookings]);
+  // The last booking on the last page moved to another tab (it was cancelled): step back a page
+  useEffect(() => { if (data && data.page > data.pages) setPage(data.pages); }, [data]);
 
   return (
     <div className="container-site page-pad">
@@ -171,7 +181,7 @@ export default function MyBookingsPage() {
             {isFetching ? "Trying again" : "Try again"}
           </button>
         </div>
-      ) : bookings.length === 0 ? (
+      ) : counts.all === 0 ? (
         <div className="mt-10 max-w-xl rounded-card-lg border border-dashed border-line bg-cream p-8">
           <p className="font-display text-h4 font-light text-ink">No bookings yet</p>
           <p className="mt-2 font-body text-small text-taupe">Once you accept a quotation and pay the deposit, your booking appears here.</p>
@@ -185,19 +195,20 @@ export default function MyBookingsPage() {
                 key={t.key}
                 type="button"
                 aria-pressed={tab === t.key}
-                onClick={() => setPicked(t.key)}
+                onClick={() => pick(t.key)}
                 className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 font-body text-small focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${tab === t.key ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"}`}
               >
                 {t.label}
-                <span className={tab === t.key ? "text-gold-200" : "text-taupe"}>{groups[t.key].length}</span>
+                <span className={tab === t.key ? "text-gold-200" : "text-taupe"}>{counts[t.key] ?? 0}</span>
               </button>
             ))}
           </div>
-          {groups[tab].length === 0 ? (
+          {list.length === 0 ? (
             <p role="status" className="mt-6 max-w-xl rounded-card-lg border border-dashed border-line bg-cream p-6 font-body text-small text-taupe">{current.empty}</p>
           ) : (
-            <ul className="mt-6 space-y-4">{groups[tab].map((b) => <BookingCard key={b._id} booking={b} onCancelled={(x) => setNotice(`Your booking at ${x.venue?.venueName ?? "the venue"} is cancelled. You can find it under Cancelled.`)} />)}</ul>
+            <ul className="mt-6 space-y-4">{list.map((b) => <BookingCard key={b._id} booking={b} onCancelled={(x) => setNotice(`Your booking at ${x.venue?.venueName ?? "the venue"} is cancelled. You can find it under Cancelled.`)} />)}</ul>
           )}
+          <div className="mt-8"><Pagination page={data.page} totalPages={data.pages} total={data.total} shown={list.length} pageSize={PAGE_SIZE} onPage={setPage} noun="booking" /></div>
         </>
       )}
     </div>

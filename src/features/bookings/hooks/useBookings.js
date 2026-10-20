@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyBookings } from "../../../api/user/booking";
-import { cancelBooking, completeBooking, fetchBookingsForOwner, settleBalance } from "../../../api/owner/venueBooking";
+import { cancelBooking, completeBooking, fetchOwnerBookingPage, settleBalance } from "../../../api/owner/venueBooking";
 
-export const useMyBookingList = (enabled = true) => useQuery({ queryKey: ["my-bookings"], queryFn: getMyBookings, enabled });
-export const useOwnerBookingList = () => useQuery({ queryKey: ["owner-bookings"], queryFn: fetchBookingsForOwner });
+// A page at a time; the previous page stays on screen while the next one loads
+export const useMyBookingList = (params, enabled = true) => useQuery({ queryKey: ["my-bookings", params], queryFn: () => getMyBookings(params), enabled, placeholderData: keepPreviousData });
+export const useOwnerBookingList = (params) => useQuery({ queryKey: ["owner-bookings", params], queryFn: () => fetchOwnerBookingPage(params), placeholderData: keepPreviousData });
 
 function useRefreshing(mutationFn) {
   const qc = useQueryClient();
