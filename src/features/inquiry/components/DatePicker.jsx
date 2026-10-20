@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { bsLabel } from "../bsCalendar";
+import { bsLabel, bsLabelNe, nepaliNumber } from "../bsCalendar";
 import {
   adSpan,
   dayNumber,
@@ -114,7 +114,7 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
           <ChevronLeft aria-hidden="true" className="size-4" />
         </button>
         <div className="text-center">
-          <h3 id={titleId} className="font-display text-h4 font-light text-ink" aria-live="polite">{view.title}</h3>
+          <h3 id={titleId} className="font-display text-h4 font-light text-ink" aria-live="polite">{mode === "BS" ? view.titleNe : view.title}</h3>
           {mode === "BS" && <p className="font-body text-caption text-taupe">{adSpan(view.start, view.days)}</p>}
         </div>
         <button
@@ -154,7 +154,7 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
               const time = date.getTime();
               const selected = selectedTime === time;
               const isToday = time === today.getTime();
-              const label = dayNumber(date, view);
+              const label = mode === "BS" ? nepaliNumber(dayNumber(date, view)) : dayNumber(date, view);
               return (
                 <span key={time} role="gridcell" aria-selected={selected}>
                   <button
@@ -162,7 +162,7 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
                     data-t={time}
                     tabIndex={time === rovingTime ? 0 : -1}
                     aria-disabled={disabled || undefined}
-                    aria-label={`${mode === "BS" ? `${bsLabel(date)}, ` : ""}${longDate(date)}${disabled ? ` (${why})` : ""}`}
+                    aria-label={`${mode === "BS" ? `${bsLabelNe(date)}, ` : ""}${longDate(date)}${disabled ? ` (${why})` : ""}`}
                     onClick={() => !disabled && onChange(date)}
                     onKeyDown={(e) => {
                       if ((e.key === "Enter" || e.key === " ") && disabled) e.preventDefault();
@@ -200,7 +200,7 @@ export default function DatePicker({ value, onChange, onMonthChange, isUnavailab
         <p className="mt-4 border-t border-line pt-3 font-body text-small text-taupe">
           {longDate(startOfDay(value))}
           <span aria-hidden="true"> · </span>
-          <span className="text-ink">{bsLabel(value)}</span>
+          <span className="text-ink">{mode === "BS" ? bsLabelNe(value) : bsLabel(value)}</span>
         </p>
       )}
     </div>

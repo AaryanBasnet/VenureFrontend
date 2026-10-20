@@ -6,6 +6,13 @@ export const BS_MONTHS = ["Baisakh", "Jestha", "Ashadh", "Shrawan", "Bhadra", "A
 
 // The converter covers 1 Baisakh 2000 BS to 30 Chaitra 2090 BS (14 April 1943 to about April 2034). Outside that it
 // either throws or, for earlier dates, quietly returns a wrong answer, so every helper checks the range itself.
+// The Nepali script for the month names (the everyday ones: साउन, असोज, कात्तिक...) and the digits, shown when the
+// calendar is read in BS. The weekday names stay in English.
+export const BS_MONTHS_NE = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कात्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
+const NEPALI_DIGITS = "०१२३४५६७८९";
+// 2083 -> "२०८३"
+export const nepaliNumber = (n) => String(n).replace(/\d/g, (d) => NEPALI_DIGITS[d]);
+
 export const BS_MIN_YEAR = 2000;
 export const BS_MAX_YEAR = 2090;
 
@@ -72,4 +79,10 @@ export function bsToAd(year, month, day) {
 export function bsLabel(date) {
   const bs = adToBs(date);
   return bs ? `${bs.day} ${BS_MONTHS[bs.month]} ${bs.year} BS` : "";
+}
+
+// e.g. "१९ मंसिर २०८३". Returns "" for dates outside the converter's supported range.
+export function bsLabelNe(date) {
+  const bs = isBsSupported(date) ? adToBs(date) : null;
+  return bs ? `${nepaliNumber(bs.day)} ${BS_MONTHS_NE[bs.month]} ${nepaliNumber(bs.year)}` : "";
 }

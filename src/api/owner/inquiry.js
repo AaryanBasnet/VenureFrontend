@@ -1,7 +1,8 @@
 import instance from "../api";
 
 export const getOwnerInquiriesApi = async () => (await instance.get("/inquiries/owner")).data.data;
-export const declineInquiryApi = async (id) => (await instance.put(`/inquiries/${id}/decline`)).data.data;
+// The venue must say why it declines: { id, reason }
+export const declineInquiryApi = async ({ id, reason }) => (await instance.put(`/inquiries/${id}/decline`, { reason })).data.data;
 
 // Body: { space, eventDate (ISO), shift, numberOfGuests, lineItems[], depositType, depositValue, notes? }.
 // The server recomputes every amount; the client totals are only a preview.

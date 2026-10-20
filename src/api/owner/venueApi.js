@@ -26,4 +26,11 @@ export const getVenuesByOwner = () => instance.get("/venues/owner/me", { params:
 export const getSpaces = async (venueId) => (await instance.get(`/venues/${venueId}/spaces`)).data.data;
 export const createSpace = async ({ venueId, ...payload }) => (await instance.post(`/venues/${venueId}/spaces`, payload)).data.data;
 export const updateSpace = async ({ id, ...payload }) => (await instance.put(`/spaces/${id}`, payload)).data.data;
+// Photos of one hall (up to 6): multipart under the name "spaceImages"
+export const uploadSpaceImages = async ({ spaceId, files }) => {
+  const form = new FormData();
+  files.forEach((file) => form.append("spaceImages", file));
+  return (await instance.post(`/spaces/${spaceId}/images`, form)).data.data;
+};
+export const removeSpaceImage = async ({ spaceId, filename }) => (await instance.delete(`/spaces/${spaceId}/images`, { data: { filename } })).data.data;
 export const deactivateSpace = async (id) => (await instance.delete(`/spaces/${id}`)).data;
