@@ -110,15 +110,12 @@ export function useVenueFilters() {
 
   const update = useCallback(
     (patch, { replace = false } = {}) => {
-      setParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          Object.entries(patch).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)));
-          if (!("page" in patch)) next.delete("page");
-          return next;
-        },
-        { replace }
-      );
+      // Start from the address bar, not from the last render: two quick choices (a type, then a kind of space) must both
+      // survive even when the first update has not been rendered yet.
+      const next = new URLSearchParams(window.location.search);
+      Object.entries(patch).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)));
+      if (!("page" in patch)) next.delete("page");
+      setParams(next, { replace });
     },
     [setParams]
   );

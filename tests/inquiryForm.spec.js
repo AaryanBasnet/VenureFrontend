@@ -47,16 +47,17 @@ test("the calendar switches between English (AD) and Nepali (BS) and shows both 
 
   await bs.click();
   await expect(bs).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("heading", { level: 3 }).filter({ hasText: /\d{4}$/ })).toContainText(
-    /Baisakh|Jestha|Ashadh|Shrawan|Bhadra|Ashwin|Kartik|Mangsir|Poush|Magh|Falgun|Chaitra/,
+  await expect(page.getByRole("heading", { level: 3 }).filter({ hasText: /[\d०-९]{4}$/ })).toContainText(
+    /बैशाख|जेठ|असार|साउन|भदौ|असोज|कात्तिक|मंसिर|पुस|माघ|फागुन|चैत/, // Nepali months and digits (weekdays stay English)
   );
   const cell = page.getByRole("grid").locator("button:not([aria-disabled])").first();
-  await expect(cell).toHaveAttribute("aria-label", / BS, /);
+  await expect(cell).toHaveAttribute("aria-label", /^[०-९]+ (?:बैशाख|जेठ|असार|साउन|भदौ|असोज|कात्तिक|मंसिर|पुस|माघ|फागुन|चैत) [०-९]{4}, /);
   await cell.click();
-  await expect(page.getByText(/ BS$/).last()).toBeVisible();
 
+  // back in English, the chosen day is shown with its Nepali (BS) date beside it
   await ad.click();
   await expect(ad).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(/ BS$/).last()).toBeVisible();
 });
 
 test("calendar keyboard: arrows move between days, Enter picks, today and the past cannot be picked", async ({ page }) => {
