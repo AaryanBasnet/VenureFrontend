@@ -1,0 +1,52 @@
+/* Fonts are served from this site (basic latin subset, about a third smaller, variable weight), not from Google: one connection fewer before the
+   first text can paint. The two fallbacks below are Georgia and Arial stretched to the metrics of Fraunces and DM Sans,
+   so when the real font arrives the text does not change size or move the page (layout shift). Text outside basic latin
+   (accented letters, Nepali) falls back to the system font, as Nepali always did. */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/fraunces-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+20B9, U+2190-2193;
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/fraunces-latin-wght-italic.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+20B9, U+2190-2193;
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../assets/fonts/dm-sans-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+20B9, U+2190-2193;
+}
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../assets/fonts/dm-sans-latin-wght-italic.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00B7, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+20B9, U+2190-2193;
+}
+@font-face {
+  font-family: "Fraunces Fallback";
+  src: local("Georgia");
+  size-adjust: 105.2%;
+  ascent-override: 93%;
+  descent-override: 24.2%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial");
+  size-adjust: 104.5%;
+  ascent-override: 94.9%;
+  descent-override: 29.7%;
+  line-gap-override: 0%;
+}

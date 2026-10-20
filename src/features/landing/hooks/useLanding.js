@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "../../../api/api";
+import { useAfterFirstPaint } from "../../../hooks/useAfterFirstPaint";
 import { images } from "../../../assets/landing/images";
 import { landingDefaults } from "../content/landingContent";
 
@@ -39,7 +40,9 @@ function normalise(data) {
  * a layout shift or a flash of different text; fetched content swaps in when it differs.
  */
 export function useLanding() {
+  const afterFirstPaint = useAfterFirstPaint(); // the page copy has defaults, so the first paint does not wait for the request
   const query = useQuery({
+    enabled: afterFirstPaint,
     queryKey: ["landing"],
     queryFn: async () => (await api.get("/landing")).data.data,
     select: normalise,

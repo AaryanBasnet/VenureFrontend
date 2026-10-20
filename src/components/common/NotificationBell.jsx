@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 import { Bell } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotification";
 import { useMenu } from "../../hooks/useMenu";

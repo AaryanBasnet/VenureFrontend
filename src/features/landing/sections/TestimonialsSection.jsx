@@ -3,16 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import SectionHeading from "../../../components/ui/SectionHeading";
 import api from "../../../api/api";
 import { useLanding } from "../hooks/useLanding";
+import { useAfterFirstPaint } from "../../../hooks/useAfterFirstPaint";
 
 // Real guest reviews that an admin has featured. The backend only features reviews of completed
 // bookings, so nothing here is invented. With none featured the whole section stays out of the page.
-const useFeaturedReviews = () =>
-  useQuery({
+const useFeaturedReviews = () => {
+  const afterFirstPaint = useAfterFirstPaint();
+  return useQuery({
+    enabled: afterFirstPaint,
     queryKey: ["featured-reviews"],
     queryFn: async () => (await api.get("/featured")).data.data ?? [],
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
+};
 
 const initials = (name = "") => name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "G";
 const shorten = (text, max = 240) => (text.length > max ? `${text.slice(0, max).trimEnd()}…` : text);

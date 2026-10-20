@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { m as motion, useReducedMotion } from "framer-motion";
 import Logo from "./ui/Logo";
 
 // Shown for a moment while the app checks the visitor's session. Calm and on-brand: no counters or fake progress.

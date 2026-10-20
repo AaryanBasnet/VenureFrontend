@@ -1,8 +1,8 @@
 @import "tailwindcss";
+@import "./styles/fonts.css";
 @import "./styles/theme.css";
 @import "./styles/layout.css";
 
-/* Fonts are loaded once, non-blocking, from index.html */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -19,11 +19,6 @@ html {
   scroll-behavior: smooth;
   /* In-page anchors land below the fixed header */
   scroll-padding-top: var(--spacing-header);
-}
-
-/* Legacy font utility, still used by the owner area */
-.font-poppins {
-  font-family: "Poppins", sans-serif;
 }
 
 /* Form controls never zoom the page on iOS: inputs stay at 16px on small screens */

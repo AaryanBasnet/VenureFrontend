@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, Loader2, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 import Button from "../ui/Button";
 import { errorClass, inputClass, labelClass } from "../ui/formStyles";
 import FileThumb from "../common/FileThumb";
