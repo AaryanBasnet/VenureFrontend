@@ -1,121 +1,146 @@
-
 # Venure Frontend
 
-Venure is a modern web platform for discovering, booking, and managing banquet halls, party palaces, and wedding venues. This frontend is built using **React**, styled with **Tailwind CSS**, and integrates with a **MERN stack** backend.
+[![CI](https://github.com/AaryanBasnet/VenureFrontend/actions/workflows/ci.yml/badge.svg)](https://github.com/AaryanBasnet/VenureFrontend/actions/workflows/ci.yml)
 
-## 🧱 Tech Stack
+Venure is an event-venue platform for Nepal. Customers find a banquet hall, hotel or heritage venue, ask for a date and a shift, get a quotation from the venue, and confirm the booking by paying a deposit on eSewa. Venue owners apply to list, answer requests and run their bookings. Admins review applications and venues.
 
-- **Frontend**: React, React Router, Tailwind CSS, Axios, Formik
-- **State Management**: React hooks, Context API
-- **Routing**: React Router DOM
-- **Image Uploads**: Multipart via Axios
-- **Code Structure**: Modular and component-based
-- **Design**: Fully responsive, minimal and modern
+**Live site: [venure.aaryanbasnet.com.np](https://venure.aaryanbasnet.com.np)** · Backend: [VenureBackend](https://github.com/AaryanBasnet/VenureBackend)
 
----
+This repository is the React frontend only. It talks to the backend over REST and Socket.IO.
 
-## 📂 Project Structure
+### At a glance
 
-```
-src/
-├── api/                   # Axios services for API communication
-│   └── owner/venueApi.js  # Venue-related API methods
-├── assets/                # Images, icons, static assets
-├── components/            # Reusable UI components
-│   ├── common/            # Inputs, buttons, modals
-│   └── user/              # Cards, BookingSummary, etc.
-├── hooks/                 # Custom React hooks (data fetching, mutations)
-├── layouts/               # Shared layout components
-├── pages/                 # Page-level components (user, admin views)
-│   ├── admin/
-│   ├── owner/
-│   └── user/
-├── routes/                # Centralized routing setup
-├── styles/                # Tailwind config and global styles
-└── utils/                 # Utility functions
-```
+| | |
+| --- | --- |
+| **~1,650** automated tests across the stack | 365 unit (Vitest), 252 end-to-end (Playwright), 1,037 backend |
+| **27 Playwright spec files** | Real browser, real backend: booking, quotations, chat, owner and admin areas, accessibility at phone width |
+| **−70% to −86%** | Median latency of the booking and inquiry lists after server-side paging (with the backend) |
+| **~20,000 lines** of React | Three roles: customer, venue owner, admin |
+| **Bikram Sambat dates** | Nepali months and digits next to English, built into the calendar |
+
+### Screenshots
+
+| Find a venue | Reply with a quotation (owner) |
+| --- | --- |
+| ![Venue search](docs/screenshots/venues.jpg) | ![Quotation builder](docs/screenshots/quotation-builder.jpg) |
+| **Owner dashboard** | **Bookings, a page at a time** |
+| ![Owner dashboard](docs/screenshots/owner-dashboard.jpg) | ![Owner bookings](docs/screenshots/owner-bookings.jpg) |
+
+The two owner screens with large totals use a generated load-test dataset (40,000 bookings), not real customers. The quotation screen uses a small local test database.
 
 ---
 
-## 🚀 Features
+## How it works
 
-### 👤 User Features
-- View venue listings with search and filter
-- View venue details with images, amenities, and location
-- Book venue via a multi-step form (date, time, guest, contact info, payment)
-- Responsive layout optimized for all devices
+Venure is built around how events are booked in Nepal, not around a shopping cart.
 
-### 🛠️ Admin Features
-- Approve, reject, or set venue status
-- View all registered venues and owners
-- Perform CRUD operations on venues
+- **Inquiry, then quotation, then booking.** A customer sends a request (date, shift, hall, guests, event type). The venue replies with a quotation priced **per plate and per shift**, never per hour. The customer accepts it and pays a deposit on eSewa. The booking exists only once that payment is verified.
+- **Shifts, not hours.** Day, night or full day. Dates are shown in English and Bikram Sambat (Nepali months and digits, English weekdays).
+- **Halls.** A venue has one or more halls (heritage courtyards, garden estates, intimate halls, mountain retreats, rooftop terraces). A venue is one of three types: banquet or party palace, hotel or resort, heritage or traditional.
+- **Owners apply, they do not sign up.** A venue owner applies with business documents and photos. An admin approves, and the owner gets an emailed link to set a password. The public sign-up page makes customers only.
+- **Balance at the venue.** Only the deposit is paid online. The owner records the balance when the customer pays it at the venue.
 
-### 🧾 Booking Flow
-1. Select date and time slot
-2. Provide guest count and contact details
-3. Choose additional services (add-ons)
-4. Confirm and proceed to payment
-5. Booking summary displayed and data submitted to backend
+## Features
 
----
+**Customers**
+- Search and filter venues by city, type, kind of space, guests, amenities and price. Each venue page has a gallery, a map and its halls.
+- Request a date from a calendar that shows what is taken and works from the keyboard.
+- Attach menu files to a request, then accept or decline the quotation (with a reason).
+- Pay the deposit on eSewa. See bookings as upcoming, past or cancelled, and cancel with the refund shown first.
+- Chat with the venue, with live delivery and "Seen" ticks.
+- Favorites, reviews, notifications, Google sign-in and password reset.
 
-## ⚙️ Setup & Installation
+**Venue owners**
+- Apply to list a venue (the draft survives a refresh), then manage venues, halls and hall photos.
+- Inbox of requests with a quotation builder. Declining needs a reason.
+- Bookings with deposit and balance: mark the balance settled, mark an event completed.
+- Dashboard, payments, analytics, reviews and chat.
 
-### Prerequisites
-- Node.js (v16+)
-- npm or yarn
-- Backend server (refer to Venure Backend repo)
+**Admins**
+- Review venue applications and their private documents, approve or reject.
+- Approve, reject and feature venues. Manage users and owners. Moderate reviews.
 
-### Steps
+Booking, inquiry and chat lists are paged on the server, with the size of every tab.
+
+## Tech stack
+
+React 19 · Vite 6 · Tailwind CSS v4 · TanStack Query · React Router · Zustand · Formik and Yup · Socket.IO client · Recharts · Framer Motion · nepali-date-converter · Vitest · Playwright
+
+## Getting started
+
+You need a recent Node.js (20 or newer) and the [backend](https://github.com/AaryanBasnet/VenureBackend) running.
 
 ```bash
-# Clone the repo
-git clone https://github.com/AaryanBasnet/venure-frontend.git
-cd venure-frontend
-
-# Install dependencies
+git clone https://github.com/AaryanBasnet/VenureFrontend.git
+cd VenureFrontend
 npm install
-
-# Start the development server
+cp .env.example .env.development.local   # then edit it
 npm run dev
 ```
 
-### Environment Variables
-Create a `.env` file in root:
+### Environment variables
 
-```env
-VITE_API_URL=http://localhost:5050/api
+| Variable | Needed | What it is |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | yes | The API, for example `http://localhost:5051/api` |
+| `VITE_BACKEND_URL` | yes | The same server without `/api` (Socket.IO and uploaded files) |
+| `VITE_GOOGLE_CLIENT_ID` | no | Google sign-in. Leave it blank and the button hides itself. It must match the backend's `GOOGLE_CLIENT_ID` |
+| `VITE_CONTACT_EMAIL`, `VITE_CONTACT_PHONE`, `VITE_CONTACT_ADDRESS`, `VITE_CONTACT_HOURS` | no | Shown on the Contact page and footer. Any left empty is not shown |
+
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run test:unit` | Vitest (365 tests) |
+| `npm run test:e2e` | Playwright (252 tests in 27 files) |
+| `npm run images:optimize` | Rebuild the landing-page images from the masters (see the script header) |
+
+## Testing
+
+- **Unit (Vitest):** calendar and Bikram Sambat maths, shift and date handling, money formatting, venue filters, booking and inquiry helpers.
+- **End to end (Playwright):** a real browser against a real backend. It covers browse and filters, the venue page, the inquiry form, quotations, booking and cancellation, chat, notifications, the owner and admin areas, routing and guards, and accessibility basics at phone width.
+- The e2e suite needs a running backend and test accounts, given through environment variables (see `tests/helpers.js`). Specs that write data run in a fixed order after the read-only ones (`playwright.config.js`).
+- **CI** runs lint and the production build on every push and pull request. The unit and e2e suites are run locally and are not part of CI yet.
+
+## Project structure
+
+```
+src/
+├── api/          # Axios calls, by area (owner, user, admin)
+├── auth/         # AuthProvider, return to the page after sign-in
+├── components/   # Shared UI (forms, dashboard shell, modals, previews)
+├── features/     # bookings, favorites, inquiry, landing, listVenue, notifications, venues
+├── hooks/        # Data hooks (TanStack Query) and chat
+├── layouts/      # Public, owner and admin shells
+├── lib/          # Socket.IO singleton
+├── pages/        # user, venueOwner and admin pages
+├── routers/      # Routes and guards
+└── utils/
+tests/            # Playwright specs
+docs/             # design-system.md and CHANGELOG-MAJOR.md
 ```
 
----
+## Deployment
 
-## 📸 Screenshots
+The site is served from Vercel (`vercel.json` rewrites every path to `index.html`). A `Dockerfile` and `nginx.conf` are included for a static container. Set the `VITE_*` variables in the hosting dashboard. Login cookies work best when the site and the API share a parent domain, see `docs/DEPLOY.md` in the backend.
 
+## More
 
+- [Design system](docs/design-system.md)
+- [Major changes log](docs/CHANGELOG-MAJOR.md)
 
-## 🧪 In Development
+## Known limits
 
+- Payments run on eSewa's sandbox until live merchant keys are set on the backend. eSewa has no refund API, so refunds are recorded and paid back by hand.
+- The owner area works but has not been redesigned yet.
 
-- Email confirmations after booking
-- Google Maps API integration
-- Reviews and ratings system
+## License
 
----
+Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). You can read, run and learn from the code. Commercial use is not allowed.
 
+## Author
 
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 📬 Contact
-
-For inquiries, suggestions, or feedback:
-
-**Author**: Aryan Basnet  
-**Email**: basnetaryan1011@gmail.com  
-**LinkedIn**: [Basnet Aryan](https://www.linkedin.com/in/basnet-aryan-4511a22a4/)
+Aaryan Basnet · [basnetaryan1011@gmail.com](mailto:basnetaryan1011@gmail.com) · [LinkedIn](https://www.linkedin.com/in/basnet-aryan-4511a22a4/)
