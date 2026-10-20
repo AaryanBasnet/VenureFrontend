@@ -21,7 +21,7 @@ test("the home page shows the backend's content, with one h1 and one landing req
   const requests = [];
   page.on("request", (r) => requests.push(new URL(r.url()).pathname));
 
-  const { content, categoryCounts } = await currentContent(request);
+  const { content, spaceTypeCounts } = await currentContent(request);
   await page.goto("/");
   await expect(page.getByText(content.hero.tagline)).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
@@ -32,14 +32,14 @@ test("the home page shows the backend's content, with one h1 and one landing req
   }
   await expect(page.getByText(content.venueTypesIntro.description)).toBeVisible();
   for (const type of content.venueTypes) {
-    await expect(page.locator(`a[href="/venues?category=${type.slug}"]`).first()).toBeAttached();
+    await expect(page.locator(`a[href="/venues?spaceType=${type.slug}"]`).first()).toBeAttached();
   }
   for (const season of content.seasons) await expect(page.getByText(season.description)).toBeAttached();
 
-  // Counts per category come from the same response as the copy
+  // Counts per kind of space come from the same response as the copy
   for (const type of content.venueTypes) {
-    const count = categoryCounts[type.slug];
-    const card = page.locator(`main a[href="/venues?category=${type.slug}"]`).first();
+    const count = spaceTypeCounts[type.slug];
+    const card = page.locator(`main a[href="/venues?spaceType=${type.slug}"]`).first();
     if (count) await expect(card).toContainText(`${count} ${count === 1 ? "venue" : "venues"}`);
     else await expect(card).not.toContainText(/\d+ venues?/);
   }
@@ -50,12 +50,12 @@ test("the home page shows the backend's content, with one h1 and one landing req
   expect(errors()).toEqual([]);
 });
 
-test("the story cards lead to a venue or to a category, and the partner button leads to the owner page", async ({ page, request }) => {
+test("the story cards lead to a venue or to a kind of space, and the partner button leads to the owner page", async ({ page, request }) => {
   const { content } = await currentContent(request);
   await page.goto("/");
   const stories = page.locator("#stories");
   for (const story of content.stories) {
-    const href = story.venueId ? `/venue/${story.venueId}` : `/venues?category=${story.category}`;
+    const href = story.venueId ? `/venue/${story.venueId}` : `/venues?spaceType=${story.category}`;
     await expect(stories.getByRole("link", { name: story.title })).toHaveAttribute("href", href);
   }
   await expect(page.getByRole("link", { name: /apply as a venue partner/i })).toHaveAttribute("href", "/list-your-venue");

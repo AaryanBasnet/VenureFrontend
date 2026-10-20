@@ -34,6 +34,6 @@ const useDecision = (fn) => {
   });
 };
 
-export const useApproveApplication = () => useDecision(({ id, category }) => approveApplicationApi(id, category));
+export const useApproveApplication = () => useDecision(({ id }) => approveApplicationApi(id));
 export const useResendApplicationLink = () => useDecision(({ id }) => resendApplicationLinkApi(id));
 export const useRejectApplication = () => useDecision(({ id, reason }) => rejectApplicationApi(id, reason));

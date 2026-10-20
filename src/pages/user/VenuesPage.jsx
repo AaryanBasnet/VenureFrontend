@@ -23,7 +23,7 @@ const grid = "grid gap-6 sm:grid-cols-2 xl:grid-cols-3";
 export default function VenuesPage() {
   const { filters, update, clear, chips } = useVenueFilters();
   const { page, sort } = filters;
-  const { counts } = useCategoryCounts();
+  const { counts, spaceCounts } = useCategoryCounts();
   const [sheetOpen, setSheetOpen] = useState(false);
   const closeSheet = useCallback(() => setSheetOpen(false), []);
   const resultsRef = useRef(null);
@@ -58,6 +58,7 @@ export default function VenuesPage() {
     filters,
     update,
     counts,
+    spaceCounts,
     total,
     isCounting: isPending || isError,
     activeCount: chips.length,

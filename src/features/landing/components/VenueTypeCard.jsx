@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import ResponsiveImage from "../../../components/ui/ResponsiveImage";
 
 /**
- * Tall photo card for a venue category (Figma component 55:26569).
+ * Tall photo card for a kind of space (Figma component 55:26569).
  * On pointer devices with hover (lg+), the hovered/focused card widens and its
  * title moves onto one line — handled by the parent flex row via `grow`. The labels of
  * the squeezed sibling cards fade out so they never clip.
@@ -11,7 +11,7 @@ export default function VenueTypeCard({ type, image, badge, count }) {
   return (
     <li className="h-[300px] w-[44vw] min-w-40 shrink-0 snap-start overflow-hidden rounded-card-md sm:w-56 lg:h-[340px] lg:w-auto lg:min-w-0 lg:flex-1 lg:transition-[flex-grow] lg:duration-500 lg:ease-out lg:hover:grow-[2.2] lg:focus-within:grow-[2.2]">
       <Link
-        to={`/venues?category=${type.slug}`}
+        to={`/venues?spaceType=${type.slug}`}
         className="group relative isolate block size-full overflow-hidden rounded-card-md focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white"
       >
         <ResponsiveImage

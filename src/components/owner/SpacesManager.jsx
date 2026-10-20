@@ -8,6 +8,8 @@ import { inputClass, labelClass } from "../ui/formStyles";
 import { btnDanger, btnOutline, btnPrimary } from "../dashboard/styles";
 import { EmptyState, ErrorState, RowsSkeleton } from "../dashboard/ui";
 import { plural } from "../../utils/plural";
+import Select from "../ui/Select";
+import { SPACE_TYPES, spaceTypeLabel } from "../../features/venues/venueTypes";
 
 const linkBtn =
   "font-body text-small text-ink underline underline-offset-4 hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50";
@@ -16,15 +18,17 @@ function SpaceForm({ initial, submitLabel, busy, onSubmit, onCancel }) {
   const uid = useId();
   const [name, setName] = useState(initial?.name ?? "");
   const [capacity, setCapacity] = useState(initial?.capacity ?? "");
+  const [spaceType, setSpaceType] = useState(initial?.spaceType ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [error, setError] = useState("");
 
   const submit = (e) => {
     e.preventDefault();
     if (name.trim().length < 2) return setError("Give the space a name (at least 2 letters).");
+    if (!spaceType) return setError("Choose the kind of space it is.");
     if (!(Number(capacity) >= 1)) return setError("Enter how many guests it holds.");
     setError("");
-    onSubmit({ name: name.trim(), capacity: Number(capacity), description: description.trim() || undefined });
+    onSubmit({ name: name.trim(), spaceType, capacity: Number(capacity), description: description.trim() || undefined });
   };
 
   return (
@@ -38,6 +42,13 @@ function SpaceForm({ initial, submitLabel, busy, onSubmit, onCancel }) {
           <label htmlFor={`${uid}-cap`} className={labelClass}>Capacity (guests)</label>
           <input id={`${uid}-cap`} className={inputClass} type="number" min="1" value={capacity} onChange={(e) => setCapacity(e.target.value)} disabled={busy} />
         </div>
+      </div>
+      <div>
+        <label htmlFor={`${uid}-type`} className={labelClass}>Kind of space</label>
+        <Select id={`${uid}-type`} value={spaceType} onChange={(e) => setSpaceType(e.target.value)} disabled={busy} className={inputClass}>
+          <option value="">Choose one</option>
+          {SPACE_TYPES.map(([slug, name]) => <option key={slug} value={slug}>{name}</option>)}
+        </Select>
       </div>
       <div>
         <label htmlFor={`${uid}-desc`} className={labelClass}>Description (optional)</label>
@@ -105,6 +116,7 @@ export default function SpacesManager({ venue, onDone }) {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="break-words font-display text-h5 font-light text-ink">{s.name}</p>
+                      {s.spaceType && <p className="mt-0.5 font-body text-caption uppercase tracking-wide text-gold-800">{spaceTypeLabel(s.spaceType)}</p>}
                       <p className="mt-1 flex items-center gap-1.5 font-body text-small text-taupe">
                         <Users aria-hidden="true" className="size-4 text-gold-800" strokeWidth={1.5} /> Up to {plural(s.capacity, "guest")}
                       </p>

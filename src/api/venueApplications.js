@@ -3,12 +3,15 @@ import instance from "./api";
 // Public: a venue owner applies. Multipart: text fields, applicationPhotos[], registrationCert, panCert.
 export const submitVenueApplicationApi = (formData) => instance.post("/venue-applications", formData);
 
+// Is this email free to apply with? "available", "has_account" or "pending" (already being reviewed)
+export const checkApplicationEmailApi = async (email) => (await instance.post("/venue-applications/check-email", { email })).data.data.status;
+
 // Admin review
 export const listApplicationsApi = async (params) => (await instance.get("/venue-applications", { params })).data.data;
 export const getApplicationApi = async (id) => (await instance.get(`/venue-applications/${id}`)).data.data;
 // A signed link that works for a few minutes; asked for only when the document is opened.
 export const getApplicationDocumentLinkApi = async (id, kind) => (await instance.get(`/venue-applications/${id}/documents/${kind}/link`)).data.data.url;
-export const approveApplicationApi = async (id, category) => (await instance.post(`/venue-applications/${id}/approve`, { category })).data;
+export const approveApplicationApi = async (id) => (await instance.post(`/venue-applications/${id}/approve`)).data;
 export const resendApplicationLinkApi = async (id) => (await instance.post(`/venue-applications/${id}/resend-link`)).data;
 export const rejectApplicationApi = async (id, reason) => (await instance.post(`/venue-applications/${id}/reject`, { reason })).data;
 

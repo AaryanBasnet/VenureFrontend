@@ -1,14 +1,10 @@
+import { spaceTypeLabel, venueTypeLabel } from "./venueTypes";
+
 export const priceFormatter = new Intl.NumberFormat("en-IN");
 
-const CATEGORY_LABELS = {
-  "heritage-courtyards": "Heritage courtyard",
-  "garden-estates": "Garden estate",
-  "intimate-halls": "Intimate hall",
-  "mountain-retreats": "Mountain retreat",
-  "rooftop-terraces": "Rooftop terrace",
-};
-
-export const categoryLabel = (slug) => CATEGORY_LABELS[slug] ?? null;
+// A venue's category is its venue type; the older "garden estate, intimate hall..." labels now describe a hall.
+export const categoryLabel = venueTypeLabel;
+export { spaceTypeLabel };
 
 export const SHIFT_LABELS = { day: "Day", night: "Night", full_day: "Full day" };
 

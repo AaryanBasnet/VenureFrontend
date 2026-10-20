@@ -7,7 +7,7 @@ import { AuthContext } from "../auth/AuthProvider";
 import { useNewsletterSignup } from "../features/landing/hooks/useNewsletterSignup";
 
 // Every item is a real page or section: nothing here is a placeholder.
-const SPACES_LINKS = venueTypes.map((type) => ({ label: type.name, to: `/venues?category=${type.slug}` }));
+const SPACES_LINKS = venueTypes.map((type) => ({ label: type.name, to: `/venues?spaceType=${type.slug}` }));
 const EXPLORE_LINKS = [
   { label: "All venues", to: "/venues" },
   { label: "Seasons", to: "/#experiences" },

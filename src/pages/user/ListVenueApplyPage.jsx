@@ -3,17 +3,14 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Check, CheckCircle2, FileText, ImagePlus, LocateFixed, MapPin, Plus, ShieldCheck, Trash2, X } from "lucide-react";
 import Select from "../../components/ui/Select";
 import { inputClass, labelClass, errorClass } from "../../components/ui/formStyles";
-import { submitVenueApplicationApi } from "../../api/venueApplications";
+import { checkApplicationEmailApi, submitVenueApplicationApi } from "../../api/venueApplications";
+import { useDebounce } from "../../hooks/useDebounce";
+import { SPACE_TYPES, VENUE_TYPES } from "../../features/venues/venueTypes";
 import { coordsFromLink, isMapsLink } from "../../features/listVenue/mapLink";
 
 // "Apply to list your venue": a six-step application. There is no account yet; the owner gets one when we approve it.
 // The map is a plain Google Maps embed (no API key, no billing).
 
-const CATEGORIES = [
-  ["banquet-party-palace", "Banquet hall and party palace"],
-  ["hotel-resort", "Hotel and resort"],
-  ["heritage-traditional", "Heritage and traditional"],
-];
 const PROVINCES = ["Koshi", "Madhesh", "Bagmati", "Gandaki", "Lumbini", "Karnali", "Sudurpashchim"];
 const STEPS = ["Your venue", "Location", "Your halls", "Photos", "Documents", "Review"];
 const MAX_HALLS = 6;
@@ -23,7 +20,32 @@ const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const field = `${inputClass} bg-white`;
 const card = "rounded-card-lg border border-line bg-white p-5 sm:p-6";
-const newHall = () => ({ id: Math.random().toString(36).slice(2), name: "", capacity: "" });
+const newHall = () => ({ id: Math.random().toString(36).slice(2), name: "", spaceType: "", capacity: "" });
+
+// What has been typed is kept for this tab, so leaving the page (to read the terms, say) and coming back loses nothing.
+// Files cannot be kept: the browser does not allow it.
+const DRAFT_KEY = "venure:apply-draft";
+const loadDraft = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(DRAFT_KEY)) ?? null;
+  } catch {
+    return null;
+  }
+};
+const saveDraft = (draft) => {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    /* private mode or full: nothing to keep */
+  }
+};
+const clearDraft = () => {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* nothing to clear */
+  }
+};
 
 const formatSize = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
@@ -111,18 +133,22 @@ function FilePick({ id, label, hint, accept, types, file, onFile, error, require
 }
 
 export default function ListVenueApplyPage() {
-  const [step, setStep] = useState(0);
+  const [draft] = useState(loadDraft);
+  const [step, setStep] = useState(draft?.step ?? 0);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [serverError, setServerError] = useState("");
   const sendingRef = useRef(false);
   const [attempted, setAttempted] = useState({});
-  const [f, setF] = useState({
+  const [f, setF] = useState(() => ({
     name: "", category: "", about: "", phone: "", ownerName: "", email: "",
     province: "", city: "", area: "", mapLink: "", coords: null,
     agree: false, pan: "",
-  });
-  const [halls, setHalls] = useState([newHall()]);
+    ...draft?.f,
+  }));
+  const [halls, setHalls] = useState(() => (draft?.halls?.length ? draft.halls : [newHall()]));
+  // Whether the email can be used: "available", "has_account" or "pending", as the server said for that email
+  const [emailCheck, setEmailCheck] = useState({ email: "", status: "" });
   const [photos, setPhotos] = useState([]);
   const [docs, setDocs] = useState({ registration: null, panCert: null });
   const [geoMsg, setGeoMsg] = useState("");
@@ -130,11 +156,19 @@ export default function ListVenueApplyPage() {
   const photoInput = useRef(null);
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target ? (e.target.type === "checkbox" ? e.target.checked : e.target.value) : e }));
 
+  useEffect(() => {
+    if (submitted) return;
+    saveDraft({ step, f, halls });
+  }, [step, f, halls, submitted]);
+
   const linkCoords = useMemo(() => (isMapsLink(f.mapLink) ? coordsFromLink(f.mapLink) : null), [f.mapLink]);
   const pin = f.coords || linkCoords;
   const addressQuery = [f.area, f.city, f.province && `${f.province} Province`, "Nepal"].filter(Boolean).join(", ");
-  const mapQuery = pin ? `${pin.lat},${pin.lng}` : f.area || f.city ? addressQuery : "Kathmandu, Nepal";
-  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=${pin || f.area ? 16 : f.city ? 13 : 11}&output=embed`;
+  // The map is a heavy embed: it is not loaded until there is something to show, and it waits until typing pauses
+  // (it used to reload on every key press, which made the page crawl).
+  const typedAddress = useDebounce(f.area.trim().length >= 3 ? addressQuery : "", 900);
+  const mapQuery = pin ? `${pin.lat},${pin.lng}` : typedAddress;
+  const mapSrc = mapQuery ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&output=embed` : "";
   const findOnMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressQuery || "Nepal")}`;
 
   const errors = useMemo(() => {
@@ -144,6 +178,8 @@ export default function ListVenueApplyPage() {
     const phoneDigits = f.phone.replace(/\D/g, "").replace(/^977/, "");
     if (phoneDigits.length < 7 || phoneDigits.length > 10) e.phone = "Enter a phone number the venue answers, like 98XXXXXXXX.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) e.email = "Enter an email address you check. We send updates there.";
+    else if (emailCheck.email === f.email.trim().toLowerCase() && emailCheck.status === "has_account") e.email = "This email already has an account.";
+    else if (emailCheck.email === f.email.trim().toLowerCase() && emailCheck.status === "pending") e.email = "An application for this email is already being reviewed. We will write to you soon.";
     if (f.ownerName.trim().length < 2) e.ownerName = "Enter the name of the person we can ask about this venue.";
     if (!f.province) e.province = "Choose the province.";
     if (!f.city.trim()) e.city = "Enter the city or municipality.";
@@ -154,6 +190,7 @@ export default function ListVenueApplyPage() {
     halls.forEach((h, i) => {
       if (h.name.trim() || h.capacity || halls.length === 1) {
         if (!h.name.trim()) e[`hall-${i}-name`] = "Name this hall.";
+        if (!h.spaceType) e[`hall-${i}-type`] = "Choose the kind of space.";
         if (!(Number(h.capacity) >= 1)) e[`hall-${i}-capacity`] = "How many guests fit?";
       }
     });
@@ -164,12 +201,12 @@ export default function ListVenueApplyPage() {
     else if (!/^\d{9}$/.test(f.pan.trim())) e.pan = "A PAN number has 9 digits.";
     if (!f.agree) e.agree = "Tick the box to confirm before you send.";
     return e;
-  }, [f, halls, photos, docs]);
+  }, [f, halls, photos, docs, emailCheck]);
 
   const stepKeys = [
     ["name", "category", "email", "phone", "ownerName"],
     ["province", "city", "area", "mapLink"],
-    ["halls", ...halls.flatMap((_, i) => [`hall-${i}-name`, `hall-${i}-capacity`])],
+    ["halls", ...halls.flatMap((_, i) => [`hall-${i}-name`, `hall-${i}-type`, `hall-${i}-capacity`])],
     ["photos"],
     ["registration", "panCert", "pan"],
     ["agree"],
@@ -188,8 +225,29 @@ export default function ListVenueApplyPage() {
     topRef.current?.focus({ preventScroll: true });
   }, [step, submitted]);
 
-  const next = () => {
+  // Asks the server whether this email can be used, so nobody fills in six steps before finding out it cannot
+  const checkEmail = async () => {
+    const email = f.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return "";
+    if (emailCheck.email === email && emailCheck.status) return emailCheck.status;
+    try {
+      const status = await checkApplicationEmailApi(email);
+      setEmailCheck({ email, status });
+      return status;
+    } catch {
+      return ""; // only a courtesy: if it fails, the server still refuses a taken email when the application is sent
+    }
+  };
+
+  const next = async () => {
     setAttempted((a) => ({ ...a, [step]: true }));
+    if (step === 0) {
+      const status = await checkEmail();
+      if (status === "has_account" || status === "pending") {
+        requestAnimationFrame(() => document.getElementById("email")?.focus());
+        return;
+      }
+    }
     const bad = stepErrors(step);
     if (bad.length) {
       requestAnimationFrame(() => document.querySelector(`[aria-invalid="true"], [role="alert"]`)?.scrollIntoView({ block: "center" }));
@@ -208,18 +266,24 @@ export default function ListVenueApplyPage() {
     const text = { venueName: f.name.trim(), venueType: f.category, about: f.about.trim(), email: f.email.trim(), phone: f.phone.trim(), contactName: f.ownerName.trim(), province: f.province, city: f.city.trim(), area: f.area.trim(), mapLink: f.mapLink.trim(), panNumber: f.pan.trim() };
     Object.entries(text).forEach(([k, v]) => form.append(k, v));
     if (pin) form.append("coordinates", JSON.stringify(pin));
-    form.append("halls", JSON.stringify(halls.filter((h) => h.name.trim()).map((h) => ({ name: h.name.trim(), capacity: Number(h.capacity) }))));
+    form.append("halls", JSON.stringify(halls.filter((h) => h.name.trim()).map((h) => ({ name: h.name.trim(), spaceType: h.spaceType, capacity: Number(h.capacity) }))));
     photos.forEach((file) => form.append("applicationPhotos", file));
     form.append("registrationCert", docs.registration);
     form.append("panCert", docs.panCert);
     try {
       await submitVenueApplicationApi(form);
+      clearDraft();
       setSubmitted(true);
     } catch (err) {
-      setServerError(
-        err?.response?.data?.message?.replace(/^Validation Error - /, "") ||
-          (err?.response ? "We could not send your application. Please try again." : "We could not reach the server. Check your connection and try again.")
-      );
+      const message = err?.response?.data?.message?.replace(/^Validation Error - /, "");
+      // The email was taken in the meantime: say so where the email is, not at the bottom of the last step
+      if (err?.response?.status === 409 && /already has an account|already being reviewed/.test(message ?? "")) {
+        setEmailCheck({ email: f.email.trim().toLowerCase(), status: /account/.test(message) ? "has_account" : "pending" });
+        setAttempted((a) => ({ ...a, 0: true }));
+        setStep(0);
+        return;
+      }
+      setServerError(message || (err?.response ? "We could not send your application. Please try again." : "We could not reach the server. Check your connection and try again."));
     } finally {
       sendingRef.current = false;
       setSending(false);
@@ -342,14 +406,17 @@ export default function ListVenueApplyPage() {
                 <Field id="category" label="What kind of venue" error={show("category")}>
                   <Select id="category" value={f.category} onChange={set("category")} aria-invalid={!!show("category")} className={field}>
                     <option value="">Choose one</option>
-                    {CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                    {VENUE_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </Select>
                 </Field>
                 <Field id="phone" label="Venue phone" error={show("phone")} hint="Customers are never shown this. Our team may call it.">
                   <input id="phone" type="tel" value={f.phone} onChange={set("phone")} aria-invalid={!!show("phone")} aria-describedby={show("phone") ? "phone-error" : "phone-hint"} placeholder="98XXXXXXXX" className={field} />
                 </Field>
                 <Field id="email" label="Email" error={show("email")} hint="Your login will use this email. We write to you here when we have news.">
-                  <input id="email" type="email" autoComplete="email" value={f.email} onChange={set("email")} aria-invalid={!!show("email")} aria-describedby={show("email") ? "email-error" : "email-hint"} placeholder="you@example.com" className={field} />
+                  <input id="email" type="email" autoComplete="email" value={f.email} onChange={set("email")} onBlur={checkEmail} aria-invalid={!!show("email")} aria-describedby={show("email") ? "email-error" : "email-hint"} placeholder="you@example.com" className={field} />
+                  {show("email") && emailCheck.status === "has_account" && emailCheck.email === f.email.trim().toLowerCase() && (
+                    <p className="mt-1 font-body text-small text-ink"><Link to="/login" className="underline underline-offset-4">Sign in</Link> instead, or use a different email.</p>
+                  )}
                 </Field>
                 <Field id="ownerName" label="Contact person" error={show("ownerName")} hint="The owner or manager we can ask about this application.">
                   <input id="ownerName" value={f.ownerName} onChange={set("ownerName")} aria-invalid={!!show("ownerName")} aria-describedby={show("ownerName") ? "ownerName-error" : "ownerName-hint"} className={field} />
@@ -385,12 +452,18 @@ export default function ListVenueApplyPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="font-display text-h5 text-ink">Put it on the map</p>
-                      <p className="mt-1 max-w-md font-body text-small text-taupe">The map below follows your address. To place the pin exactly, use one of the two options.</p>
+                      <p className="mt-1 max-w-md font-body text-small text-taupe">The map follows your address. To place the pin exactly, use one of the two options.</p>
                     </div>
                     {pin && <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-100 px-3 py-1 font-body text-caption text-gold-800"><MapPin aria-hidden="true" className="size-3.5" /> Pin set: {pin.lat.toFixed(4)}, {pin.lng.toFixed(4)}</span>}
                   </div>
                   <div className="mt-4 overflow-hidden rounded-card-md border border-line bg-sand">
-                    <iframe title={`Map of ${addressQuery || "Nepal"}`} src={mapSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-72 w-full border-0 sm:h-80" />
+                    {mapSrc ? (
+                      <iframe title={`Map of ${mapQuery}`} src={mapSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-72 w-full border-0 sm:h-80" />
+                    ) : (
+                      <div className="flex h-40 items-center justify-center px-6 text-center font-body text-small text-taupe sm:h-48">
+                        <span><MapPin aria-hidden="true" className="mx-auto mb-2 size-6 text-gold-800" />The map appears once you enter your street or landmark above.</span>
+                      </div>
+                    )}
                   </div>
                   <div className="mt-5 grid gap-5 md:grid-cols-2">
                     <div>
@@ -425,9 +498,15 @@ export default function ListVenueApplyPage() {
                         <button type="button" onClick={() => setHalls((hs) => hs.filter((x) => x.id !== h.id))} className="inline-flex min-h-11 items-center gap-1.5 font-body text-small text-taupe hover:text-ink"><Trash2 aria-hidden="true" className="size-4" /> Remove<span className="sr-only"> hall {i + 1}</span></button>
                       )}
                     </div>
-                    <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_160px]">
+                    <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_1fr_160px]">
                       <Field id={`hn-${i}`} label="Hall name" error={show(`hall-${i}-name`)}>
                         <input id={`hn-${i}`} value={h.name} onChange={setHall(h.id, "name")} aria-invalid={!!show(`hall-${i}-name`)} aria-describedby={show(`hall-${i}-name`) ? `hn-${i}-error` : undefined} placeholder="Glass Hall" className={field} />
+                      </Field>
+                      <Field id={`ht-${i}`} label="Kind of space" error={show(`hall-${i}-type`)}>
+                        <Select id={`ht-${i}`} value={h.spaceType} onChange={setHall(h.id, "spaceType")} aria-invalid={!!show(`hall-${i}-type`)} className={field}>
+                          <option value="">Choose one</option>
+                          {SPACE_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                        </Select>
                       </Field>
                       <Field id={`hc-${i}`} label="Guests it holds" error={show(`hall-${i}-capacity`)}>
                         <input id={`hc-${i}`} type="number" inputMode="numeric" min="1" value={h.capacity} onChange={setHall(h.id, "capacity")} aria-invalid={!!show(`hall-${i}-capacity`)} aria-describedby={show(`hall-${i}-capacity`) ? `hc-${i}-error` : undefined} className={field} />
@@ -445,7 +524,7 @@ export default function ListVenueApplyPage() {
               <div className={card}>
                 <input ref={photoInput} id="photos" type="file" multiple accept={PHOTO_TYPES.join(",")} onChange={addPhotos} aria-label="Add photos" className="sr-only" />
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="font-body text-small text-ink">{photos.length} of 12 photos. <span className="text-taupe">JPG, PNG or WebP, up to {MAX_MB} MB each. The first one is the cover.</span></p>
+                  <p className="font-body text-small text-ink">{photos.length} of 12 photos. <span className="text-taupe">JPG, PNG or WebP, up to {MAX_MB} MB each. The first one is the cover. Photos are not kept if you leave this page.</span></p>
                   <button type="button" onClick={() => photoInput.current?.click()} disabled={photos.length >= 12} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink px-5 font-body text-button uppercase text-ink hover:bg-ink hover:text-gold-50 disabled:opacity-50"><ImagePlus aria-hidden="true" className="size-4" /> Add photos</button>
                 </div>
                 {photos.length > 0 ? (
@@ -489,9 +568,9 @@ export default function ListVenueApplyPage() {
             {step === 5 && (
               <>
                 {[
-                  [0, "Your venue", [["Name", f.name], ["Kind", CATEGORIES.find(([v]) => v === f.category)?.[1]], ["Email", f.email], ["Phone", f.phone], ["Contact person", f.ownerName], ["About", f.about]]],
+                  [0, "Your venue", [["Name", f.name], ["Kind", VENUE_TYPES.find(([v]) => v === f.category)?.[1]], ["Email", f.email], ["Phone", f.phone], ["Contact person", f.ownerName], ["About", f.about]]],
                   [1, "Location", [["Address", [f.area, f.city, f.province].filter(Boolean).join(", ")], ["Map pin", pin ? `${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)}` : f.mapLink ? "Google Maps link saved" : ""]]],
-                  [2, "Halls", halls.filter((h) => h.name).map((h) => [h.name, `${h.capacity} guests`])],
+                  [2, "Halls", halls.filter((h) => h.name).map((h) => [h.name, `${SPACE_TYPES.find(([v]) => v === h.spaceType)?.[1] ?? ""} · ${h.capacity} guests`])],
                   [3, "Photos", [["Added", `${photos.length} photos`]]],
                   [4, "Documents", [["Registration certificate", docs.registration?.name], ["PAN certificate", docs.panCert?.name], ["PAN number", f.pan]]],
                 ].map(([i, title, rows]) => (
@@ -505,7 +584,7 @@ export default function ListVenueApplyPage() {
                 ))}
                 <label className="flex min-h-11 cursor-pointer items-start gap-3 font-body text-small text-ink">
                   <input type="checkbox" checked={f.agree} onChange={set("agree")} aria-invalid={!!show("agree")} aria-describedby={show("agree") ? "agree-error" : undefined} className="mt-0.5 size-5 shrink-0 accent-ink" />
-                  <span>I confirm this venue is mine to list, and the details and documents are true. I accept the <Link to="/terms" className="underline underline-offset-4">terms of use</Link>.</span>
+                  <span>I confirm this venue is mine to list, and the details and documents are true. I accept the <Link to="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">terms of use<span className="sr-only"> (opens in a new tab)</span></Link>.</span>
                 </label>
                 {show("agree") && <p id="agree-error" role="alert" className={errorClass}>{show("agree")}</p>}
               </>

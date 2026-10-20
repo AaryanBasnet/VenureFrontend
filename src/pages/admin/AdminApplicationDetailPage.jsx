@@ -5,10 +5,9 @@ import { toast } from "react-toastify";
 import { ErrorState, PageHeader, Panel, Pill } from "../../components/dashboard/ui";
 import { btnDanger, btnOutline, btnPrimary, shortDate } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
-import Select from "../../components/ui/Select";
 import { applicationError, useApplication, useApproveApplication, useRejectApplication, useResendApplicationLink } from "../../hooks/admin/useVenueApplications";
 import { getApplicationDocumentLinkApi } from "../../api/venueApplications";
-import { SITE_CATEGORIES, VENUE_TYPE_LABELS } from "../../features/listVenue/applicationLabels";
+import { SPACE_TYPE_LABELS, VENUE_TYPE_LABELS } from "../../features/listVenue/applicationLabels";
 import { formatSize } from "../../features/inquiry/attachments";
 
 const TONE = { pending: ["Waiting for review", "gold"], approved: ["Approved", "success"], rejected: ["Rejected", "danger"] };
@@ -61,7 +60,6 @@ export default function AdminApplicationDetailPage() {
   const approve = useApproveApplication();
   const reject = useRejectApplication();
   const resend = useResendApplicationLink();
-  const [category, setCategory] = useState("");
   const [reason, setReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
   const [error, setError] = useState("");
@@ -84,7 +82,6 @@ export default function AdminApplicationDetailPage() {
   }
 
   const [statusLabel, statusTone] = TONE[a.status];
-  const chosen = category || a.suggestedCategory || "";
   const pin = a.coordinates ? `${a.coordinates.lat},${a.coordinates.lng}` : "";
   const address = [a.location.area, a.location.city, `${a.location.province} Province`, "Nepal"].join(", ");
   const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(pin || address)}&z=16&output=embed`;
@@ -94,7 +91,7 @@ export default function AdminApplicationDetailPage() {
   const onApprove = async () => {
     setError("");
     try {
-      const result = await approve.mutateAsync({ id: a._id, category: chosen });
+      const result = await approve.mutateAsync({ id: a._id });
       if (result.data.emailed) toast.success("Approved. The owner has been emailed a link to choose a password.");
       else toast.warning("Approved, but the email could not be sent. Use “Send the link again” below.", { autoClose: false });
     } catch (e) {
@@ -160,7 +157,7 @@ export default function AdminApplicationDetailPage() {
             <ul className="-my-3 divide-y divide-line">
               {a.halls.map((h) => (
                 <li key={h.name} className="flex justify-between gap-4 py-2.5 font-body text-small text-ink">
-                  <span>{h.name}</span>
+                  <span>{h.name}{h.spaceType && <span className="ml-2 text-caption text-gold-800">{SPACE_TYPE_LABELS[h.spaceType]}</span>}</span>
                   <span className="text-taupe">{h.capacity} guests</span>
                 </li>
               ))}
@@ -207,16 +204,10 @@ export default function AdminApplicationDetailPage() {
                 </form>
               ) : (
                 <div className="space-y-4">
-                  <div>
-                    <label htmlFor="category" className={labelClass}>List it on the site as</label>
-                    <Select id="category" value={chosen} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
-                      {SITE_CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                    </Select>
-                    <p className="mt-1.5 font-body text-caption text-taupe">They said: {VENUE_TYPE_LABELS[a.venueType]}. The site files venues under its own categories.</p>
-                  </div>
+                  <p className="font-body text-small text-ink">It will be listed as <strong className="font-medium">{VENUE_TYPE_LABELS[a.venueType]}</strong>, with each hall under the kind of space the owner chose.</p>
                   <p className="font-body text-small text-ink">Approving creates the owner account and the live venue with its halls and photos, then emails {a.email} a one-time link to choose a password.</p>
                   <div className="flex flex-wrap gap-3">
-                    <button type="button" onClick={onApprove} disabled={busy || !chosen} className={btnPrimary}>{approve.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />} Approve</button>
+                    <button type="button" onClick={onApprove} disabled={busy} className={btnPrimary}>{approve.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />} Approve</button>
                     <button type="button" onClick={() => { setRejecting(true); setError(""); }} disabled={busy} className={btnDanger}>Reject</button>
                   </div>
                 </div>

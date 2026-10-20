@@ -37,11 +37,23 @@ test("a shared link restores the filters (city, type, guests)", async ({ page })
   for (const name of await names(page).allTextContents()) expect(name).not.toBe("Riverside Garden Hall");
   await expect(page.getByRole("button", { name: "Clear all filters" })).toBeVisible();
 
-  await page.goto("/venues?category=garden-estates");
-  await expect(page.getByRole("radio", { name: /Garden Estates/ })).toBeChecked();
+  await page.goto("/venues?category=banquet-party-palace");
+  await expect(page.getByRole("radio", { name: /Banquet hall and party palace/ })).toBeChecked();
   await expect(page.getByRole("radio", { name: /All types/ })).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "Remove filter: Banquet hall and party palace" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Riverside Garden Hall" })).toBeVisible();
+
+  // The kind of space is a second, separate filter
+  await page.goto("/venues?spaceType=garden-estates");
+  await expect(page.getByRole("radio", { name: /^Garden estate/ })).toBeChecked();
   await expect(page.getByRole("button", { name: "Remove filter: Garden estate" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Riverside Garden Hall" })).toBeVisible();
+
+  // An older link (?category=garden-estates was a venue category before it became a kind of space) still works
+  await page.goto("/venues?category=garden-estates");
+  await expect(page).toHaveURL(/spaceType=garden-estates/);
+  await expect(page).not.toHaveURL(/category=/);
+  await expect(page.getByRole("radio", { name: /^Garden estate/ })).toBeChecked();
 
   await page.goto("/venues?guests=250");
   await expect(names(page).first()).toBeVisible();
@@ -50,13 +62,16 @@ test("a shared link restores the filters (city, type, guests)", async ({ page })
 
 test("choosing a type chip and the city updates the URL; Clear all filters resets it", async ({ page }) => {
   await page.goto("/venues");
-  await page.getByRole("radio", { name: /Garden Estates/ }).click();
-  await expect(page).toHaveURL(/category=garden-estates/);
+  await page.getByRole("radio", { name: /Banquet hall and party palace/ }).click();
+  await expect(page).toHaveURL(/category=banquet-party-palace/);
+  await page.getByRole("radio", { name: /^Garden estate/ }).click();
+  await expect(page).toHaveURL(/spaceType=garden-estates/);
+  await expect(page).toHaveURL(/category=banquet-party-palace/); // both filters together
 
   await page.getByRole("combobox", { name: "Where" }).click();
   await page.getByRole("option", { name: "Kathmandu" }).click();
   await expect(page).toHaveURL(/city=Kathmandu/);
-  await expect(page).toHaveURL(/category=garden-estates/);
+  await expect(page).toHaveURL(/spaceType=garden-estates/);
 
   await page.getByRole("button", { name: "Clear all filters" }).click();
   await expect(page).toHaveURL(/\/venues$/);
@@ -118,8 +133,8 @@ test.describe("on a phone", () => {
     await expect(open).toBeFocused();
 
     await open.click();
-    await sheet.getByRole("radio", { name: /Garden Estates/ }).click();
-    await expect(page).toHaveURL(/category=garden-estates/);
+    await sheet.getByRole("radio", { name: /^Garden estate/ }).click();
+    await expect(page).toHaveURL(/spaceType=garden-estates/);
     await sheet.getByRole("button", { name: /^Show \d+ venue/ }).click();
     await expect(sheet).toHaveCount(0);
     await expect(names(page)).toHaveCount(1);
