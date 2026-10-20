@@ -13,6 +13,7 @@ import {
 import { useVenueDetails } from "../../hooks/user/useVenueDetails";
 import { useVenueSpaces } from "../../features/venues/hooks/useVenueSpaces";
 import RequestFiles from "../../features/inquiry/components/Attachments";
+import ReasonField from "../../features/inquiry/components/ReasonField";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
 import QuotationBuilder from "../../features/inquiry/components/QuotationBuilder";
 import { effectiveStatus, formatDate, serverDay, shiftLabel } from "../../features/inquiry/inquiryOptions";
@@ -59,6 +60,7 @@ export default function OwnerInquiryDetailPage() {
   const [error, setError] = useState("");
   const [sentNotice, setSentNotice] = useState(false);
   const [confirm, setConfirm] = useState(null); // "decline" | "withdraw"
+  const [declineReason, setDeclineReason] = useState("");
 
   if (isPending) {
     return (
@@ -116,6 +118,8 @@ export default function OwnerInquiryDetailPage() {
             <Row term="Event">{inquiry.eventType}</Row>
             <Row term="Contact">{inquiry.contactName}{"\n"}{inquiry.phoneNumber}</Row>
             {inquiry.message && <Row term="Notes">{inquiry.message}</Row>}
+            {inquiry.customerReason && <Row term="Customer's reason">{inquiry.customerReason}</Row>}
+            {inquiry.declineReason && <Row term="Your reason">{inquiry.declineReason}</Row>}
           </dl>
           <RequestFiles inquiry={inquiry} />
           {phone && (
@@ -169,9 +173,18 @@ export default function OwnerInquiryDetailPage() {
           )}
           {confirm === "decline" && (
             <div role="alertdialog" aria-label="Confirm declining the request" className="rounded-card-md border border-red-300 bg-red-50 p-5 font-body text-small text-ink">
-              <p>Decline this request? The customer is told you cannot host this date. This cannot be undone.</p>
+              <p>Decline this request? The customer is told you cannot host this date, together with your reason. This cannot be undone.</p>
+              <ReasonField
+                required
+                label="Why are you declining?"
+                hint="The customer reads this."
+                value={declineReason}
+                onChange={setDeclineReason}
+                disabled={decline.isPending}
+                quickPicks={["That date is already taken", "Too many guests for our halls", "We are closed on that date"]}
+              />
               <div className="mt-4 flex flex-wrap gap-3">
-                <button type="button" disabled={decline.isPending} onClick={() => run(decline, inquiry._id, "Request declined")} className={btnDanger}>Yes, decline</button>
+                <button type="button" disabled={decline.isPending || declineReason.trim().length < 3} onClick={() => run(decline, { id: inquiry._id, reason: declineReason.trim() }, "Request declined")} className={btnDanger}>Yes, decline</button>
                 <button type="button" onClick={() => setConfirm(null)} className={btnOutline}>No, keep it</button>
               </div>
             </div>

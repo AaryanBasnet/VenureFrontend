@@ -1,7 +1,8 @@
 import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LayoutGrid, Users } from "lucide-react";
-import { createSpace, deactivateSpace, getSpaces, updateSpace } from "../../api/owner/venueApi";
+import { ImagePlus, LayoutGrid, Loader2, Users, X } from "lucide-react";
+import { createSpace, deactivateSpace, getSpaces, removeSpaceImage, updateSpace, uploadSpaceImages } from "../../api/owner/venueApi";
+import { cloudinaryTransform } from "../../utils/cloudinary";
 import { apiError } from "../../features/inquiry/hooks/useInquiries";
 import { SHIFT_OPTIONS } from "../../features/inquiry/inquiryOptions";
 import { inputClass, labelClass } from "../ui/formStyles";
@@ -13,6 +14,71 @@ import { SPACE_TYPES, spaceTypeLabel } from "../../features/venues/venueTypes";
 
 const linkBtn =
   "font-body text-small text-ink underline underline-offset-4 hover:text-gold-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50";
+
+const MAX_PHOTOS = 6;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_PHOTO_MB = 10;
+const HALL_THUMB = "f_auto,q_auto,w_320,h_240,c_fill";
+
+// The photos of one hall: customers see the first one on the venue page, so the order is the order they were added in.
+function SpacePhotos({ space, onChanged }) {
+  const uid = useId();
+  const [problem, setProblem] = useState("");
+  const photos = space.spaceImages ?? [];
+  const room = MAX_PHOTOS - photos.length;
+  const refresh = () => onChanged();
+  const add = useMutation({ mutationFn: uploadSpaceImages, onSuccess: refresh });
+  const remove = useMutation({ mutationFn: removeSpaceImage, onSuccess: refresh });
+  const busy = add.isPending || remove.isPending;
+
+  const pick = (e) => {
+    const chosen = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!chosen.length) return;
+    const bad = chosen.find((f) => !IMAGE_TYPES.includes(f.type) || f.size > MAX_PHOTO_MB * 1048576);
+    if (bad) return setProblem(`${bad.name} must be a JPG, PNG or WebP photo under ${MAX_PHOTO_MB} MB.`);
+    if (chosen.length > room) return setProblem(`This hall has room for ${room} more ${room === 1 ? "photo" : "photos"}.`);
+    setProblem("");
+    add.mutate({ spaceId: space._id, files: chosen }, { onError: (err) => setProblem(apiError(err)) });
+  };
+
+  return (
+    <div className="mt-4 border-t border-line pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-body text-small text-ink">
+          Photos <span className="text-taupe">{photos.length} of {MAX_PHOTOS}. Customers see the first one on your venue page.</span>
+        </p>
+        <div>
+          <input id={uid} type="file" multiple accept={IMAGE_TYPES.join(",")} onChange={pick} disabled={busy || room <= 0} aria-label={`Add photos of ${space.name}`} className="sr-only" />
+          <button type="button" onClick={() => document.getElementById(uid)?.click()} disabled={busy || room <= 0} className={`${btnOutline} !px-4 !py-2`}>
+            {add.isPending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : <ImagePlus aria-hidden="true" className="size-4" />}
+            {add.isPending ? "Adding" : "Add photos"}
+          </button>
+        </div>
+      </div>
+      {photos.length > 0 && (
+        <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {photos.map((p, i) => (
+            <li key={p.filename} className="relative overflow-hidden rounded-card-sm border border-line">
+              <img src={cloudinaryTransform(p.url, HALL_THUMB)} alt={`${space.name}, photo ${i + 1}`} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+              {i === 0 && <span className="absolute left-1 top-1 rounded-full bg-ink px-2 py-0.5 font-body text-caption text-gold-50">First</span>}
+              <button
+                type="button"
+                onClick={() => remove.mutate({ spaceId: space._id, filename: p.filename }, { onError: (err) => setProblem(apiError(err)) })}
+                disabled={busy}
+                aria-label={`Remove photo ${i + 1} of ${space.name}`}
+                className="absolute right-1 top-1 inline-flex size-8 items-center justify-center rounded-full bg-white/95 text-ink shadow hover:bg-white disabled:opacity-50"
+              >
+                <X aria-hidden="true" className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {problem && <p role="alert" className="mt-2 font-body text-small text-red-700">{problem}</p>}
+    </div>
+  );
+}
 
 function SpaceForm({ initial, submitLabel, busy, onSubmit, onCancel }) {
   const uid = useId();
@@ -129,6 +195,7 @@ export default function SpacesManager({ venue, onDone }) {
                       )}
                     </div>
                   </div>
+                  <SpacePhotos space={s} onChanged={refresh} />
                   {removing === s._id && (
                     <div role="alert" className="mt-4 flex flex-wrap items-center gap-3 rounded-card-sm bg-red-50 p-3">
                       <p className="mr-auto font-body text-small text-red-700">Remove {s.name}? Customers will no longer be able to pick it.</p>

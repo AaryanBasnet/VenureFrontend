@@ -467,7 +467,10 @@ export default function InquiryPage() {
               <AttachmentPicker files={files} onChange={setFiles} />
               <label className="flex min-h-11 cursor-pointer items-start gap-3 font-body text-small text-ink">
                 <input type="checkbox" checked={siteVisit} onChange={(e) => setSiteVisit(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-ink" />
-                I would like to visit the venue before confirming.
+                <span>
+                  I would like to visit the venue before confirming.
+                  <span className="mt-0.5 block text-caption text-taupe">This adds a note to your request. It does not book a visit; the venue will reply to you.</span>
+                </span>
               </label>
               </div>
             </div>

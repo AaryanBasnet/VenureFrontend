@@ -118,6 +118,20 @@ test("create a venue with a food package and a drink option, then add a hall", a
   await page.getByRole("button", { name: "Add space" }).click();
   await expect(page.getByText("Pine Lawn", { exact: true })).toBeVisible();
 
+  // Photos of a hall: add two (the first shows on the venue page), refuse a file that is not a photo, remove one
+  const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+  const glass = page.getByRole("listitem").filter({ hasText: "Glass Hall" });
+  await glass.getByLabel("Add photos of Glass Hall").setInputFiles([
+    { name: "one.png", mimeType: "image/png", buffer: Buffer.concat([PNG, Buffer.from([1])]) },
+    { name: "two.png", mimeType: "image/png", buffer: Buffer.concat([PNG, Buffer.from([2])]) },
+  ]);
+  await expect(glass.getByRole("img", { name: /Glass Hall, photo 2/ })).toBeVisible({ timeout: 30000 });
+  await expect(glass.getByText("2 of 6")).toBeVisible();
+  await glass.getByLabel("Add photos of Glass Hall").setInputFiles({ name: "notes.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF") });
+  await expect(glass.getByRole("alert")).toContainText("must be a JPG, PNG or WebP photo");
+  await glass.getByRole("button", { name: "Remove photo 2 of Glass Hall" }).click();
+  await expect(glass.getByText("1 of 6")).toBeVisible();
+
   // Edit a space, then remove it behind the inline confirmation
   const pine = page.getByRole("listitem").filter({ hasText: "Pine Lawn" });
   await pine.getByRole("button", { name: "Edit" }).click();

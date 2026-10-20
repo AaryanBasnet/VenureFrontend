@@ -178,3 +178,29 @@ describe("dates the converter cannot handle", () => {
     expect(bsToAd(2083, 6, 31)).toBeNull();
   });
 });
+
+describe("the Nepali month names and digits", async () => {
+  const { BS_MONTHS, BS_MONTHS_NE, bsLabelNe, nepaliNumber } = await import("./bsCalendar");
+
+  it("writes numbers in Devanagari digits", () => {
+    expect(nepaliNumber(2083)).toBe("२०८३");
+    expect(nepaliNumber(19)).toBe("१९");
+    expect(nepaliNumber(0)).toBe("०");
+    expect(nepaliNumber("1 Mangsir 07")).toBe("१ Mangsir ०७");
+  });
+
+  it("has an everyday Nepali name for each of the twelve months, in the same order as the English ones", () => {
+    expect(BS_MONTHS_NE).toHaveLength(12);
+    expect(BS_MONTHS_NE).toHaveLength(BS_MONTHS.length);
+    expect(new Set(BS_MONTHS_NE).size).toBe(12);
+    expect(BS_MONTHS_NE[0]).toBe("बैशाख"); // Baisakh
+    expect(BS_MONTHS_NE[3]).toBe("साउन"); // Shrawan
+    expect(BS_MONTHS_NE[7]).toBe("मंसिर"); // Mangsir
+    expect(BS_MONTHS_NE[11]).toBe("चैत"); // Chaitra
+  });
+
+  it("writes a whole date in Nepali: 5 December 2026 is 19 Mangsir 2083", () => {
+    expect(bsLabelNe(new Date(2026, 11, 5))).toBe("१९ मंसिर २०८३");
+    expect(bsLabelNe(new Date(1900, 0, 1))).toBe(""); // outside the supported range
+  });
+});

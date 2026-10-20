@@ -2,7 +2,7 @@
 // Every date here is a local-midnight Date standing for a calendar day (the same day for the visitor and for
 // the venue: the picker never turns a clicked day into a different one). "Today" is the day it is in Kathmandu.
 import NepaliDate from "nepali-date-converter";
-import { BS_MAX_YEAR, BS_MIN_YEAR, BS_MONTHS, adToBs, bsMonthLength, bsSupportedRange } from "./bsCalendar";
+import { BS_MAX_YEAR, BS_MIN_YEAR, BS_MONTHS, BS_MONTHS_NE, adToBs, bsMonthLength, bsSupportedRange, nepaliNumber } from "./bsCalendar";
 import { serverDay } from "./inquiryOptions";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -51,7 +51,7 @@ export function monthView(anchor, mode) {
   // The converter's first and last months have no neighbour on one side: the view just stays where it is
   const next = m === 11 ? (y >= BS_MAX_YEAR ? addDays(start, days) : first(y + 1, 0)) : first(y, m + 1);
   const prev = m === 0 ? (y <= BS_MIN_YEAR ? start : first(y - 1, 11)) : first(y, m - 1);
-  return { mode, start, days, title: `${BS_MONTHS[m]} ${y}`, prev, next, bsYear: y, bsMonth: m };
+  return { mode, start, days, title: `${BS_MONTHS[m]} ${y}`, titleNe: `${BS_MONTHS_NE[m]} ${nepaliNumber(y)}`, prev, next, bsYear: y, bsMonth: m };
 }
 
 // "Oct to Nov 2026": which English months a Nepali month covers.

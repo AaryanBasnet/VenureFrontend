@@ -28,7 +28,8 @@ const ktmDay = (n) => {
   return new Date(y, m - 1, d);
 };
 const monthTitle = (date) => date.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-const BS_MONTH = /Baisakh|Jestha|Ashadh|Shrawan|Bhadra|Ashwin|Kartik|Mangsir|Poush|Magh|Falgun|Chaitra/;
+// In the Nepali calendar the months and numbers are in Nepali (everyday month names, Devanagari digits); weekdays stay English
+const BS_MONTH = /बैशाख|जेठ|असार|साउन|भदौ|असोज|कात्तिक|मंसिर|पुस|माघ|फागुन|चैत/;
 
 const openForm = async (page) => {
   await page.goto(`/venue/${world.venueId}/inquire`);
@@ -36,7 +37,7 @@ const openForm = async (page) => {
 };
 const grid = (page) => page.getByRole("grid");
 const dayButton = (page, date, suffix = "") => grid(page).getByRole("button", { name: `${dayLabel(date)}${suffix}`, exact: true });
-const heading = (page) => page.getByRole("heading", { level: 3 }).filter({ hasText: /\d{4}$/ });
+const heading = (page) => page.getByRole("heading", { level: 3 }).filter({ hasText: /[\d०-९]{4}$/ });
 const showMonthOf = async (page, date) => {
   for (let i = 0; i < 26 && !(await heading(page).innerText()).includes(monthTitle(date)); i++) {
     await page.getByRole("button", { name: "Next month" }).click();
@@ -94,7 +95,12 @@ test.describe("customer", () => {
 
     await page.getByRole("button", { name: /नेपाली/ }).click();
     await expect(heading(page)).toContainText(BS_MONTH);
-    await expect(selected).toHaveAttribute("aria-label", new RegExp(`^\\d+ (?:${BS_MONTH.source}) \\d{4} BS, ${dayLabel(target)}$`));
+    await expect(heading(page)).toContainText(/[०-९]{4}/);
+    await expect(selected).toHaveAttribute("aria-label", new RegExp(`^[०-९]+ (?:${BS_MONTH.source}) [०-९]{4}, ${dayLabel(target)}$`));
+    // the day numbers are Devanagari digits, and the weekday names stay English
+    await expect(selected).toHaveText(/^[०-९]+$/);
+    await expect(grid(page).getByRole("columnheader", { name: "Sunday" })).toBeVisible();
+    await expect(grid(page).getByRole("columnheader", { name: "आइतबार" })).toHaveCount(0);
     // the English months the Nepali month covers are printed under the title
     await expect(page.getByText(/^[A-Z][a-z]{2}( to [A-Z][a-z]{2})? \d{4}$/).first()).toBeVisible();
 
@@ -296,7 +302,7 @@ test.describe("customer", () => {
     await page.keyboard.press("PageDown");
     await expect(heading(page)).not.toHaveText(startMonth);
     await expect(roving).toBeFocused();
-    await expect(roving).toHaveAttribute("aria-label", / BS, /);
+    await expect(roving).toHaveAttribute("aria-label", new RegExp(`^[०-९]+ (?:${BS_MONTH.source}) [०-९]{4}, `));
     await page.keyboard.press("PageUp");
     await expect(heading(page)).toHaveText(startMonth);
     await page.keyboard.press("End");

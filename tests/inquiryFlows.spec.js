@@ -47,11 +47,13 @@ test.describe("customer", () => {
     expect(await status(inquiry)).toBe("pending");
 
     await page.getByRole("button", { name: "Cancel this request" }).click();
+    await page.getByLabel(/Why are you cancelling/).fill("We moved the wedding to spring");
     await page.getByRole("button", { name: "Yes, cancel the request" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Your request is cancelled. Nothing was charged." })).toBeVisible();
     await expect(page.getByRole("heading", { name: "You cancelled this request" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Cancel this request" })).toHaveCount(0);
     expect(await status(inquiry)).toBe("cancelled");
+    expect((await world.api.owner.get(`inquiries/${inquiry._id}`).then((r) => r.json())).data.customerReason).toBe("We moved the wedding to spring");
 
     // It moves to Closed in the list
     await page.goto("/my-inquiries");
@@ -72,13 +74,15 @@ test.describe("customer", () => {
     expect((await world.api.owner.get(`quotations/${quotation._id}`).then((r) => r.json())).data.status).toBe("sent");
 
     await page.getByRole("button", { name: "Decline this quote" }).click();
+    await page.getByRole("button", { name: "Too expensive" }).click();
+    await expect(page.getByLabel(/Why\? The venue reads this/)).toHaveValue("Too expensive");
     await page.getByRole("button", { name: "Yes, decline it" }).click();
     await expect(page.getByRole("status").filter({ hasText: "You declined the quotation." })).toBeVisible();
     await expect(page.getByText("Waiting for the venue").first()).toBeVisible();
 
     expect((await world.api.owner.get(`quotations/${quotation._id}`).then((r) => r.json())).data.status).toBe("rejected");
     expect(await status(inquiry)).toBe("pending");
-    expect(await ownerNotes()).toContain(`Your quotation for "${world.venueName}" was declined by the customer.`);
+    expect(await ownerNotes()).toContain(`Your quotation for "${world.venueName}" was declined by the customer: Too expensive`);
   });
 });
 
@@ -94,11 +98,15 @@ test.describe("owner", () => {
     expect(await status(inquiry)).toBe("pending");
 
     await page.getByRole("button", { name: "Decline this request" }).click();
+    // a reason is required: the button stays off until there is one
+    await expect(dialog.getByRole("button", { name: "Yes, decline" })).toBeDisabled();
+    await dialog.getByRole("button", { name: "That date is already taken" }).click();
+    await dialog.getByLabel("Why are you declining?").fill("That date is already taken, sorry.");
     await dialog.getByRole("button", { name: "Yes, decline" }).click();
     await expect(page.getByText("Request declined").first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Decline this request" })).toHaveCount(0);
     expect(await status(inquiry)).toBe("declined");
-    expect(await customerNotes()).toContain(`Your inquiry for "${world.venueName}" was declined.`);
+    expect(await customerNotes()).toContain(`Your inquiry for "${world.venueName}" was declined: That date is already taken, sorry.`);
 
     const ctx = await browser.newContext({ baseURL });
     const guest = await ctx.newPage();
@@ -106,6 +114,7 @@ test.describe("owner", () => {
     await guest.goto(mine(inquiry));
     await expect(guest.getByRole("heading", { name: "The venue could not take this date" })).toBeVisible();
     await expect(guest.getByText("Declined by the venue").first()).toBeVisible();
+    await expect(guest.getByText("That date is already taken, sorry.")).toBeVisible(); // the venue's reason is on the page
     await ctx.close();
   });
 

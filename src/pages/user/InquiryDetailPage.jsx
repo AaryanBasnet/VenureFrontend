@@ -11,6 +11,7 @@ import {
   useRejectQuotation,
   useRequireLogin,
 } from "../../features/inquiry/hooks/useInquiries";
+import ReasonField from "../../features/inquiry/components/ReasonField";
 import StatusBadge from "../../features/inquiry/components/StatusBadge";
 import QuotationSummary from "../../features/inquiry/components/QuotationSummary";
 import RequestFiles from "../../features/inquiry/components/Attachments";
@@ -49,6 +50,7 @@ export default function InquiryDetailPage() {
   const [payment, setPayment] = useState(null);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(null); // "decline" | "cancel" | null
+  const [reason, setReason] = useState(""); // optional, for whichever of the two is open
   const [notice, setNotice] = useState("");
 
   if (!ready || isPending) {
@@ -82,8 +84,9 @@ export default function InquiryDetailPage() {
   const doReject = async () => {
     setError("");
     try {
-      await reject.mutateAsync(quotation._id);
+      await reject.mutateAsync({ id: quotation._id, reason: reason.trim() });
       setConfirm(null);
+      setReason("");
       setNotice("You declined the quotation. The request is back with the venue, which can send you another.");
     } catch (e) {
       setError(apiError(e));
@@ -92,8 +95,9 @@ export default function InquiryDetailPage() {
   const doCancel = async () => {
     setError("");
     try {
-      await cancel.mutateAsync(inquiry._id);
+      await cancel.mutateAsync({ id: inquiry._id, reason: reason.trim() });
       setConfirm(null);
+      setReason("");
       setNotice("Your request is cancelled. Nothing was charged.");
     } catch (e) {
       setError(apiError(e));
@@ -169,6 +173,7 @@ export default function InquiryDetailPage() {
                 {confirm === "decline" && (
                   <div className="mt-4 rounded-card-md bg-sand p-4 font-body text-small text-ink">
                     <p>Decline this quotation? Your request goes back to the venue, which can send you a different one. You can also cancel the request below.</p>
+                    <ReasonField label="Why? The venue reads this." hint="For example the price or the date." value={reason} onChange={setReason} disabled={busy} quickPicks={["Too expensive", "We need a different date", "We chose another venue"]} />
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button type="button" onClick={doReject} disabled={busy} className="inline-flex min-h-11 items-center gap-2 px-2 font-semibold text-red-700 hover:underline disabled:opacity-60">
                         {reject.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
@@ -205,6 +210,9 @@ export default function InquiryDetailPage() {
           {status === "declined" && (
             <div className={note}>
               <h2 className="font-display text-h4 font-light text-ink">The venue could not take this date</h2>
+              {inquiry.declineReason && (
+                <p className="mt-2 font-body text-small text-ink"><span className="text-taupe">The venue said:</span> “{inquiry.declineReason}”</p>
+              )}
               <p className="mt-2 font-body text-small text-ink">Nothing was charged. You can try another date at this venue, or send a request to a different venue.</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link to={`/venue/${inquiry.venue?._id}/inquire`} className={primary}>Try another date</Link>
@@ -233,6 +241,7 @@ export default function InquiryDetailPage() {
             confirm === "cancel" ? (
               <div className="rounded-card-md bg-sand p-4 font-body text-small text-ink">
                 <p>Cancel this request? The venue will no longer hold your date in mind and any quotation is withdrawn. Nothing has been charged.</p>
+                <ReasonField label="Why are you cancelling? The venue can read this." hint="You do not have to say." value={reason} onChange={setReason} disabled={busy} quickPicks={["We changed the date", "We chose another venue", "The event is cancelled"]} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={doCancel} disabled={busy} className="inline-flex min-h-11 items-center gap-2 px-2 font-semibold text-red-700 hover:underline disabled:opacity-60">
                     {cancel.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
