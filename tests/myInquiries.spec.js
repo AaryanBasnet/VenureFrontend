@@ -32,7 +32,8 @@ test("each filter button shows as many requests as its count says", async ({ pag
     await expect(button).toHaveAttribute("aria-pressed", "true");
     // Exactly one filter is pressed at a time
     await expect(group.locator('button[aria-pressed="true"]')).toHaveCount(1);
-    await expect(page.getByRole("main").getByRole("listitem").filter({ has: page.getByRole("link") })).toHaveCount(count);
+    // The list comes ten at a time; the count on the button is the size of the whole filter
+    await expect(page.getByRole("main").getByRole("listitem").filter({ has: page.getByRole("link") })).toHaveCount(Math.min(count, 10));
   }
 });
 
@@ -59,4 +60,17 @@ test("a request id that does not exist says so", async ({ page }) => {
   await page.goto("/my-inquiries/000000000000000000000000");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: /my inquiries|all requests|back/i }).first()).toBeVisible();
+});
+
+test("a long list comes in pages, and the next page shows the rest", async ({ page }) => {
+  const all = page.getByRole("group", { name: "Filter requests" }).getByRole("button").first();
+  await expect(all).toBeVisible();
+  const total = Number((await all.innerText()).match(/(\d+)\s*$/)?.[1]);
+  test.skip(total <= 10, "the seeded account has one page of requests");
+  const rows = page.getByRole("main").getByRole("listitem").filter({ has: page.getByRole("link") });
+  await expect(rows).toHaveCount(10);
+  await expect(page.getByText(`of ${total} requests`)).toBeVisible();
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(page.getByRole("button", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
+  await expect(rows).toHaveCount(Math.min(total - 10, 10));
 });

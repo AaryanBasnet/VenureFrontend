@@ -6,6 +6,7 @@ import useAddVenue from "../../hooks/owner/useAddVenue";
 import { useUpdateVenue } from "../../hooks/owner/useUpdateVenue";
 import { assetUrl } from "../../utils/assetUrl";
 import { VENUE_TYPES } from "../../features/venues/venueTypes";
+import FileThumb from "../common/FileThumb";
 import { errorClass, inputClass, labelClass } from "../ui/formStyles";
 import { btnPrimary } from "../dashboard/styles";
 import { DrinkOptionsEditor, PackagesEditor } from "./MenuEditors";
@@ -22,7 +23,6 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
 
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [venueImages, setVenueImages] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]);
   const [existingVenueImages, setExistingVenueImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [packageRows, setPackageRows] = useState([]);
@@ -103,7 +103,6 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
 
           resetForm();
           setVenueImages([]);
-          setPreviewImages([]);
           setSelectedAmenities([]);
 
           onSuccess?.(values);
@@ -119,7 +118,6 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
 
           resetForm();
           setVenueImages([]);
-          setPreviewImages([]);
           setSelectedAmenities([]);
           setPackageRows([]);
           setDrinkRows([]);
@@ -144,7 +142,6 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setVenueImages(files);
-    setPreviewImages(files.map((file) => URL.createObjectURL(file)));
   };
 
   if (mode === "edit" && !initialData) {
@@ -275,12 +272,12 @@ export default function VenueRegisterForm({ onSuccess, mode = "create", initialD
           disabled={isLoading}
         />
 
-        {previewImages.length > 0 && (
+        {venueImages.length > 0 && (
           <div className="mt-4">
             <p className="mb-2 font-body text-caption text-taupe">New photos to upload</p>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-              {previewImages.map((src, idx) => (
-                <img key={idx} src={src} alt={`Preview ${idx + 1}`} className="aspect-[4/3] w-full rounded-card-sm border border-line object-cover" />
+              {venueImages.map((file, idx) => (
+                <FileThumb key={idx} file={file} label={`Preview ${idx + 1}`} className="aspect-[4/3] w-full rounded-card-sm border border-line" />
               ))}
             </div>
           </div>

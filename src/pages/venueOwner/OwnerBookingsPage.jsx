@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { CalendarDays, Phone } from "lucide-react";
 import { toast } from "react-toastify";
 import { apiError } from "../../features/inquiry/hooks/useInquiries";
@@ -10,13 +10,14 @@ import { EmptyState, ErrorState, PageHeader, RowsSkeleton, StatusPill } from "..
 import { btnDanger, btnOutline, btnPrimary, npr } from "../../components/dashboard/styles";
 import { inputClass, labelClass } from "../../components/ui/formStyles";
 import Select from "../../components/ui/Select";
+import Pagination from "../../features/venues/components/Pagination";
 import { plural } from "../../utils/plural";
 import { useRovingTabs } from "../../hooks/useRovingTabs";
 
 const TABS = [
-  { id: "upcoming", label: "Upcoming", match: (s) => s === "confirmed" || s === "pending_deposit", empty: "When a customer pays a deposit, the booking appears here." },
-  { id: "completed", label: "Completed", match: (s) => s === "completed", empty: "Events you mark as completed are listed here." },
-  { id: "cancelled", label: "Cancelled", match: (s) => s === "cancelled", empty: "No cancelled bookings." },
+  { id: "upcoming", label: "Upcoming", group: "upcoming", empty: "When a customer pays a deposit, the booking appears here." },
+  { id: "completed", label: "Completed", group: "completed", empty: "Events you mark as completed are listed here." },
+  { id: "cancelled", label: "Cancelled", group: "cancelled", empty: "No cancelled bookings." },
 ];
 const METHODS = ["Cash", "Bank transfer", "eSewa", "Khalti", "Other"];
 const day = (d) => serverDay(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -146,15 +147,20 @@ function BookingCard({ booking }) {
   );
 }
 
+const PAGE_SIZE = 10;
 const TAB_IDS = TABS.map((t) => t.id);
 const tabDomId = (id) => `btab-${id}`;
 
 export default function OwnerBookingsPage() {
-  const { data: bookings = [], isPending, isError, refetch } = useOwnerBookingList();
   const [tab, setTab] = useState("upcoming");
-  const roving = useRovingTabs({ ids: TAB_IDS, selected: tab, onSelect: setTab, idFor: tabDomId });
+  const [page, setPage] = useState(1);
   const current = TABS.find((t) => t.id === tab);
-  const shown = bookings.filter((b) => current.match(b.status)).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+  const { data, isPending, isError, refetch } = useOwnerBookingList({ group: current.group, page, limit: PAGE_SIZE });
+  const selectTab = (id) => { setTab(id); setPage(1); };
+  // The last booking on the last page moved to another tab: step back a page
+  useEffect(() => { if (data && data.page > data.pages) setPage(data.pages); }, [data]);
+  const roving = useRovingTabs({ ids: TAB_IDS, selected: tab, onSelect: selectTab, idFor: tabDomId });
+  const shown = data?.items ?? [];
 
   return (
     <>
@@ -174,7 +180,7 @@ export default function OwnerBookingsPage() {
               tab === t.id ? "border-ink bg-ink text-gold-50" : "border-line bg-white text-ink hover:border-ink"
             }`}
           >
-            {t.label} <span className={tab === t.id ? "text-gold-200" : "text-taupe"}>({bookings.filter((b) => t.match(b.status)).length})</span>
+            {t.label} <span className={tab === t.id ? "text-gold-200" : "text-taupe"}>({data?.counts[t.group] ?? 0})</span>
           </button>
         ))}
       </div>
@@ -189,6 +195,7 @@ export default function OwnerBookingsPage() {
         ) : (
           <ul className="space-y-4">{shown.map((b) => <BookingCard key={b._id} booking={b} />)}</ul>
         )}
+        {data && <div className="mt-6"><Pagination page={data.page} totalPages={data.pages} total={data.total} shown={shown.length} pageSize={PAGE_SIZE} onPage={setPage} noun="booking" /></div>}
       </div>
     </>
   );

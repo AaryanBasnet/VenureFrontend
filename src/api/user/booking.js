@@ -1,8 +1,9 @@
 import instance from "../api";
 
 // The customer's bookings (the booking itself is created from an accepted quotation, see the inquiry flow).
-export const getMyBookings = async () => {
-  const res = await instance.get("/bookings/my-bookings");
+// One page: { items, total, page, pages, counts }. params: { group, page, limit }
+export const getMyBookings = async (params = {}) => {
+  const res = await instance.get("/bookings/my-bookings", { params: { page: 1, ...params } });
   return res.data.data;
 };
 

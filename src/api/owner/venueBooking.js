@@ -2,6 +2,9 @@ import instance from "../api";
 
 export const fetchBookingsForOwner = async () => (await instance.get("/bookings/owner-bookings")).data.data;
 
+// One page: { items, total, page, pages, counts }. params: { group, page, limit }
+export const fetchOwnerBookingPage = async (params = {}) => (await instance.get("/bookings/owner-bookings", { params: { page: 1, ...params } })).data.data;
+
 export const getMonthlyEarningsForOwner = async () => instance.get("/bookings/owner-earnings");
 
 // Owners and customers both cancel through the same route; the server decides the refund.

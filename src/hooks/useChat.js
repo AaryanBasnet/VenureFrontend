@@ -3,8 +3,11 @@ import { fetchChats, fetchMessages, createOrGetChat } from "../api/chatApi";
 import {
   connectSocket,
   sendMessage,
+  markChatSeen,
   subscribeToMessages,
   unsubscribeFromMessages,
+  subscribeToSeen,
+  unsubscribeFromSeen,
 } from "../utils/socket";
 
 // Conversation list and the open thread, for the customer and owner chat pages.
@@ -45,6 +48,7 @@ export function useChat(currentUser, venueId = null) {
     subscribeToMessages((newMessage) => {
       if (activeChat && newMessage.chatId === activeChat._id) {
         setMessages((prev) => [...prev, newMessage]);
+        markChatSeen(activeChat._id); // it is on screen, so it is read
       }
       // Keep the list preview current for any conversation
       setChats((prev) =>
@@ -59,13 +63,27 @@ export function useChat(currentUser, venueId = null) {
     return () => unsubscribeFromMessages();
   }, [activeChat]);
 
+  // The other person opened the conversation: my messages in it are now seen
+  useEffect(() => {
+    if (!userId) return undefined;
+    subscribeToSeen(({ chatId }) => {
+      if (activeRef.current?._id === chatId) {
+        setMessages((prev) => prev.map((m) => (m.seen ? m : { ...m, seen: true })));
+      }
+    });
+    return () => unsubscribeFromSeen();
+  }, [userId]);
+
   const loadMessagesFor = useCallback((chat) => {
     const id = ++requestId.current;
     setMessagesLoading(true);
     setMessagesError(false);
     fetchMessages(chat._id)
       .then((list) => {
-        if (id === requestId.current) setMessages(Array.isArray(list) ? list : []);
+        if (id !== requestId.current) return;
+        setMessages(Array.isArray(list) ? list : []);
+        markChatSeen(chat._id);
+        setChats((prev) => prev.map((c) => (c._id === chat._id ? { ...c, unreadCount: 0 } : c)));
       })
       .catch(() => {
         if (id === requestId.current) setMessagesError(true);
@@ -96,6 +114,7 @@ export function useChat(currentUser, venueId = null) {
       receiver: activeChat.participants.find((p) => p._id !== currentUser._id)?._id,
       text,
       timestamp: new Date().toISOString(),
+      seen: false,
     };
     sendMessage(message);
     setMessages((prev) => [...prev, message]);

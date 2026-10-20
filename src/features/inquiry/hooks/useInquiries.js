@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useGoToLogin } from "../../../auth/returnTo";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../../../auth/AuthProvider";
 import {
   acceptQuotationApi,
@@ -32,7 +32,8 @@ export function useRequireLogin() {
 }
 
 /* ── Customer ── */
-export const useMyInquiries = (enabled = true) => useQuery({ queryKey: ["inquiries", "my"], queryFn: getMyInquiriesApi, enabled });
+// A page at a time; the previous page stays on screen while the next one loads
+export const useMyInquiries = (params, enabled = true) => useQuery({ queryKey: ["inquiries", "my", params], queryFn: () => getMyInquiriesApi(params), enabled, placeholderData: keepPreviousData });
 export const useInquiry = (id, enabled = true) => useQuery({ queryKey: ["inquiry", id], queryFn: () => getInquiryApi(id), enabled: !!id && enabled });
 export const useQuotation = (id) => useQuery({ queryKey: ["quotation", id], queryFn: () => getQuotationApi(id), enabled: !!id });
 
@@ -73,7 +74,9 @@ export const useRejectQuotation = () => useRefreshing(rejectQuotationApi);
 export const useVerifyEsewaPayment = () => useRefreshing(verifyEsewaPaymentApi);
 
 /* ── Venue owner ── */
-export const useOwnerInquiries = () => useQuery({ queryKey: ["owner-inquiries"], queryFn: getOwnerInquiriesApi });
+// The owner's "needs a reply" requests: the badge, the dashboard and the first inquiries tab share this one query
+export const WAITING = { group: "pending", limit: 5 };
+export const useOwnerInquiries = (params) => useQuery({ queryKey: ["owner-inquiries", params], queryFn: () => getOwnerInquiriesApi(params), placeholderData: keepPreviousData });
 export const useDeclineInquiry = () => useRefreshing(declineInquiryApi);
 export const useCreateQuotation = () => useRefreshing(createQuotationApi);
 export const useWithdrawQuotation = () => useRefreshing(withdrawQuotationApi);

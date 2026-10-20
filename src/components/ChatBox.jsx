@@ -93,7 +93,7 @@ export default function ChatBox({ messages = [], onSend, currentUserId, isTyping
                   <p className="whitespace-pre-wrap break-words font-body text-small">{msg.text}</p>
                   <p className={`mt-1 flex items-center justify-end gap-1.5 font-body text-caption ${mine ? "text-gold-200/80" : "text-taupe"}`}>
                     {timeOf(msg.timestamp)}
-                    {mine && <Ticks status={msg.status} />}
+                    {mine && <Ticks status={msg.status ?? (msg.seen ? "read" : "sent")} />}
                   </p>
                 </div>
               </div>

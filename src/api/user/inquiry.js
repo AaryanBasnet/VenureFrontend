@@ -5,7 +5,8 @@ import instance from "../api";
 // contactName, phoneNumber.
 export const createInquiryApi = (payload) => instance.post("/inquiries", payload);
 
-export const getMyInquiriesApi = async () => (await instance.get("/inquiries/my")).data.data;
+// One page of the customer's requests: { items, total, page, pages, counts }. params: { group, page, limit, venue }
+export const getMyInquiriesApi = async (params = {}) => (await instance.get("/inquiries/my", { params: { page: 1, ...params } })).data.data;
 export const getInquiryApi = async (id) => (await instance.get(`/inquiries/${id}`)).data.data;
 // Both take { id, reason }; the reason is optional for the customer
 export const cancelInquiryApi = async ({ id, reason }) => (await instance.put(`/inquiries/${id}/cancel`, { reason: reason || undefined })).data.data;
