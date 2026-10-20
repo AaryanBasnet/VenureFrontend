@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { afterLoginPath, currentPath } from "../../auth/returnTo";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
 
 function AuthSpinner() {

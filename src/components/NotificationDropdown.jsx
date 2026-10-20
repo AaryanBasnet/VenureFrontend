@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { Bell, X, Check, CheckCheck, Clock, ArrowRight } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 import { useNotifications } from "../hooks/useNotification";
 import { AuthContext } from "../auth/AuthProvider";
 

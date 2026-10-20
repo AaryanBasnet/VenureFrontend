@@ -32,8 +32,8 @@
   --color-success: #48634b; /* security / success messaging */
 
   /* ── Typography ──────────────────────────────────────── */
-  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
-  --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Fraunces Fallback", "Iowan Old Style", Georgia, serif;
+  --font-body: "DM Sans", "DM Sans Fallback", ui-sans-serif, system-ui, sans-serif;
 
   --text-display: clamp(2.5rem, 1.6rem + 3.6vw, 3.75rem); /* 40 → 60 */
   --text-display--line-height: 1.07;

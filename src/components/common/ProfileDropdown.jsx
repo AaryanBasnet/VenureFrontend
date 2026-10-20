@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m as motion } from "framer-motion";
 import { LogOut, UserCircle2 } from "lucide-react";
 import { accountLinksFor } from "../../layouts/accountLinks";
 import { assetUrl } from "../../utils/assetUrl";
