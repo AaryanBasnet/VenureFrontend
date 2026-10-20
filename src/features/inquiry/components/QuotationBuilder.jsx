@@ -54,7 +54,7 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
   const fitting = spaces.filter((s) => s.capacity >= inquiry.numberOfGuests);
   const [spaceId, setSpaceId] = useState(inquiry.space?._id ?? fitting[0]?._id ?? "");
   const [shift, setShift] = useState(inquiry.preferredShift ?? "night");
-  const [guests, setGuests] = useState(inquiry.numberOfGuests);
+  const guests = inquiry.numberOfGuests; // the customer's number; the venue cannot change it
   const [items, setItems] = useState(() => initialItems(inquiry, venue));
   const [depositType, setDepositType] = useState("percentage");
   const [depositValue, setDepositValue] = useState(20);
@@ -137,7 +137,8 @@ export default function QuotationBuilder({ inquiry, venue, spaces, onSent }) {
           </div>
           <div>
             <label htmlFor="q-guests" className={lab}>Guests</label>
-            <input id="q-guests" type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} className={field} />
+            <input id="q-guests" type="number" value={guests} readOnly aria-readonly="true" aria-describedby="q-guests-hint" className={`${field} cursor-not-allowed bg-sand`} />
+            <p id="q-guests-hint" className="mt-1 font-body text-caption text-taupe">The customer's number. It cannot be changed here.</p>
           </div>
         </div>
 
