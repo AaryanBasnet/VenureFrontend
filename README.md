@@ -1,4 +1,4 @@
-# Venure Frontend
+# 🏛️ Venure Frontend
 
 [![CI](https://github.com/AaryanBasnet/VenureFrontend/actions/workflows/ci.yml/badge.svg)](https://github.com/AaryanBasnet/VenureFrontend/actions/workflows/ci.yml)
 
@@ -8,29 +8,47 @@ Venure is an event-venue platform for Nepal. Customers find a banquet hall, hote
 
 This repository is the React frontend only. It talks to the backend over REST and Socket.IO.
 
+> **Try it in one click:** open the [login page](https://venure.aaryanbasnet.com.np/login) and choose **Customer**, **Venue owner** or **Admin** under "Just looking around?". No sign-up. The owner and admin demos are read-only (the server enforces it), and the demo admin only ever sees demo data.
+
+<p align="center"><img src="docs/demo.gif" alt="A tour of the owner demo: dashboard, a customer's request, the quotation builder, bookings, analytics and venues" width="780"></p>
+
 ### At a glance
 
 | | |
 | --- | --- |
-| **~1,650** automated tests across the stack | 365 unit (Vitest), 252 end-to-end (Playwright), 1,037 backend |
-| **27 Playwright spec files** | Real browser, real backend: booking, quotations, chat, owner and admin areas, accessibility at phone width |
+| **~1,700** automated tests across the stack | 365 unit (Vitest), 258 end-to-end (Playwright), 1,053 backend |
+| **28 Playwright spec files** | Real browser, real backend: booking, quotations, chat, owner and admin areas, demo accounts, accessibility at phone width |
 | **−70% to −86%** | Median latency of the booking and inquiry lists after server-side paging (with the backend) |
 | **~20,000 lines** of React | Three roles: customer, venue owner, admin |
+| **Lighthouse 100 / 96 / 100** | Accessibility, best practices and SEO on the live home page (performance below) |
 | **Bikram Sambat dates** | Nepali months and digits next to English, built into the calendar |
 
 ### Screenshots
 
-| Find a venue | Reply with a quotation (owner) |
+| Find a venue | A venue page |
 | --- | --- |
-| ![Venue search](docs/screenshots/venues.jpg) | ![Quotation builder](docs/screenshots/quotation-builder.jpg) |
-| **Owner dashboard** | **Bookings, a page at a time** |
-| ![Owner dashboard](docs/screenshots/owner-dashboard.jpg) | ![Owner bookings](docs/screenshots/owner-bookings.jpg) |
+| ![Venue search](docs/screenshots/venues.jpg) | ![A venue](docs/screenshots/venue.jpg) |
+| **Owner dashboard** | **Reply with a quotation** |
+| ![Owner dashboard](docs/screenshots/owner-dashboard.jpg) | ![Quotation builder](docs/screenshots/quotation-builder.jpg) |
+| **Owner analytics** | **Admin: review an application** |
+| ![Owner analytics](docs/screenshots/owner-analytics.jpg) | ![Admin application](docs/screenshots/admin-application.jpg) |
 
-The two owner screens with large totals use a generated load-test dataset (40,000 bookings), not real customers. The quotation screen uses a small local test database.
+The screenshots come from the demo data. The venues, people and prices are made up, and the venue photos are AI-generated illustrations, not real places.
+
+### Lighthouse
+
+Measured on the live home page, median of three runs, 20 October 2026 (Lighthouse 12, its default throttling):
+
+| | Performance | Accessibility | Best practices | SEO | First paint | Largest paint |
+|---|---|---|---|---|---|---|
+| Desktop | 76 | 100 | 96 | 100 | 0.7 s | 1.5 s |
+| Mobile | 66 | 100 | 96 | 100 | 4.5 s | 6.0 s |
+
+Honest reading: accessibility and SEO are where they should be. Performance is the weak spot. Mobile is slow to paint on Lighthouse's throttled phone, and desktop loses points to layout shift (CLS 0.41, the footer and hero move while the page fills in). Both are known and listed as next steps, not hidden.
 
 ---
 
-## How it works
+## ✨ How it works
 
 Venure is built around how events are booked in Nepal, not around a shopping cart.
 
@@ -40,7 +58,7 @@ Venure is built around how events are booked in Nepal, not around a shopping car
 - **Owners apply, they do not sign up.** A venue owner applies with business documents and photos. An admin approves, and the owner gets an emailed link to set a password. The public sign-up page makes customers only.
 - **Balance at the venue.** Only the deposit is paid online. The owner records the balance when the customer pays it at the venue.
 
-## Features
+## 🚀 Features
 
 **Customers**
 - Search and filter venues by city, type, kind of space, guests, amenities and price. Each venue page has a gallery, a map and its halls.
@@ -49,6 +67,7 @@ Venure is built around how events are booked in Nepal, not around a shopping car
 - Pay the deposit on eSewa. See bookings as upcoming, past or cancelled, and cancel with the refund shown first.
 - Chat with the venue, with live delivery and "Seen" ticks.
 - Favorites, reviews, notifications, Google sign-in and password reset.
+- A one-click demo for visitors: customer, venue owner and admin, read-only, with a banner that says so.
 
 **Venue owners**
 - Apply to list a venue (the draft survives a refresh), then manage venues, halls and hall photos.
@@ -62,11 +81,11 @@ Venure is built around how events are booked in Nepal, not around a shopping car
 
 Booking, inquiry and chat lists are paged on the server, with the size of every tab.
 
-## Tech stack
+## 🛠 Tech stack
 
 React 19 · Vite 6 · Tailwind CSS v4 · TanStack Query · React Router · Zustand · Formik and Yup · Socket.IO client · Recharts · Framer Motion · nepali-date-converter · Vitest · Playwright
 
-## Getting started
+## ⚙️ Getting started
 
 You need a recent Node.js (20 or newer) and the [backend](https://github.com/AaryanBasnet/VenureBackend) running.
 
@@ -87,7 +106,7 @@ npm run dev
 | `VITE_GOOGLE_CLIENT_ID` | no | Google sign-in. Leave it blank and the button hides itself. It must match the backend's `GOOGLE_CLIENT_ID` |
 | `VITE_CONTACT_EMAIL`, `VITE_CONTACT_PHONE`, `VITE_CONTACT_ADDRESS`, `VITE_CONTACT_HOURS` | no | Shown on the Contact page and footer. Any left empty is not shown |
 
-## Scripts
+## 📜 Scripts
 
 | Command | What it does |
 | --- | --- |
@@ -95,17 +114,17 @@ npm run dev
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm run test:unit` | Vitest (365 tests) |
-| `npm run test:e2e` | Playwright (252 tests in 27 files) |
+| `npm run test:e2e` | Playwright (258 tests in 28 files) |
 | `npm run images:optimize` | Rebuild the landing-page images from the masters (see the script header) |
 
-## Testing
+## 🧪 Testing
 
 - **Unit (Vitest):** calendar and Bikram Sambat maths, shift and date handling, money formatting, venue filters, booking and inquiry helpers.
 - **End to end (Playwright):** a real browser against a real backend. It covers browse and filters, the venue page, the inquiry form, quotations, booking and cancellation, chat, notifications, the owner and admin areas, routing and guards, and accessibility basics at phone width.
 - The e2e suite needs a running backend and test accounts, given through environment variables (see `tests/helpers.js`). Specs that write data run in a fixed order after the read-only ones (`playwright.config.js`).
 - **CI** runs lint and the production build on every push and pull request. The unit and e2e suites are run locally and are not part of CI yet.
 
-## Project structure
+## 📁 Project structure
 
 ```
 src/
@@ -123,24 +142,25 @@ tests/            # Playwright specs
 docs/             # design-system.md and CHANGELOG-MAJOR.md
 ```
 
-## Deployment
+## 🚀 Deployment
 
 The site is served from Vercel (`vercel.json` rewrites every path to `index.html`). A `Dockerfile` and `nginx.conf` are included for a static container. Set the `VITE_*` variables in the hosting dashboard. Login cookies work best when the site and the API share a parent domain, see `docs/DEPLOY.md` in the backend.
 
-## More
+## 📚 More
 
 - [Design system](docs/design-system.md)
 - [Major changes log](docs/CHANGELOG-MAJOR.md)
 
-## Known limits
+## 🚧 Known limits
 
 - Payments run on eSewa's sandbox until live merchant keys are set on the backend. eSewa has no refund API, so refunds are recorded and paid back by hand.
 - The owner area works but has not been redesigned yet.
+- Performance on a throttled phone and layout shift on desktop (see Lighthouse above) still need work.
 
-## License
+## 📄 License
 
 Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). You can read, run and learn from the code. Commercial use is not allowed.
 
-## Author
+## 📬 Author
 
 Aaryan Basnet · [basnetaryan1011@gmail.com](mailto:basnetaryan1011@gmail.com) · [LinkedIn](https://www.linkedin.com/in/basnet-aryan-4511a22a4/)

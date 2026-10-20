@@ -2,6 +2,8 @@ import api from "./api";
 
 export const registerUserApi = (data) => api.post("/auth/register", data);
 export const loginUserApi = (data) => api.post("/auth/login", data);
+// role: "customer" | "owner" | "admin"
+export const demoLoginApi = (role) => api.post("/auth/demo", { role });
 export const googleAuthApi = (credential) =>
   api.post("/auth/google", { credential });
 export const logoutUserApi = () => api.post("/auth/logout");

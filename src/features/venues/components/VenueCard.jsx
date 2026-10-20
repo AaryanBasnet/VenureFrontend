@@ -42,21 +42,19 @@ export default function VenueCard({ venue, isFavorite = false, onToggleFavorite,
       )}
 
       <div className="m-3 rounded-card-md border border-white/20 bg-ink/45 px-4 py-3.5 text-white backdrop-blur-md">
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate font-body text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-gold-200">{venue.location?.city || "Nepal"}</p>
-            <h2 className="mt-1 font-display text-h5 font-normal leading-tight [overflow-wrap:anywhere]">
-              <Link to={`/venue/${venue._id}`} className="line-clamp-2 after:absolute after:inset-0 after:z-0 focus-visible:outline-none">
-                {venue.venueName}
-              </Link>
-            </h2>
-          </div>
-          <p className="shrink-0 text-right">
+        <div className="min-w-0">
+          <p className="truncate font-body text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-gold-200">{venue.location?.city || "Nepal"}</p>
+          <h2 className="mt-1 font-display text-h5 font-normal leading-tight [overflow-wrap:anywhere]">
+            <Link to={`/venue/${venue._id}`} className="line-clamp-2 after:absolute after:inset-0 after:z-0 focus-visible:outline-none">
+              {venue.venueName}
+            </Link>
+          </h2>
+          <p className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5">
             {from > 0 ? (
               <>
-                <span className="block font-body text-caption text-white/75">From</span>
-                <span className="block font-display text-h5 font-normal leading-tight">NPR {priceFormatter.format(from)}</span>
-                <span className="block font-body text-caption text-white/75">per plate</span>
+                <span className="font-body text-caption text-white/75">From</span>
+                <span className="font-display text-h5 font-normal leading-tight">NPR {priceFormatter.format(from)}</span>
+                <span className="font-body text-caption text-white/75">per plate</span>
               </>
             ) : (
               <span className="font-body text-caption text-white/75">Price on request</span>
