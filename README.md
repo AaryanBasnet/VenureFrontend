@@ -20,7 +20,7 @@ This repository is the React frontend only. It talks to the backend over REST an
 | **28 Playwright spec files** | Real browser, real backend: booking, quotations, chat, owner and admin areas, demo accounts, accessibility at phone width |
 | **−70% to −86%** | Median latency of the booking and inquiry lists after server-side paging (with the backend) |
 | **~20,000 lines** of React | Three roles: customer, venue owner, admin |
-| **Lighthouse 100 / 96 / 100** | Accessibility, best practices and SEO on the live home page (performance below) |
+| **Lighthouse 94 desktop, 82 mobile** | Performance on the live home page; accessibility 100, best practices 96, SEO 100, layout shift 0 |
 | **Bikram Sambat dates** | Nepali months and digits next to English, built into the calendar |
 
 ### Screenshots
@@ -37,14 +37,18 @@ The screenshots come from the demo data. The venues, people and prices are made 
 
 ### Lighthouse
 
-Measured on the live home page, median of three runs, 20 October 2026 (Lighthouse 12, its default throttling):
+Measured on the live home page, median of three runs, 27 October 2026 (Lighthouse 12, its default throttling):
 
-| | Performance | Accessibility | Best practices | SEO | First paint | Largest paint |
-|---|---|---|---|---|---|---|
-| Desktop | 76 | 100 | 96 | 100 | 0.7 s | 1.5 s |
-| Mobile | 66 | 100 | 96 | 100 | 4.5 s | 6.0 s |
+| | Performance | Accessibility | Best practices | SEO | Layout shift | First paint | Largest paint |
+|---|---|---|---|---|---|---|---|
+| Desktop | 94 | 100 | 96 | 100 | 0 | 0.9 s | 1.4 s |
+| Mobile | 82 | 100 | 96 | 100 | 0 | 2.4 s | 4.1 s |
 
-Honest reading: accessibility and SEO are where they should be. Performance is the weak spot. Mobile is slow to paint on Lighthouse's throttled phone, and desktop loses points to layout shift (CLS 0.41, the footer and hero move while the page fills in). Both are known and listed as next steps, not hidden.
+Before the performance work (20 October): desktop 76 and mobile 66, with a layout shift of 0.41 (the footer jumped when the page loaded), and a mobile largest paint of 6.0 s.
+
+What changed: the loading placeholder is now a full screen tall so nothing moves when the page arrives, fonts are served from this site with metric-matched fallbacks, the chat library and animation code load only when needed, and data for sections below the fold waits until the page has painted.
+
+Honest reading: mobile is still the weaker score, because Lighthouse runs it on a throttled phone and the main JavaScript bundle (React, axios, toasts) is the cost that is left. Getting it much higher would need pre-rendering the landing page, which is not done.
 
 ---
 
@@ -155,7 +159,7 @@ The site is served from Vercel (`vercel.json` rewrites every path to `index.html
 
 - Payments run on eSewa's sandbox until live merchant keys are set on the backend. eSewa has no refund API, so refunds are recorded and paid back by hand.
 - The owner area works but has not been redesigned yet.
-- Performance on a throttled phone and layout shift on desktop (see Lighthouse above) still need work.
+- Performance on a throttled phone (mobile Lighthouse 82) could be higher; pre-rendering the landing page would be the next step.
 
 ## 📄 License
 
